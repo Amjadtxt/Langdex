@@ -140,7 +140,7 @@ header {
   width: 75%;
   display: flex;
   justify-content: center;
-  border: 1px solid #FFFFFF;
+  border: 0px solid #FFFFFF;
   border-radius: 30px;
 }
 
