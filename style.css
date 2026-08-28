@@ -137,11 +137,11 @@ header {
 /* NAVBAR */
 
 .bar {
-  width: 75%;
+  width: 100%;
   display: flex;
   justify-content: center;
-  border: 0px solid #FFFFFF;
-  border-radius: 30px;
+  border: 1px solid #FFFFFF;
+ 
 }
 
 nav ul {
