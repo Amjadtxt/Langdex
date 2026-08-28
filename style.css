@@ -186,20 +186,20 @@ input {
   border: none;
   border-radius: 15px;
   font-size: 15px;
-  margin: 8px;
+  margin: 7px;
   text-align: center;
   width: 85%;
-  padding: 10px;
+  padding: 8px;
 }
 
 select {
   border: none;
   border-radius: 15px;
   font-size: 15px;
-  margin: 8px;
+  margin: 7px;
   text-align: center;
   width: 90%;
-  padding: 10px;
+  padding: 8px;
 }
 
 h1 {
@@ -256,7 +256,7 @@ button {
 .reg {
   background-color: #4CAF50;
   padding: 10px;
-Width:100%;
+Width:85%;
 }
 
 .reg:hover {
