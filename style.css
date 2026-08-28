@@ -229,14 +229,6 @@ padding:10px
 .reg:hover {
 background-color: #66BB6A;
 }
-
-@media (max-width: 768px) {
-.form{
-justify-content: center;
-width:280px;
-height: 460px;
-}
-
 input{
 width:75%;
 padding:8px;
@@ -307,3 +299,9 @@ width:80%;
 }
 .search-txt{
 width:75%;}
+@media (max-width: 768px) {
+.form{
+justify-content: center;
+width:280px;
+height: 460px;
+}
