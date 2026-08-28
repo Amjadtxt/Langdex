@@ -3,7 +3,9 @@
 * {
   padding: 0.1px;
 }
-
+.arabic {
+  font-family: 'Cairo', sans-serif;
+}
 .content {
   border: 0px solid #Ffffff;
   border-radius: 25px;
