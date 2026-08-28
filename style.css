@@ -3,7 +3,7 @@
 }
 
 .content {
-  border: 0px solid #FFFFFF;
+  border: 0px solid #Ffffff;
   border-radius: 25px;
   display: flex;
   justify-content: center;
@@ -18,7 +18,7 @@
   justify-content: center;
   margin-top: 30px;
   overflow-x: auto;
-  border: 0px solid #FFFFFF;
+  border: 0px solid #ffffff;
   border-radius: 18px;
 }
 
@@ -29,7 +29,7 @@
   width: 100%;
   border-collapse: collapse;
   background-color: transparent;
-  color: #FFFFFF;
+  color: #ffffff;
   font-family: monospace;
 }
 
@@ -38,8 +38,8 @@
 
 .table-container th {
   padding: 10px 10px;
-  background-color: #FFFFFF;
-  color: #24272B;
+  background-color: #ffffff;
+  color: #24272b;
   text-align: left;
   font-size: 16px;
   font-weight: bold;
@@ -51,7 +51,7 @@
 .table-container td {
   padding: 12px 15px;
   font-size: 12px;
-  border-bottom: 1px solid #3A3E43;
+  border-bottom: 1px solid #3a3e43;
 }
 
 
@@ -62,7 +62,7 @@
 }
 
 .table-container tbody tr:hover {
-  background-color: #30343A;
+  background-color: #30343a;
 }
 
 
@@ -73,10 +73,8 @@
 }
 
 
-/* SEARCH */
-
 .search-section {
-  margin: 5px;
+  margin: 10px;
   display: flex;
   flex-direction: column;
   border: 0px solid white;
@@ -88,7 +86,7 @@
 .search-btn {
   background-color: #9C27B0;
   border: none;
-  color: #FFFFFF;
+  color: #Ffffff;
   border-radius: 15px;
   margin: 5px;
   font-size: 15px;
@@ -112,8 +110,6 @@
 }
 
 
-/* BODY */
-
 body {
   display: flex;
   align-content: center;
@@ -122,9 +118,6 @@ body {
   background: #1E2C3C;
   justify-content: center;
 }
-
-
-/* HEADER */
 
 header {
   margin-bottom: 0px;
@@ -161,18 +154,6 @@ nav li {
 }
 
 
-/* CONTENT */
-
-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-
-/* FORM */
-
 .form {
   margin: 5px;
   display: flex;
@@ -199,4 +180,179 @@ input {
 select {
   border: none;
   border-radius: 15px;
-  font-size: 15px
+  font-size: 15px;
+  margin: 8px;
+  text-align: center;
+  width: 90%;
+  padding: 10px;
+}
+
+h1 {
+  color: #FFFFFF;
+  font-size: 35px;
+}
+
+.inter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 12px;
+  gap: 10px;
+}
+
+.inter1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 12px;
+  width: 100%;
+}
+
+button {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.del {
+  background-color: #E53935;
+  color: #FFFFFF;
+  padding: 10px;
+}
+
+.del:hover {
+  background-color: #EF5350;
+}
+
+.cel {
+  background-color: #546E7A;
+  color: #FFFFFF;
+  padding: 10px;
+}
+
+.cel:hover {
+  background-color: #78909C;
+}
+
+.upa {
+  background-color: #2196F3;
+  padding: 10px;
+}
+
+.upa:hover {
+  background-color: #42A5F5;
+}
+
+.id {
+  background: lightgoldenrodyellow;
+}
+
+.reg {
+  background-color: #4CAF50;
+  padding: 10px;
+}
+
+.reg:hover {
+  background-color: #66BB6A;
+}
+
+
+@media (max-width: 768px) {
+
+  .form {
+    justify-content: center;
+    width: 280px;
+    height: 460px;
+  }
+
+  input {
+    width: 75%;
+    padding: 8px;
+  }
+
+  button {
+    width: 80%;
+    padding: 6px;
+  }
+
+  header {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  select {
+    width: 80%;
+    padding: 8px;
+  }
+
+  .data-section {
+    text-align: center;
+  }
+
+  .data-section h1 {
+    text-align: center;
+  }
+
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .table-container table {
+    width: 100%;
+    min-width: 0;
+    margin: 0 auto;
+    table-layout: fixed;
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: 8px 5px;
+    font-size: 11px;
+    text-align: center;
+    word-break: break-word;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  nav ul {
+    gap: 10.5px;
+    display: flex;
+    justify-content: center;
+  }
+
+  nav ul a {
+    font-size: 15px;
+  }
+
+  .bar {
+    width: 105%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .show-data {
+    width: 30%;
+  }
+
+  .search-section {
+    width: 100%;
+  }
+
+  .search-btn {
+    width: 80%;
+  }
+
+  .search-txt {
+    width: 75%;
+  }
+
+}
