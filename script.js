@@ -1,14 +1,14 @@
 /* =========================================================
-   LANGDEX
-   GitHub Pages + Firebase Firestore
+   LANGDEX - COMPLETE SCRIPT
+   Firebase + Search + Online Search
    English / Hindi / Urdu
    Arabic Meaning
    ========================================================= */
 
 
-/* =========================================================
+/* =========================
    FIREBASE
-   ========================================================= */
+   ========================= */
 
 import { initializeApp } from
   "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
@@ -25,19 +25,18 @@ import {
   "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
-/* =========================================================
+/* =========================
    FIREBASE CONFIG
-   =========================================================
-   حط بيانات Firebase بتاعتك هنا
-   ========================================================= */
+   ========================= */
 
 const firebaseConfig = {
-  apiKey: "ضع_API_KEY_هنا",
-  authDomain: "ضع_PROJECT_ID.firebaseapp.com",
-  projectId: "ضع_PROJECT_ID_هنا",
-  storageBucket: "ضع_STORAGE_BUCKET_هنا",
-  messagingSenderId: "ضع_MESSAGING_SENDER_ID_هنا",
-  appId: "ضع_APP_ID_هنا"
+  apiKey: "AIzaSyCKshc43oZ6DYwfPheHH9CsraX3VpU2fjc",
+  authDomain: "langdex.firebaseapp.com",
+  projectId: "langdex",
+  storageBucket: "langdex.firebasestorage.app",
+  messagingSenderId: "819838317933",
+  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+  measurementId: "G-F60CC2CDCJ"
 };
 
 
@@ -45,27 +44,17 @@ const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
+
+/* =========================
+   COLLECTION
+   ========================= */
+
 const COLLECTION_NAME = "words";
 
 
-/* =========================================================
-   GET HTML ELEMENTS
-   ========================================================= */
-
-/*
-   حسب HTML بتاعك:
-
-   search-txt  = البحث
-   id          = ID
-
-   باقي الـ inputs مفيش لهم classes
-   لذلك هنجيبهم من داخل .form بالترتيب.
-
-   0 = ID
-   1 = WORD
-   2 = MEANING
-   3 = SYNONYMS
-*/
+/* =========================
+   HTML ELEMENTS
+   ========================= */
 
 const searchInput =
   document.querySelector(".search-txt");
@@ -76,23 +65,23 @@ const searchButton =
 const form =
   document.querySelector(".form");
 
-const formInputs =
-  form ? form.querySelectorAll("input") : [];
+const inputs =
+  form.querySelectorAll("input");
 
 const idInput =
-  formInputs[0];
+  inputs[0];
 
 const wordInput =
-  formInputs[1];
+  inputs[1];
 
 const meaningInput =
-  formInputs[2];
+  inputs[2];
 
 const synonymsInput =
-  formInputs[3];
+  inputs[3];
 
 const languageSelect =
-  form ? form.querySelector("select") : null;
+  form.querySelector("select");
 
 const registerButton =
   document.querySelector(".reg");
@@ -107,24 +96,24 @@ const clearButton =
   document.querySelector(".cel");
 
 
-/* =========================================================
-   CURRENT STATE
-   ========================================================= */
+/* =========================
+   STATE
+   ========================= */
 
 let currentDocumentId = null;
 
-let currentDatabaseResults = [];
-
 let currentSearchText = "";
 
-let currentSearchIndex = -1;
+let currentResults = [];
+
+let currentResultIndex = -1;
 
 
-/* =========================================================
+/* =========================
    LANGUAGE MAP
-   ========================================================= */
+   ========================= */
 
-const languageNames = {
+const languages = {
 
   en: "الإنجليزية",
 
@@ -135,9 +124,9 @@ const languageNames = {
 };
 
 
-/* =========================================================
+/* =========================
    CLEAN TEXT
-   ========================================================= */
+   ========================= */
 
 function cleanText(value) {
 
@@ -155,22 +144,20 @@ function cleanText(value) {
 }
 
 
-/* =========================================================
+/* =========================
    DETECT LANGUAGE
-   ========================================================= */
+   ========================= */
 
-function detectLanguage(text) {
+function detectLanguage(word) {
 
-  const value =
-    cleanText(text);
+  const text =
+    cleanText(word);
 
 
-  /*
-     Hindi / Devanagari
-  */
+  /* Hindi */
 
   if (
-    /[\u0900-\u097F]/.test(value)
+    /[\u0900-\u097F]/.test(text)
   ) {
 
     return "hi";
@@ -178,16 +165,10 @@ function detectLanguage(text) {
   }
 
 
-  /*
-     Urdu / Arabic script
-
-     ملاحظة:
-     لو الكلمة عربية فعلًا سيتم اعتبارها Urdu
-     لأن مشروعك حاليًا بيدعم English/Hindi/Urdu.
-  */
+  /* Urdu */
 
   if (
-    /[\u0600-\u06FF]/.test(value)
+    /[\u0600-\u06FF]/.test(text)
   ) {
 
     return "ur";
@@ -195,12 +176,10 @@ function detectLanguage(text) {
   }
 
 
-  /*
-     English
-  */
+  /* English */
 
   if (
-    /[A-Za-z]/.test(value)
+    /[A-Za-z]/.test(text)
   ) {
 
     return "en";
@@ -213,11 +192,11 @@ function detectLanguage(text) {
 }
 
 
-/* =========================================================
-   SET LANGUAGE SELECT
-   ========================================================= */
+/* =========================
+   SET LANGUAGE
+   ========================= */
 
-function setLanguage(languageCode) {
+function setLanguage(code) {
 
   if (!languageSelect) {
 
@@ -226,11 +205,11 @@ function setLanguage(languageCode) {
   }
 
 
-  const languageName =
-    languageNames[languageCode];
+  const name =
+    languages[code];
 
 
-  if (!languageName) {
+  if (!name) {
 
     return;
 
@@ -243,12 +222,10 @@ function setLanguage(languageCode) {
   ) {
 
     if (
-      option.textContent.trim() ===
-      languageName
+      option.textContent.trim() === name
     ) {
 
-      languageSelect.value =
-        option.value;
+      option.selected = true;
 
       return;
 
@@ -259,11 +236,11 @@ function setLanguage(languageCode) {
 }
 
 
-/* =========================================================
-   GET SELECTED LANGUAGE
-   ========================================================= */
+/* =========================
+   GET LANGUAGE
+   ========================= */
 
-function getSelectedLanguage() {
+function getLanguage() {
 
   if (!languageSelect) {
 
@@ -310,11 +287,11 @@ function getSelectedLanguage() {
 }
 
 
-/* =========================================================
-   TRANSLATE USING MYMEMORY
-   ========================================================= */
+/* =========================
+   TRANSLATION
+   ========================= */
 
-async function translateText(
+async function translate(
   text,
   source,
   target
@@ -331,9 +308,7 @@ async function translateText(
   }
 
 
-  if (
-    source === target
-  ) {
+  if (source === target) {
 
     return value;
 
@@ -359,7 +334,7 @@ async function translateText(
     if (!response.ok) {
 
       throw new Error(
-        "Translation request failed"
+        "Translation failed"
       );
 
     }
@@ -369,20 +344,9 @@ async function translateText(
       await response.json();
 
 
-    const result =
-      data?.responseData?.translatedText;
-
-
-    if (!result) {
-
-      throw new Error(
-        "No translation result"
-      );
-
-    }
-
-
-    return cleanText(result);
+    return cleanText(
+      data?.responseData?.translatedText
+    );
 
   } catch (error) {
 
@@ -391,7 +355,6 @@ async function translateText(
       error
     );
 
-
     return "";
 
   }
@@ -399,12 +362,12 @@ async function translateText(
 }
 
 
-/* =========================================================
-   GET ENGLISH SYNONYMS
-   ========================================================= */
+/* =========================
+   ENGLISH SYNONYMS
+   ========================= */
 
 async function getEnglishSynonyms(
-  englishWord
+  word
 ) {
 
   try {
@@ -412,9 +375,7 @@ async function getEnglishSynonyms(
     const url =
       "https://api.datamuse.com/words" +
       "?rel_syn=" +
-      encodeURIComponent(
-        englishWord
-      ) +
+      encodeURIComponent(word) +
       "&max=8";
 
 
@@ -447,14 +408,12 @@ async function getEnglishSynonyms(
       .filter(Boolean)
       .slice(0, 8);
 
-
   } catch (error) {
 
     console.error(
-      "Synonyms error:",
+      "Synonym error:",
       error
     );
-
 
     return [];
 
@@ -463,142 +422,66 @@ async function getEnglishSynonyms(
 }
 
 
-/* =========================================================
-   GET ONLINE WORD DATA
-   ========================================================= */
+/* =========================
+   ONLINE ENGLISH
+   ========================= */
 
-async function getOnlineWord(
+async function getEnglishData(
   word
 ) {
 
-  const cleanWord =
-    cleanText(word);
+  try {
+
+    const url =
+      "https://api.dictionaryapi.dev/api/v2/entries/en/" +
+      encodeURIComponent(word);
 
 
-  if (!cleanWord) {
-
-    alert(
-      "اكتب كلمة الأول."
-    );
-
-    return null;
-
-  }
+    const response =
+      await fetch(url);
 
 
-  /*
-     تحديد اللغة
-  */
+    if (!response.ok) {
 
-  const language =
-    detectLanguage(
-      cleanWord
-    );
+      return null;
+
+    }
 
 
-  if (!language) {
-
-    alert(
-      "مش قادر أحدد لغة الكلمة."
-    );
-
-    return null;
-
-  }
+    const data =
+      await response.json();
 
 
-  /*
-     ============================================
-     English
-     ============================================
-  */
-
-  if (
-    language === "en"
-  ) {
-
-    /*
-       Dictionary API
-    */
-
-    try {
-
-      const dictionaryUrl =
-        "https://api.dictionaryapi.dev/api/v2/entries/en/" +
-        encodeURIComponent(
-          cleanWord
-        );
+    const entry =
+      data?.[0];
 
 
-      const response =
-        await fetch(
-          dictionaryUrl
-        );
+    if (!entry) {
+
+      return null;
+
+    }
 
 
-      if (!response.ok) {
-
-        alert(
-          "ملقتش الكلمة في القاموس الأونلاين."
-        );
-
-        return null;
-
-      }
+    let definition = "";
 
 
-      const data =
-        await response.json();
-
-
-      const entry =
-        data?.[0];
-
-
-      if (!entry) {
-
-        alert(
-          "ملقتش بيانات للكلمة."
-        );
-
-        return null;
-
-      }
-
-
-      /*
-         أول تعريف
-      */
-
-      let englishMeaning =
-        "";
-
+    for (
+      const meaning
+      of entry.meanings || []
+    ) {
 
       for (
-        const meaning
-        of entry.meanings || []
+        const item
+        of meaning.definitions || []
       ) {
 
-        for (
-          const definition
-          of meaning.definitions || []
+        if (
+          item.definition
         ) {
 
-          if (
-            definition.definition
-          ) {
-
-            englishMeaning =
-              definition.definition;
-
-            break;
-
-          }
-
-        }
-
-
-        if (englishMeaning) {
+          definition =
+            item.definition;
 
           break;
 
@@ -607,167 +490,155 @@ async function getOnlineWord(
       }
 
 
-      /*
-         ترجمة المعنى للعربي
-      */
+      if (definition) {
 
-      const arabicMeaning =
-        await translateText(
-          englishMeaning,
-          "en",
-          "ar"
+        break;
+
+      }
+
+    }
+
+
+    const arabicMeaning =
+      await translate(
+        definition,
+        "en",
+        "ar"
+      );
+
+
+    let synonyms = [];
+
+
+    for (
+      const meaning
+      of entry.meanings || []
+    ) {
+
+      if (
+        Array.isArray(
+          meaning.synonyms
+        )
+      ) {
+
+        synonyms.push(
+          ...meaning.synonyms
         );
 
-
-      /*
-         Synonyms
-      */
-
-      let synonyms =
-        [];
+      }
 
 
       for (
-        const meaning
-        of entry.meanings || []
+        const item
+        of meaning.definitions || []
       ) {
 
         if (
           Array.isArray(
-            meaning.synonyms
+            item.synonyms
           )
         ) {
 
           synonyms.push(
-            ...meaning.synonyms
+            ...item.synonyms
           );
 
         }
 
-
-        for (
-          const definition
-          of meaning.definitions || []
-        ) {
-
-          if (
-            Array.isArray(
-              definition.synonyms
-            )
-          ) {
-
-            synonyms.push(
-              ...definition.synonyms
-            );
-
-          }
-
-        }
-
       }
-
-
-      /*
-         لو القاموس مفيهوش synonyms
-         نستخدم Datamuse
-      */
-
-      if (
-        synonyms.length === 0
-      ) {
-
-        synonyms =
-          await getEnglishSynonyms(
-            cleanWord
-          );
-
-      }
-
-
-      synonyms =
-        [
-          ...new Set(
-            synonyms
-              .map(cleanText)
-              .filter(Boolean)
-          )
-        ]
-        .slice(0, 8);
-
-
-      return {
-
-        word:
-          entry.word ||
-          cleanWord,
-
-        meaning:
-          arabicMeaning ||
-          "لم يتم العثور على معنى عربي.",
-
-        synonyms:
-          synonyms.join(", "),
-
-        language:
-          "en"
-
-      };
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "حصل خطأ أثناء البحث عن الكلمة على الإنترنت."
-      );
-
-      return null;
 
     }
 
+
+    if (
+      synonyms.length === 0
+    ) {
+
+      synonyms =
+        await getEnglishSynonyms(
+          word
+        );
+
+    }
+
+
+    synonyms =
+      [
+        ...new Set(
+          synonyms
+            .map(cleanText)
+            .filter(Boolean)
+        )
+      ]
+      .slice(0, 8);
+
+
+    return {
+
+      word:
+        entry.word || word,
+
+      meaning:
+        arabicMeaning,
+
+      synonyms:
+        synonyms.join(", "),
+
+      language:
+        "en"
+
+    };
+
+  } catch (error) {
+
+    console.error(error);
+
+    return null;
+
   }
 
+}
 
-  /*
-     ============================================
-     Hindi / Urdu
-     ============================================
-  */
+
+/* =========================
+   ONLINE HINDI / URDU
+   ========================= */
+
+async function getIndicData(
+  word,
+  language
+) {
 
   try {
 
     /*
-       نحول الكلمة للإنجليزية
-       عشان نقدر نبحث عن synonyms.
-    */
-
-    const englishWord =
-      await translateText(
-        cleanWord,
-        language,
-        "en"
-      );
-
-
-    /*
-       نجيب معنى عربي مباشر
-       من اللغة الأصلية.
+       الكلمة الأصلية
+       → عربي
     */
 
     const arabicMeaning =
-      await translateText(
-        cleanWord,
+      await translate(
+        word,
         language,
         "ar"
       );
 
 
     /*
-       نحاول نجيب synonyms
-       عن طريق الإنجليزية.
+       الكلمة الأصلية
+       → English
+       عشان نقدر نجيب synonyms
     */
 
-    let synonyms = [];
+    const englishWord =
+      await translate(
+        word,
+        language,
+        "en"
+      );
+
+
+    let synonyms = "";
 
 
     if (englishWord) {
@@ -778,31 +649,16 @@ async function getOnlineWord(
         );
 
 
-      /*
-         نرجع المرادفات
-         للغة الأصلية.
-      */
-
       if (
         englishSynonyms.length > 0
       ) {
 
-        const translatedSynonyms =
-          await translateText(
+        synonyms =
+          await translate(
             englishSynonyms.join(", "),
             "en",
             language
           );
-
-
-        if (
-          translatedSynonyms
-        ) {
-
-          synonyms =
-            translatedSynonyms;
-
-        }
 
       }
 
@@ -812,11 +668,10 @@ async function getOnlineWord(
     return {
 
       word:
-        cleanWord,
+        word,
 
       meaning:
-        arabicMeaning ||
-        "لم يتم العثور على معنى عربي.",
+        arabicMeaning,
 
       synonyms:
         synonyms,
@@ -826,14 +681,9 @@ async function getOnlineWord(
 
     };
 
-
   } catch (error) {
 
     console.error(error);
-
-    alert(
-      "حصل خطأ أثناء البحث عن الكلمة."
-    );
 
     return null;
 
@@ -842,105 +692,55 @@ async function getOnlineWord(
 }
 
 
-/* =========================================================
-   GET NEXT ID
-   ========================================================= */
+/* =========================
+   ONLINE SEARCH
+   ========================= */
 
-async function getNextId() {
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          COLLECTION_NAME
-        )
-      );
-
-
-    let maxId = 0;
-
-
-    snapshot.forEach(
-      item => {
-
-        const data =
-          item.data();
-
-
-        const numericId =
-          Number(data.id);
-
-
-        if (
-          Number.isFinite(
-            numericId
-          ) &&
-          numericId > maxId
-        ) {
-
-          maxId =
-            numericId;
-
-        }
-
-      }
-    );
-
-
-    return maxId + 1;
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "حصل خطأ أثناء تحديد الـ ID."
-    );
-
-    return 1;
-
-  }
-
-}
-
-
-/* =========================================================
-   SET NEXT ID
-   ========================================================= */
-
-async function setNextId() {
-
-  if (!idInput) {
-
-    return;
-
-  }
-
-
-  idInput.value =
-    await getNextId();
-
-}
-
-
-/* =========================================================
-   SEARCH DATABASE
-   ========================================================= */
-
-async function searchDatabase(
+async function searchOnline(
   word
 ) {
 
+  const language =
+    detectLanguage(word);
+
+
+  if (!language) {
+
+    alert(
+      "لم أستطع تحديد لغة الكلمة."
+    );
+
+    return null;
+
+  }
+
+
+  if (
+    language === "en"
+  ) {
+
+    return await getEnglishData(
+      word
+    );
+
+  }
+
+
+  return await getIndicData(
+    word,
+    language
+  );
+
+}
+
+
+/* =========================
+   GET ALL DATABASE DATA
+   ========================= */
+
+async function getDatabaseData() {
+
   try {
-
-    const searchWord =
-      cleanText(
-        word
-      ).toLowerCase();
-
 
     const snapshot =
       await getDocs(
@@ -957,52 +757,27 @@ async function searchDatabase(
     snapshot.forEach(
       item => {
 
-        const data =
-          item.data();
+        results.push({
 
+          documentId:
+            item.id,
 
-        const databaseWord =
-          cleanText(
-            data.word
-          ).toLowerCase();
+          ...item.data()
 
-
-        if (
-          databaseWord ===
-          searchWord
-        ) {
-
-          results.push({
-
-            documentId:
-              item.id,
-
-            ...data
-
-          });
-
-        }
+        });
 
       }
     );
 
 
-    results.sort(
-      (a, b) =>
-        Number(a.id || 0) -
-        Number(b.id || 0)
-    );
-
-
     return results;
-
 
   } catch (error) {
 
     console.error(error);
 
     alert(
-      "حصل خطأ أثناء البحث في قاعدة البيانات."
+      "حدث خطأ أثناء الاتصال بقاعدة البيانات."
     );
 
     return [];
@@ -1012,9 +787,73 @@ async function searchDatabase(
 }
 
 
-/* =========================================================
+/* =========================
+   SEARCH DATABASE
+   ========================= */
+
+async function searchDatabase(
+  word
+) {
+
+  const value =
+    cleanText(word).toLowerCase();
+
+
+  const data =
+    await getDatabaseData();
+
+
+  return data.filter(
+    item =>
+      cleanText(
+        item.word
+      ).toLowerCase() === value
+  );
+
+}
+
+
+/* =========================
+   GET NEXT ID
+   ========================= */
+
+async function getNextId() {
+
+  const data =
+    await getDatabaseData();
+
+
+  let maxId = 0;
+
+
+  data.forEach(
+    item => {
+
+      const number =
+        Number(item.id);
+
+
+      if (
+        Number.isFinite(number) &&
+        number > maxId
+      ) {
+
+        maxId = number;
+
+      }
+
+    }
+  );
+
+
+  return maxId + 1;
+
+}
+
+
+/* =========================
    FILL FORM
-   ========================================================= */
+   ========================= */
 
 function fillForm(
   data
@@ -1027,36 +866,20 @@ function fillForm(
   }
 
 
-  if (idInput) {
-
-    idInput.value =
-      data.id ?? "";
-
-  }
+  idInput.value =
+    data.id ?? "";
 
 
-  if (wordInput) {
-
-    wordInput.value =
-      data.word ?? "";
-
-  }
+  wordInput.value =
+    data.word ?? "";
 
 
-  if (meaningInput) {
-
-    meaningInput.value =
-      data.meaning ?? "";
-
-  }
+  meaningInput.value =
+    data.meaning ?? "";
 
 
-  if (synonymsInput) {
-
-    synonymsInput.value =
-      data.synonyms ?? "";
-
-  }
+  synonymsInput.value =
+    data.synonyms ?? "";
 
 
   setLanguage(
@@ -1070,19 +893,19 @@ function fillForm(
 }
 
 
-/* =========================================================
-   SEARCH
-   ========================================================= */
+/* =========================
+   SEARCH BUTTON
+   ========================= */
 
-async function searchWord() {
+async function handleSearch() {
 
-  const value =
+  const word =
     cleanText(
-      searchInput?.value
+      searchInput.value
     );
 
 
-  if (!value) {
+  if (!word) {
 
     alert(
       "اكتب كلمة للبحث."
@@ -1094,27 +917,27 @@ async function searchWord() {
 
 
   /*
-     لو نفس الكلمة واتعرضت نتيجة قبل كده
-     نجيب النتيجة اللي بعدها.
+     نفس الكلمة:
+     اعرض النتيجة التالية
   */
 
   if (
     currentSearchText ===
-    value.toLowerCase() &&
-    currentDatabaseResults.length > 0
+    word.toLowerCase() &&
+    currentResults.length > 0
   ) {
 
-    currentSearchIndex++;
+    currentResultIndex++;
 
 
     if (
-      currentSearchIndex <
-      currentDatabaseResults.length
+      currentResultIndex <
+      currentResults.length
     ) {
 
       fillForm(
-        currentDatabaseResults[
-          currentSearchIndex
+        currentResults[
+          currentResultIndex
         ]
       );
 
@@ -1127,6 +950,17 @@ async function searchWord() {
 
     }
 
+
+    /*
+       خلصت نتائج Firebase
+    */
+
+    alert(
+      "لا توجد نتائج أخرى لهذه الكلمة."
+    );
+
+    return;
+
   }
 
 
@@ -1135,40 +969,38 @@ async function searchWord() {
   */
 
   currentSearchText =
-    value.toLowerCase();
+    word.toLowerCase();
 
 
-  currentSearchIndex =
+  currentResultIndex =
     -1;
 
 
-  currentDatabaseResults =
+  currentResults =
     await searchDatabase(
-      value
+      word
     );
 
 
   /*
-     =========================================
-     موجودة في Firebase
-     =========================================
+     موجودة
   */
 
   if (
-    currentDatabaseResults.length > 0
+    currentResults.length > 0
   ) {
 
-    currentSearchIndex =
+    currentResultIndex =
       0;
 
 
     fillForm(
-      currentDatabaseResults[0]
+      currentResults[0]
     );
 
 
     alert(
-      "الكلمة موجودة بالفعل في قاعدة البيانات.\nلا يمكنك حفظها مرة أخرى.\nيمكنك تحديثها أو حذفها."
+      "الكلمة موجودة بالفعل في قاعدة البيانات.\nيمكنك تحديثها أو حذفها، ولا يمكنك حفظها مرة أخرى."
     );
 
 
@@ -1178,50 +1010,46 @@ async function searchWord() {
 
 
   /*
-     =========================================
-     غير موجودة → Online
-     =========================================
+     غير موجودة
+     → Online
   */
 
+  alert(
+    "الكلمة غير موجودة في قاعدة البيانات.\nجاري البحث عنها على الإنترنت..."
+  );
+
+
   const onlineData =
-    await getOnlineWord(
-      value
+    await searchOnline(
+      word
     );
 
 
   if (!onlineData) {
 
+    alert(
+      "لم أجد معلومات كافية عن هذه الكلمة."
+    );
+
     return;
 
   }
 
 
   /*
-     نملأ الفورم
+     تعبئة الفورم
   */
 
-  if (wordInput) {
-
-    wordInput.value =
-      onlineData.word;
-
-  }
+  wordInput.value =
+    onlineData.word;
 
 
-  if (meaningInput) {
-
-    meaningInput.value =
-      onlineData.meaning;
-
-  }
+  meaningInput.value =
+    onlineData.meaning;
 
 
-  if (synonymsInput) {
-
-    synonymsInput.value =
-      onlineData.synonyms;
-
-  }
+  synonymsInput.value =
+    onlineData.synonyms;
 
 
   setLanguage(
@@ -1229,54 +1057,40 @@ async function searchWord() {
   );
 
 
-  /*
-     كلمة جديدة
-  */
-
   currentDocumentId =
     null;
 
 
-  await setNextId();
+  const nextId =
+    await getNextId();
+
+
+  idInput.value =
+    nextId;
 
 
   alert(
-    "الكلمة غير موجودة في قاعدة البيانات.\nتم جلب بياناتها من الإنترنت ويمكنك الآن حفظها."
+    "تم العثور على الكلمة.\nتم وضع المعنى بالعربية والمرادفات في الفورم.\nيمكنك الآن حفظها."
   );
 
 }
 
 
-/* =========================================================
-   CHECK DUPLICATE
-   ========================================================= */
-
-async function checkDuplicate(
-  word
-) {
-
-  return await searchDatabase(
-    word
-  );
-
-}
-
-
-/* =========================================================
+/* =========================
    REGISTER
-   ========================================================= */
+   ========================= */
 
 async function registerWord() {
 
   /*
-     ممنوع الحفظ لو النتيجة الحالية
-     جاية من Firebase.
+     ممنوع Generate/Hفظ
+     لو الكلمة موجودة
   */
 
   if (currentDocumentId) {
 
     alert(
-      "هذه الكلمة موجودة بالفعل في قاعدة البيانات.\nاستخدم تحديث أو حذف بدل الحفظ."
+      "لا يمكنك حفظ هذه الكلمة لأنها موجودة بالفعل.\nاستخدم تحديث أو حذف."
     );
 
     return;
@@ -1286,27 +1100,30 @@ async function registerWord() {
 
   const word =
     cleanText(
-      wordInput?.value
+      wordInput.value
     );
+
 
   const meaning =
     cleanText(
-      meaningInput?.value
+      meaningInput.value
     );
+
 
   const synonyms =
     cleanText(
-      synonymsInput?.value
+      synonymsInput.value
     );
 
+
   const language =
-    getSelectedLanguage();
+    getLanguage();
 
 
   if (!word) {
 
     alert(
-      "اكتب الكلمة الأول."
+      "اكتب الكلمة."
     );
 
     return;
@@ -1317,7 +1134,7 @@ async function registerWord() {
   if (!meaning) {
 
     alert(
-      "المعنى غير موجود."
+      "اكتب المعنى بالعربية."
     );
 
     return;
@@ -1337,12 +1154,11 @@ async function registerWord() {
 
 
   /*
-     منع التكرار مرة ثانية
-     حتى لو المستخدم عدل الكلمة يدويًا.
+     منع التكرار
   */
 
   const duplicate =
-    await checkDuplicate(
+    await searchDatabase(
       word
     );
 
@@ -1373,7 +1189,7 @@ async function registerWord() {
 
   try {
 
-    const newId =
+    const id =
       await getNextId();
 
 
@@ -1385,7 +1201,7 @@ async function registerWord() {
       {
 
         id:
-          newId,
+          id,
 
         word:
           word,
@@ -1403,12 +1219,8 @@ async function registerWord() {
     );
 
 
-    if (idInput) {
-
-      idInput.value =
-        newId;
-
-    }
+    idInput.value =
+      id;
 
 
     currentDocumentId =
@@ -1425,7 +1237,7 @@ async function registerWord() {
     console.error(error);
 
     alert(
-      "حصل خطأ أثناء حفظ الكلمة."
+      "حدث خطأ أثناء حفظ الكلمة."
     );
 
   }
@@ -1433,16 +1245,16 @@ async function registerWord() {
 }
 
 
-/* =========================================================
+/* =========================
    UPDATE
-   ========================================================= */
+   ========================= */
 
 async function updateWord() {
 
   if (!currentDocumentId) {
 
     alert(
-      "مفيش كلمة محددة للتحديث."
+      "اختر كلمة موجودة في قاعدة البيانات أولًا."
     );
 
     return;
@@ -1452,21 +1264,24 @@ async function updateWord() {
 
   const word =
     cleanText(
-      wordInput?.value
+      wordInput.value
     );
+
 
   const meaning =
     cleanText(
-      meaningInput?.value
+      meaningInput.value
     );
+
 
   const synonyms =
     cleanText(
-      synonymsInput?.value
+      synonymsInput.value
     );
 
+
   const language =
-    getSelectedLanguage();
+    getLanguage();
 
 
   if (!word) {
@@ -1504,7 +1319,7 @@ async function updateWord() {
 
   try {
 
-    const wordRef =
+    const reference =
       doc(
         db,
         COLLECTION_NAME,
@@ -1513,7 +1328,7 @@ async function updateWord() {
 
 
     await updateDoc(
-      wordRef,
+      reference,
       {
 
         word:
@@ -1542,7 +1357,7 @@ async function updateWord() {
     console.error(error);
 
     alert(
-      "حصل خطأ أثناء تحديث الكلمة."
+      "حدث خطأ أثناء تحديث الكلمة."
     );
 
   }
@@ -1550,16 +1365,16 @@ async function updateWord() {
 }
 
 
-/* =========================================================
+/* =========================
    DELETE
-   ========================================================= */
+   ========================= */
 
 async function deleteWord() {
 
   if (!currentDocumentId) {
 
     alert(
-      "اختار كلمة موجودة في قاعدة البيانات الأول."
+      "اختر كلمة من قاعدة البيانات أولًا."
     );
 
     return;
@@ -1567,13 +1382,13 @@ async function deleteWord() {
   }
 
 
-  const answer =
+  const confirmed =
     confirm(
-      "هل أنت متأكد أنك تريد حذف هذه الكلمة؟"
+      "هل أنت متأكد من حذف هذه الكلمة؟"
     );
 
 
-  if (!answer) {
+  if (!confirmed) {
 
     return;
 
@@ -1598,13 +1413,12 @@ async function deleteWord() {
 
     await clearForm();
 
-
   } catch (error) {
 
     console.error(error);
 
     alert(
-      "حصل خطأ أثناء حذف الكلمة."
+      "حدث خطأ أثناء حذف الكلمة."
     );
 
   }
@@ -1612,160 +1426,137 @@ async function deleteWord() {
 }
 
 
-/* =========================================================
+/* =========================
    CLEAR
-   ========================================================= */
+   ========================= */
 
 async function clearForm() {
 
-  if (idInput) {
-
-    idInput.value =
-      "";
-
-  }
+  idInput.value =
+    "";
 
 
-  if (wordInput) {
-
-    wordInput.value =
-      "";
-
-  }
+  wordInput.value =
+    "";
 
 
-  if (meaningInput) {
-
-    meaningInput.value =
-      "";
-
-  }
+  meaningInput.value =
+    "";
 
 
-  if (synonymsInput) {
-
-    synonymsInput.value =
-      "";
-
-  }
+  synonymsInput.value =
+    "";
 
 
-  if (searchInput) {
-
-    searchInput.value =
-      "";
-
-  }
+  searchInput.value =
+    "";
 
 
-  if (languageSelect) {
-
-    languageSelect.selectedIndex =
-      0;
-
-  }
+  languageSelect.selectedIndex =
+    0;
 
 
   currentDocumentId =
     null;
 
-  currentDatabaseResults =
-    [];
 
   currentSearchText =
     "";
 
-  currentSearchIndex =
+
+  currentResults =
+    [];
+
+
+  currentResultIndex =
     -1;
 
 
-  await setNextId();
+  const nextId =
+    await getNextId();
+
+
+  idInput.value =
+    nextId;
 
 }
 
 
-/* =========================================================
-   BUTTON EVENTS
-   ========================================================= */
+/* =========================
+   EVENTS
+   ========================= */
 
-if (searchButton) {
-
-  searchButton.addEventListener(
-    "click",
-    searchWord
-  );
-
-}
+searchButton.addEventListener(
+  "click",
+  handleSearch
+);
 
 
-if (registerButton) {
-
-  registerButton.addEventListener(
-    "click",
-    registerWord
-  );
-
-}
+registerButton.addEventListener(
+  "click",
+  registerWord
+);
 
 
-if (updateButton) {
-
-  updateButton.addEventListener(
-    "click",
-    updateWord
-  );
-
-}
+updateButton.addEventListener(
+  "click",
+  updateWord
+);
 
 
-if (deleteButton) {
-
-  deleteButton.addEventListener(
-    "click",
-    deleteWord
-  );
-
-}
+deleteButton.addEventListener(
+  "click",
+  deleteWord
+);
 
 
-if (clearButton) {
-
-  clearButton.addEventListener(
-    "click",
-    clearForm
-  );
-
-}
+clearButton.addEventListener(
+  "click",
+  clearForm
+);
 
 
-/* =========================================================
-   ENTER TO SEARCH
-   ========================================================= */
+/* =========================
+   ENTER SEARCH
+   ========================= */
 
-if (searchInput) {
+searchInput.addEventListener(
+  "keydown",
+  event => {
 
-  searchInput.addEventListener(
-    "keydown",
-    event => {
+    if (
+      event.key === "Enter"
+    ) {
 
-      if (
-        event.key === "Enter"
-      ) {
+      event.preventDefault();
 
-        event.preventDefault();
-
-        searchWord();
-
-      }
+      handleSearch();
 
     }
-  );
 
-}
+  }
+);
 
 
-/* =========================================================
+/* =========================
    START
-   ========================================================= */
+   ========================= */
 
-setNextId();
+(async function start() {
+
+  try {
+
+    const nextId =
+      await getNextId();
+
+
+    idInput.value =
+      nextId;
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+})();
