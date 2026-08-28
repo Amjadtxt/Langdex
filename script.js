@@ -1,79 +1,98 @@
-// ======================================================
-// FIREBASE
-// ======================================================
+/* =========================================================
+   LANGDEX
+   GitHub Pages + Firebase Firestore
+   English / Hindi / Urdu
+   Arabic Meaning
+   ========================================================= */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+/* =========================================================
+   FIREBASE
+   ========================================================= */
+
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
   getFirestore,
   collection,
-  addDoc,
   getDocs,
-  doc,
+  addDoc,
   updateDoc,
-  deleteDoc
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  deleteDoc,
+  doc
+} from
+  "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
-// ======================================================
-// FIREBASE CONFIGURATION
-// ======================================================
+/* =========================================================
+   FIREBASE CONFIG
+   =========================================================
+   حط بيانات Firebase بتاعتك هنا
+   ========================================================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
-  authDomain: "langdex.firebaseapp.com",
-  projectId: "langdex",
-  storageBucket: "langdex.firebasestorage.app",
-  messagingSenderId: "819838317933",
-  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-  measurementId: "G-F60CC2CDC"
+  apiKey: "ضع_API_KEY_هنا",
+  authDomain: "ضع_PROJECT_ID.firebaseapp.com",
+  projectId: "ضع_PROJECT_ID_هنا",
+  storageBucket: "ضع_STORAGE_BUCKET_هنا",
+  messagingSenderId: "ضع_MESSAGING_SENDER_ID_هنا",
+  appId: "ضع_APP_ID_هنا"
 };
 
-
-// ======================================================
-// INITIALIZE FIREBASE
-// ======================================================
 
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
-
-// ======================================================
-// FORM
-// ======================================================
-
-const form = document.querySelector(".form");
-
-let idInput = null;
-let wordInput = null;
-let meaningInput = null;
-let synonymsInput = null;
-let languageSelect = null;
+const COLLECTION_NAME = "words";
 
 
-// ======================================================
-// GET FORM INPUTS
-// ======================================================
+/* =========================================================
+   GET HTML ELEMENTS
+   ========================================================= */
 
-if (form) {
+/*
+   حسب HTML بتاعك:
 
-  const inputs = form.querySelectorAll("input");
+   search-txt  = البحث
+   id          = ID
 
-  idInput = inputs[0] || null;
-  wordInput = inputs[1] || null;
-  meaningInput = inputs[2] || null;
-  synonymsInput = inputs[3] || null;
+   باقي الـ inputs مفيش لهم classes
+   لذلك هنجيبهم من داخل .form بالترتيب.
 
-  languageSelect =
-    form.querySelector("select");
+   0 = ID
+   1 = WORD
+   2 = MEANING
+   3 = SYNONYMS
+*/
 
-}
+const searchInput =
+  document.querySelector(".search-txt");
 
+const searchButton =
+  document.querySelector(".search-btn");
 
-// ======================================================
-// BUTTONS
-// ======================================================
+const form =
+  document.querySelector(".form");
+
+const formInputs =
+  form ? form.querySelectorAll("input") : [];
+
+const idInput =
+  formInputs[0];
+
+const wordInput =
+  formInputs[1];
+
+const meaningInput =
+  formInputs[2];
+
+const synonymsInput =
+  formInputs[3];
+
+const languageSelect =
+  form ? form.querySelector("select") : null;
 
 const registerButton =
   document.querySelector(".reg");
@@ -87,149 +106,1326 @@ const deleteButton =
 const clearButton =
   document.querySelector(".cel");
 
-const generateButton =
-  document.querySelector(".gen");
+
+/* =========================================================
+   CURRENT STATE
+   ========================================================= */
+
+let currentDocumentId = null;
+
+let currentDatabaseResults = [];
+
+let currentSearchText = "";
+
+let currentSearchIndex = -1;
 
 
-// ======================================================
-// SEARCH
-// ======================================================
+/* =========================================================
+   LANGUAGE MAP
+   ========================================================= */
 
-const searchInput =
-  document.querySelector(".search-txt") ||
-  document.querySelector(".search-section input");
+const languageNames = {
 
-const searchButton =
-  document.querySelector(".search-btn");
+  en: "الإنجليزية",
 
+  hi: "الهندية",
 
-// ======================================================
-// SHOW DATA
-// ======================================================
+  ur: "الأردية"
 
-const showDataButton =
-  document.querySelector(".show-data");
-
-const dataTable =
-  document.querySelector("#data-table");
+};
 
 
-// ======================================================
-// VARIABLES
-// ======================================================
+/* =========================================================
+   CLEAN TEXT
+   ========================================================= */
 
-// Firestore document ID
-let selectedDocumentId = null;
+function cleanText(value) {
 
+  if (
+    value === null ||
+    value === undefined
+  ) {
 
-// True when the form contains existing database data
-let isExistingData = false;
+    return "";
 
+  }
 
-// All search results
-let searchResults = [];
+  return String(value).trim();
 
-
-// Current search position
-let searchIndex = 0;
-
-
-// Last search text
-let lastSearchText = "";
+}
 
 
-// ======================================================
-// UPDATE GENERATE BUTTON
-// ======================================================
+/* =========================================================
+   DETECT LANGUAGE
+   ========================================================= */
 
-function updateGenerateButton() {
+function detectLanguage(text) {
 
-  if (!generateButton) {
-    return;
+  const value =
+    cleanText(text);
+
+
+  /*
+     Hindi / Devanagari
+  */
+
+  if (
+    /[\u0900-\u097F]/.test(value)
+  ) {
+
+    return "hi";
+
   }
 
 
-  if (isExistingData) {
+  /*
+     Urdu / Arabic script
 
-    generateButton.disabled = true;
+     ملاحظة:
+     لو الكلمة عربية فعلًا سيتم اعتبارها Urdu
+     لأن مشروعك حاليًا بيدعم English/Hindi/Urdu.
+  */
 
-    generateButton.style.opacity = "0.5";
+  if (
+    /[\u0600-\u06FF]/.test(value)
+  ) {
 
-    generateButton.style.cursor = "not-allowed";
+    return "ur";
 
-  } else {
+  }
 
-    generateButton.disabled = false;
 
-    generateButton.style.opacity = "1";
+  /*
+     English
+  */
 
-    generateButton.style.cursor = "pointer";
+  if (
+    /[A-Za-z]/.test(value)
+  ) {
+
+    return "en";
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   SET LANGUAGE SELECT
+   ========================================================= */
+
+function setLanguage(languageCode) {
+
+  if (!languageSelect) {
+
+    return;
+
+  }
+
+
+  const languageName =
+    languageNames[languageCode];
+
+
+  if (!languageName) {
+
+    return;
+
+  }
+
+
+  for (
+    const option
+    of languageSelect.options
+  ) {
+
+    if (
+      option.textContent.trim() ===
+      languageName
+    ) {
+
+      languageSelect.value =
+        option.value;
+
+      return;
+
+    }
 
   }
 
 }
 
 
-// ======================================================
-// GET NEXT ID
-// ======================================================
+/* =========================================================
+   GET SELECTED LANGUAGE
+   ========================================================= */
 
-async function setNextId() {
+function getSelectedLanguage() {
 
-  if (!idInput) {
-    return;
+  if (!languageSelect) {
+
+    return "";
+
+  }
+
+
+  const text =
+    languageSelect.options[
+      languageSelect.selectedIndex
+    ]?.textContent.trim();
+
+
+  if (
+    text === "الإنجليزية"
+  ) {
+
+    return "en";
+
+  }
+
+
+  if (
+    text === "الهندية"
+  ) {
+
+    return "hi";
+
+  }
+
+
+  if (
+    text === "الأردية"
+  ) {
+
+    return "ur";
+
+  }
+
+
+  return "";
+
+}
+
+
+/* =========================================================
+   TRANSLATE USING MYMEMORY
+   ========================================================= */
+
+async function translateText(
+  text,
+  source,
+  target
+) {
+
+  const value =
+    cleanText(text);
+
+
+  if (!value) {
+
+    return "";
+
+  }
+
+
+  if (
+    source === target
+  ) {
+
+    return value;
+
   }
 
 
   try {
 
-    const snapshot =
-      await getDocs(
-        collection(db, "words")
+    const url =
+      "https://api.mymemory.translated.net/get" +
+      "?q=" +
+      encodeURIComponent(value) +
+      "&langpair=" +
+      encodeURIComponent(
+        source + "|" + target
       );
 
 
-    let lastId = 0;
+    const response =
+      await fetch(url);
 
 
-    snapshot.forEach((firebaseDoc) => {
+    if (!response.ok) {
 
-      const data =
-        firebaseDoc.data();
+      throw new Error(
+        "Translation request failed"
+      );
 
-
-      const currentId =
-        Number(data.id);
-
-
-      if (
-        !isNaN(currentId) &&
-        currentId > lastId
-      ) {
-
-        lastId =
-          currentId;
-
-      }
-
-    });
+    }
 
 
-    idInput.value =
-      lastId + 1;
+    const data =
+      await response.json();
+
+
+    const result =
+      data?.responseData?.translatedText;
+
+
+    if (!result) {
+
+      throw new Error(
+        "No translation result"
+      );
+
+    }
+
+
+    return cleanText(result);
+
+  } catch (error) {
+
+    console.error(
+      "Translation error:",
+      error
+    );
+
+
+    return "";
+
+  }
+
+}
+
+
+/* =========================================================
+   GET ENGLISH SYNONYMS
+   ========================================================= */
+
+async function getEnglishSynonyms(
+  englishWord
+) {
+
+  try {
+
+    const url =
+      "https://api.datamuse.com/words" +
+      "?rel_syn=" +
+      encodeURIComponent(
+        englishWord
+      ) +
+      "&max=8";
+
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      return [];
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (!Array.isArray(data)) {
+
+      return [];
+
+    }
+
+
+    return data
+      .map(item =>
+        cleanText(item.word)
+      )
+      .filter(Boolean)
+      .slice(0, 8);
 
 
   } catch (error) {
 
     console.error(
-      "Error getting next ID:",
+      "Synonyms error:",
       error
     );
 
 
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   GET ONLINE WORD DATA
+   ========================================================= */
+
+async function getOnlineWord(
+  word
+) {
+
+  const cleanWord =
+    cleanText(word);
+
+
+  if (!cleanWord) {
+
     alert(
-      "Error getting next ID: " +
-      error.message
+      "اكتب كلمة الأول."
+    );
+
+    return null;
+
+  }
+
+
+  /*
+     تحديد اللغة
+  */
+
+  const language =
+    detectLanguage(
+      cleanWord
+    );
+
+
+  if (!language) {
+
+    alert(
+      "مش قادر أحدد لغة الكلمة."
+    );
+
+    return null;
+
+  }
+
+
+  /*
+     ============================================
+     English
+     ============================================
+  */
+
+  if (
+    language === "en"
+  ) {
+
+    /*
+       Dictionary API
+    */
+
+    try {
+
+      const dictionaryUrl =
+        "https://api.dictionaryapi.dev/api/v2/entries/en/" +
+        encodeURIComponent(
+          cleanWord
+        );
+
+
+      const response =
+        await fetch(
+          dictionaryUrl
+        );
+
+
+      if (!response.ok) {
+
+        alert(
+          "ملقتش الكلمة في القاموس الأونلاين."
+        );
+
+        return null;
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      const entry =
+        data?.[0];
+
+
+      if (!entry) {
+
+        alert(
+          "ملقتش بيانات للكلمة."
+        );
+
+        return null;
+
+      }
+
+
+      /*
+         أول تعريف
+      */
+
+      let englishMeaning =
+        "";
+
+
+      for (
+        const meaning
+        of entry.meanings || []
+      ) {
+
+        for (
+          const definition
+          of meaning.definitions || []
+        ) {
+
+          if (
+            definition.definition
+          ) {
+
+            englishMeaning =
+              definition.definition;
+
+            break;
+
+          }
+
+        }
+
+
+        if (englishMeaning) {
+
+          break;
+
+        }
+
+      }
+
+
+      /*
+         ترجمة المعنى للعربي
+      */
+
+      const arabicMeaning =
+        await translateText(
+          englishMeaning,
+          "en",
+          "ar"
+        );
+
+
+      /*
+         Synonyms
+      */
+
+      let synonyms =
+        [];
+
+
+      for (
+        const meaning
+        of entry.meanings || []
+      ) {
+
+        if (
+          Array.isArray(
+            meaning.synonyms
+          )
+        ) {
+
+          synonyms.push(
+            ...meaning.synonyms
+          );
+
+        }
+
+
+        for (
+          const definition
+          of meaning.definitions || []
+        ) {
+
+          if (
+            Array.isArray(
+              definition.synonyms
+            )
+          ) {
+
+            synonyms.push(
+              ...definition.synonyms
+            );
+
+          }
+
+        }
+
+      }
+
+
+      /*
+         لو القاموس مفيهوش synonyms
+         نستخدم Datamuse
+      */
+
+      if (
+        synonyms.length === 0
+      ) {
+
+        synonyms =
+          await getEnglishSynonyms(
+            cleanWord
+          );
+
+      }
+
+
+      synonyms =
+        [
+          ...new Set(
+            synonyms
+              .map(cleanText)
+              .filter(Boolean)
+          )
+        ]
+        .slice(0, 8);
+
+
+      return {
+
+        word:
+          entry.word ||
+          cleanWord,
+
+        meaning:
+          arabicMeaning ||
+          "لم يتم العثور على معنى عربي.",
+
+        synonyms:
+          synonyms.join(", "),
+
+        language:
+          "en"
+
+      };
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "حصل خطأ أثناء البحث عن الكلمة على الإنترنت."
+      );
+
+      return null;
+
+    }
+
+  }
+
+
+  /*
+     ============================================
+     Hindi / Urdu
+     ============================================
+  */
+
+  try {
+
+    /*
+       نحول الكلمة للإنجليزية
+       عشان نقدر نبحث عن synonyms.
+    */
+
+    const englishWord =
+      await translateText(
+        cleanWord,
+        language,
+        "en"
+      );
+
+
+    /*
+       نجيب معنى عربي مباشر
+       من اللغة الأصلية.
+    */
+
+    const arabicMeaning =
+      await translateText(
+        cleanWord,
+        language,
+        "ar"
+      );
+
+
+    /*
+       نحاول نجيب synonyms
+       عن طريق الإنجليزية.
+    */
+
+    let synonyms = [];
+
+
+    if (englishWord) {
+
+      const englishSynonyms =
+        await getEnglishSynonyms(
+          englishWord
+        );
+
+
+      /*
+         نرجع المرادفات
+         للغة الأصلية.
+      */
+
+      if (
+        englishSynonyms.length > 0
+      ) {
+
+        const translatedSynonyms =
+          await translateText(
+            englishSynonyms.join(", "),
+            "en",
+            language
+          );
+
+
+        if (
+          translatedSynonyms
+        ) {
+
+          synonyms =
+            translatedSynonyms;
+
+        }
+
+      }
+
+    }
+
+
+    return {
+
+      word:
+        cleanWord,
+
+      meaning:
+        arabicMeaning ||
+        "لم يتم العثور على معنى عربي.",
+
+      synonyms:
+        synonyms,
+
+      language:
+        language
+
+    };
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء البحث عن الكلمة."
+    );
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   GET NEXT ID
+   ========================================================= */
+
+async function getNextId() {
+
+  try {
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          COLLECTION_NAME
+        )
+      );
+
+
+    let maxId = 0;
+
+
+    snapshot.forEach(
+      item => {
+
+        const data =
+          item.data();
+
+
+        const numericId =
+          Number(data.id);
+
+
+        if (
+          Number.isFinite(
+            numericId
+          ) &&
+          numericId > maxId
+        ) {
+
+          maxId =
+            numericId;
+
+        }
+
+      }
+    );
+
+
+    return maxId + 1;
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء تحديد الـ ID."
+    );
+
+    return 1;
+
+  }
+
+}
+
+
+/* =========================================================
+   SET NEXT ID
+   ========================================================= */
+
+async function setNextId() {
+
+  if (!idInput) {
+
+    return;
+
+  }
+
+
+  idInput.value =
+    await getNextId();
+
+}
+
+
+/* =========================================================
+   SEARCH DATABASE
+   ========================================================= */
+
+async function searchDatabase(
+  word
+) {
+
+  try {
+
+    const searchWord =
+      cleanText(
+        word
+      ).toLowerCase();
+
+
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          COLLECTION_NAME
+        )
+      );
+
+
+    const results = [];
+
+
+    snapshot.forEach(
+      item => {
+
+        const data =
+          item.data();
+
+
+        const databaseWord =
+          cleanText(
+            data.word
+          ).toLowerCase();
+
+
+        if (
+          databaseWord ===
+          searchWord
+        ) {
+
+          results.push({
+
+            documentId:
+              item.id,
+
+            ...data
+
+          });
+
+        }
+
+      }
+    );
+
+
+    results.sort(
+      (a, b) =>
+        Number(a.id || 0) -
+        Number(b.id || 0)
+    );
+
+
+    return results;
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء البحث في قاعدة البيانات."
+    );
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   FILL FORM
+   ========================================================= */
+
+function fillForm(
+  data
+) {
+
+  if (!data) {
+
+    return;
+
+  }
+
+
+  if (idInput) {
+
+    idInput.value =
+      data.id ?? "";
+
+  }
+
+
+  if (wordInput) {
+
+    wordInput.value =
+      data.word ?? "";
+
+  }
+
+
+  if (meaningInput) {
+
+    meaningInput.value =
+      data.meaning ?? "";
+
+  }
+
+
+  if (synonymsInput) {
+
+    synonymsInput.value =
+      data.synonyms ?? "";
+
+  }
+
+
+  setLanguage(
+    data.language
+  );
+
+
+  currentDocumentId =
+    data.documentId || null;
+
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+async function searchWord() {
+
+  const value =
+    cleanText(
+      searchInput?.value
+    );
+
+
+  if (!value) {
+
+    alert(
+      "اكتب كلمة للبحث."
+    );
+
+    return;
+
+  }
+
+
+  /*
+     لو نفس الكلمة واتعرضت نتيجة قبل كده
+     نجيب النتيجة اللي بعدها.
+  */
+
+  if (
+    currentSearchText ===
+    value.toLowerCase() &&
+    currentDatabaseResults.length > 0
+  ) {
+
+    currentSearchIndex++;
+
+
+    if (
+      currentSearchIndex <
+      currentDatabaseResults.length
+    ) {
+
+      fillForm(
+        currentDatabaseResults[
+          currentSearchIndex
+        ]
+      );
+
+
+      alert(
+        "تم عرض النتيجة التالية."
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  /*
+     بحث جديد
+  */
+
+  currentSearchText =
+    value.toLowerCase();
+
+
+  currentSearchIndex =
+    -1;
+
+
+  currentDatabaseResults =
+    await searchDatabase(
+      value
+    );
+
+
+  /*
+     =========================================
+     موجودة في Firebase
+     =========================================
+  */
+
+  if (
+    currentDatabaseResults.length > 0
+  ) {
+
+    currentSearchIndex =
+      0;
+
+
+    fillForm(
+      currentDatabaseResults[0]
+    );
+
+
+    alert(
+      "الكلمة موجودة بالفعل في قاعدة البيانات.\nلا يمكنك حفظها مرة أخرى.\nيمكنك تحديثها أو حذفها."
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+     =========================================
+     غير موجودة → Online
+     =========================================
+  */
+
+  const onlineData =
+    await getOnlineWord(
+      value
+    );
+
+
+  if (!onlineData) {
+
+    return;
+
+  }
+
+
+  /*
+     نملأ الفورم
+  */
+
+  if (wordInput) {
+
+    wordInput.value =
+      onlineData.word;
+
+  }
+
+
+  if (meaningInput) {
+
+    meaningInput.value =
+      onlineData.meaning;
+
+  }
+
+
+  if (synonymsInput) {
+
+    synonymsInput.value =
+      onlineData.synonyms;
+
+  }
+
+
+  setLanguage(
+    onlineData.language
+  );
+
+
+  /*
+     كلمة جديدة
+  */
+
+  currentDocumentId =
+    null;
+
+
+  await setNextId();
+
+
+  alert(
+    "الكلمة غير موجودة في قاعدة البيانات.\nتم جلب بياناتها من الإنترنت ويمكنك الآن حفظها."
+  );
+
+}
+
+
+/* =========================================================
+   CHECK DUPLICATE
+   ========================================================= */
+
+async function checkDuplicate(
+  word
+) {
+
+  return await searchDatabase(
+    word
+  );
+
+}
+
+
+/* =========================================================
+   REGISTER
+   ========================================================= */
+
+async function registerWord() {
+
+  /*
+     ممنوع الحفظ لو النتيجة الحالية
+     جاية من Firebase.
+  */
+
+  if (currentDocumentId) {
+
+    alert(
+      "هذه الكلمة موجودة بالفعل في قاعدة البيانات.\nاستخدم تحديث أو حذف بدل الحفظ."
+    );
+
+    return;
+
+  }
+
+
+  const word =
+    cleanText(
+      wordInput?.value
+    );
+
+  const meaning =
+    cleanText(
+      meaningInput?.value
+    );
+
+  const synonyms =
+    cleanText(
+      synonymsInput?.value
+    );
+
+  const language =
+    getSelectedLanguage();
+
+
+  if (!word) {
+
+    alert(
+      "اكتب الكلمة الأول."
+    );
+
+    return;
+
+  }
+
+
+  if (!meaning) {
+
+    alert(
+      "المعنى غير موجود."
+    );
+
+    return;
+
+  }
+
+
+  if (!language) {
+
+    alert(
+      "اختر لغة الكلمة."
+    );
+
+    return;
+
+  }
+
+
+  /*
+     منع التكرار مرة ثانية
+     حتى لو المستخدم عدل الكلمة يدويًا.
+  */
+
+  const duplicate =
+    await checkDuplicate(
+      word
+    );
+
+
+  if (
+    duplicate.length > 0
+  ) {
+
+    const duplicateId =
+      duplicate[0].id ??
+      "غير معروف";
+
+
+    alert(
+      `الكلمة موجودة بالفعل.\nرقم الـ ID: ${duplicateId}`
+    );
+
+
+    fillForm(
+      duplicate[0]
+    );
+
+
+    return;
+
+  }
+
+
+  try {
+
+    const newId =
+      await getNextId();
+
+
+    await addDoc(
+      collection(
+        db,
+        COLLECTION_NAME
+      ),
+      {
+
+        id:
+          newId,
+
+        word:
+          word,
+
+        meaning:
+          meaning,
+
+        synonyms:
+          synonyms,
+
+        language:
+          language
+
+      }
+    );
+
+
+    if (idInput) {
+
+      idInput.value =
+        newId;
+
+    }
+
+
+    currentDocumentId =
+      null;
+
+
+    alert(
+      "تم حفظ الكلمة بنجاح."
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء حفظ الكلمة."
     );
 
   }
@@ -237,1024 +1433,328 @@ async function setNextId() {
 }
 
 
-// ======================================================
-// CLEAR FORM
-// ======================================================
+/* =========================================================
+   UPDATE
+   ========================================================= */
+
+async function updateWord() {
+
+  if (!currentDocumentId) {
+
+    alert(
+      "مفيش كلمة محددة للتحديث."
+    );
+
+    return;
+
+  }
+
+
+  const word =
+    cleanText(
+      wordInput?.value
+    );
+
+  const meaning =
+    cleanText(
+      meaningInput?.value
+    );
+
+  const synonyms =
+    cleanText(
+      synonymsInput?.value
+    );
+
+  const language =
+    getSelectedLanguage();
+
+
+  if (!word) {
+
+    alert(
+      "الكلمة لا يمكن أن تكون فارغة."
+    );
+
+    return;
+
+  }
+
+
+  if (!meaning) {
+
+    alert(
+      "المعنى لا يمكن أن يكون فارغًا."
+    );
+
+    return;
+
+  }
+
+
+  if (!language) {
+
+    alert(
+      "اختر لغة الكلمة."
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    const wordRef =
+      doc(
+        db,
+        COLLECTION_NAME,
+        currentDocumentId
+      );
+
+
+    await updateDoc(
+      wordRef,
+      {
+
+        word:
+          word,
+
+        meaning:
+          meaning,
+
+        synonyms:
+          synonyms,
+
+        language:
+          language
+
+      }
+    );
+
+
+    alert(
+      "تم تحديث الكلمة بنجاح."
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء تحديث الكلمة."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DELETE
+   ========================================================= */
+
+async function deleteWord() {
+
+  if (!currentDocumentId) {
+
+    alert(
+      "اختار كلمة موجودة في قاعدة البيانات الأول."
+    );
+
+    return;
+
+  }
+
+
+  const answer =
+    confirm(
+      "هل أنت متأكد أنك تريد حذف هذه الكلمة؟"
+    );
+
+
+  if (!answer) {
+
+    return;
+
+  }
+
+
+  try {
+
+    await deleteDoc(
+      doc(
+        db,
+        COLLECTION_NAME,
+        currentDocumentId
+      )
+    );
+
+
+    alert(
+      "تم حذف الكلمة بنجاح."
+    );
+
+
+    await clearForm();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "حصل خطأ أثناء حذف الكلمة."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CLEAR
+   ========================================================= */
 
 async function clearForm() {
 
-  // Clear Word
+  if (idInput) {
+
+    idInput.value =
+      "";
+
+  }
+
+
   if (wordInput) {
-    wordInput.value = "";
+
+    wordInput.value =
+      "";
+
   }
 
 
-  // Clear Meaning
   if (meaningInput) {
-    meaningInput.value = "";
+
+    meaningInput.value =
+      "";
+
   }
 
 
-  // Clear Synonyms
   if (synonymsInput) {
-    synonymsInput.value = "";
+
+    synonymsInput.value =
+      "";
+
   }
 
 
-  // Reset Language
-  if (languageSelect) {
-    languageSelect.selectedIndex = 0;
-  }
-
-
-  // Remove selected Firestore document
-  selectedDocumentId = null;
-
-
-  // Form is now ready for new data
-  isExistingData = false;
-
-
-  // Reset search
-  searchResults = [];
-
-  searchIndex = 0;
-
-  lastSearchText = "";
-
-
-  // Clear search input
   if (searchInput) {
-    searchInput.value = "";
+
+    searchInput.value =
+      "";
+
   }
 
 
-  // Enable Generate
-  updateGenerateButton();
+  if (languageSelect) {
+
+    languageSelect.selectedIndex =
+      0;
+
+  }
 
 
-  // Get last ID + 1
+  currentDocumentId =
+    null;
+
+  currentDatabaseResults =
+    [];
+
+  currentSearchText =
+    "";
+
+  currentSearchIndex =
+    -1;
+
+
   await setNextId();
 
 }
 
 
-// ======================================================
-// INITIALIZE ID
-// ======================================================
+/* =========================================================
+   BUTTON EVENTS
+   ========================================================= */
 
-if (idInput) {
-  setNextId();
-}
+if (searchButton) {
 
-
-// ======================================================
-// INITIAL GENERATE STATE
-// ======================================================
-
-updateGenerateButton();
-
-
-// ======================================================
-// CLEAR BUTTON
-// ======================================================
-
-if (clearButton) {
-
-  clearButton.addEventListener(
+  searchButton.addEventListener(
     "click",
-    async () => {
-
-      await clearForm();
-
-    }
+    searchWord
   );
 
 }
 
-
-// ======================================================
-// REGISTER / GENERATE
-// ======================================================
 
 if (registerButton) {
 
   registerButton.addEventListener(
     "click",
-    async () => {
-
-      // ------------------------------------------------
-      // DON'T ALLOW REGISTERING SEARCH RESULT
-      // ------------------------------------------------
-
-      if (isExistingData) {
-
-        alert(
-          "This word already exists.\n\nUse UPDATE or DELETE."
-        );
-
-        return;
-      }
-
-
-      // ------------------------------------------------
-      // CHECK FORM
-      // ------------------------------------------------
-
-      if (!wordInput || !meaningInput) {
-
-        alert(
-          "Form elements were not found."
-        );
-
-        return;
-      }
-
-
-      // ------------------------------------------------
-      // GET VALUES
-      // ------------------------------------------------
-
-      const word =
-        wordInput.value.trim();
-
-
-      const meaning =
-        meaningInput.value.trim();
-
-
-      const synonyms =
-        synonymsInput
-          ? synonymsInput.value.trim()
-          : "";
-
-
-      const language =
-        languageSelect
-          ? languageSelect.value
-          : "";
-
-
-      // ------------------------------------------------
-      // REQUIRED FIELDS
-      // ------------------------------------------------
-
-      if (!word || !meaning) {
-
-        alert(
-          "Please fill in WORD and MEANING."
-        );
-
-        return;
-      }
-
-
-      try {
-
-        // ----------------------------------------------
-        // GET DATABASE
-        // ----------------------------------------------
-
-        const snapshot =
-          await getDocs(
-            collection(db, "words")
-          );
-
-
-        // ----------------------------------------------
-        // CHECK DUPLICATE
-        // ----------------------------------------------
-
-        let existingWord = null;
-
-
-        snapshot.forEach((firebaseDoc) => {
-
-          const data =
-            firebaseDoc.data();
-
-
-          const databaseWord =
-            String(
-              data.word ?? ""
-            )
-            .trim()
-            .toLowerCase();
-
-
-          if (
-            databaseWord ===
-            word.toLowerCase()
-          ) {
-
-            existingWord =
-              data;
-
-          }
-
-        });
-
-
-        // ----------------------------------------------
-        // DUPLICATE FOUND
-        // ----------------------------------------------
-
-        if (existingWord) {
-
-          alert(
-            `This word already exists with ID ${existingWord.id}.`
-          );
-
-          return;
-        }
-
-
-        // ----------------------------------------------
-        // FIND LAST ID
-        // ----------------------------------------------
-
-        let lastId = 0;
-
-
-        snapshot.forEach((firebaseDoc) => {
-
-          const data =
-            firebaseDoc.data();
-
-
-          const currentId =
-            Number(data.id);
-
-
-          if (
-            !isNaN(currentId) &&
-            currentId > lastId
-          ) {
-
-            lastId =
-              currentId;
-
-          }
-
-        });
-
-
-        const newId =
-          lastId + 1;
-
-
-        // ----------------------------------------------
-        // ADD DATA
-        // ----------------------------------------------
-
-        await addDoc(
-          collection(db, "words"),
-          {
-
-            id: newId,
-
-            word: word,
-
-            meaning: meaning,
-
-            synonyms: synonyms,
-
-            language: language
-
-          }
-        );
-
-
-        // ----------------------------------------------
-        // SUCCESS
-        // ----------------------------------------------
-
-        alert(
-          "Data registered successfully!"
-        );
-
-
-        // ----------------------------------------------
-        // PREPARE NEXT ID
-        // ----------------------------------------------
-
-        if (idInput) {
-          idInput.value =
-            newId + 1;
-        }
-
-
-        // Clear fields
-
-        wordInput.value = "";
-
-        meaningInput.value = "";
-
-        if (synonymsInput) {
-          synonymsInput.value = "";
-        }
-
-        if (languageSelect) {
-          languageSelect.selectedIndex = 0;
-        }
-
-
-        selectedDocumentId = null;
-
-        isExistingData = false;
-
-        updateGenerateButton();
-
-
-      } catch (error) {
-
-        console.error(
-          "Error saving data:",
-          error
-        );
-
-
-        alert(
-          "Error saving data: " +
-          error.message
-        );
-
-      }
-
-    }
+    registerWord
   );
 
 }
 
-
-// ======================================================
-// SEARCH
-// ======================================================
-
-if (
-  searchInput &&
-  searchButton
-) {
-
-  // Focus Search
-  searchInput.focus();
-
-
-  searchButton.addEventListener(
-    "click",
-    async () => {
-
-      const searchText =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-
-      // ------------------------------------------------
-      // EMPTY SEARCH
-      // ------------------------------------------------
-
-      if (!searchText) {
-
-        alert(
-          "Please enter something to search."
-        );
-
-        return;
-      }
-
-
-      try {
-
-        // ------------------------------------------------
-        // NEW SEARCH
-        // ------------------------------------------------
-
-        if (
-          searchText !==
-          lastSearchText
-        ) {
-
-          const snapshot =
-            await getDocs(
-              collection(db, "words")
-            );
-
-
-          searchResults = [];
-
-
-          // ----------------------------------------------
-          // SEARCH ALL FIELDS
-          // ----------------------------------------------
-
-          snapshot.forEach((firebaseDoc) => {
-
-            const data =
-              firebaseDoc.data();
-
-
-            const id =
-              String(
-                data.id ?? ""
-              ).toLowerCase();
-
-
-            const word =
-              String(
-                data.word ?? ""
-              ).toLowerCase();
-
-
-            const meaning =
-              String(
-                data.meaning ?? ""
-              ).toLowerCase();
-
-
-            const synonyms =
-              String(
-                data.synonyms ?? ""
-              ).toLowerCase();
-
-
-            const language =
-              String(
-                data.language ?? ""
-              ).toLowerCase();
-
-
-            if (
-
-              id.includes(searchText) ||
-
-              word.includes(searchText) ||
-
-              meaning.includes(searchText) ||
-
-              synonyms.includes(searchText) ||
-
-              language.includes(searchText)
-
-            ) {
-
-              searchResults.push({
-
-                data:
-                  data,
-
-                documentId:
-                  firebaseDoc.id
-
-              });
-
-            }
-
-          });
-
-
-          // Start from first result
-
-          searchIndex = 0;
-
-
-          lastSearchText =
-            searchText;
-
-        }
-
-
-        // ------------------------------------------------
-        // NO RESULTS
-        // ------------------------------------------------
-
-        if (
-          searchResults.length === 0
-        ) {
-
-          alert(
-            "No results found."
-          );
-
-          return;
-        }
-
-
-        // ------------------------------------------------
-        // GET CURRENT RESULT
-        // ------------------------------------------------
-
-        const result =
-          searchResults[
-            searchIndex
-          ];
-
-
-        const foundData =
-          result.data;
-
-
-        // ------------------------------------------------
-        // SAVE FIRESTORE DOCUMENT ID
-        // ------------------------------------------------
-
-        selectedDocumentId =
-          result.documentId;
-
-
-        // ------------------------------------------------
-        // THIS IS EXISTING DATA
-        // ------------------------------------------------
-
-        isExistingData =
-          true;
-
-
-        updateGenerateButton();
-
-
-        // ------------------------------------------------
-        // PUT DATA INTO FORM
-        // ------------------------------------------------
-
-        if (idInput) {
-
-          idInput.value =
-            foundData.id ?? "";
-
-        }
-
-
-        if (wordInput) {
-
-          wordInput.value =
-            foundData.word ?? "";
-
-        }
-
-
-        if (meaningInput) {
-
-          meaningInput.value =
-            foundData.meaning ?? "";
-
-        }
-
-
-        if (synonymsInput) {
-
-          synonymsInput.value =
-            foundData.synonyms ?? "";
-
-        }
-
-
-        if (languageSelect) {
-
-          languageSelect.value =
-            foundData.language ?? "";
-
-        }
-
-
-        // ------------------------------------------------
-        // MOVE TO NEXT RESULT
-        // ------------------------------------------------
-
-        searchIndex++;
-
-
-        if (
-          searchIndex >=
-          searchResults.length
-        ) {
-
-          searchIndex = 0;
-
-        }
-
-
-      } catch (error) {
-
-        console.error(
-          "Error searching database:",
-          error
-        );
-
-
-        alert(
-          "Error searching database: " +
-          error.message
-        );
-
-      }
-
-    }
-  );
-
-}
-
-
-// ======================================================
-// UPDATE
-// ======================================================
 
 if (updateButton) {
 
   updateButton.addEventListener(
     "click",
-    async () => {
-
-      // ------------------------------------------------
-      // NO SELECTED DATA
-      // ------------------------------------------------
-
-      if (!selectedDocumentId) {
-
-        alert(
-          "Please search for a word first."
-        );
-
-        return;
-      }
-
-
-      // ------------------------------------------------
-      // GET VALUES
-      // ------------------------------------------------
-
-      const word =
-        wordInput
-          ? wordInput.value.trim()
-          : "";
-
-
-      const meaning =
-        meaningInput
-          ? meaningInput.value.trim()
-          : "";
-
-
-      const synonyms =
-        synonymsInput
-          ? synonymsInput.value.trim()
-          : "";
-
-
-      const language =
-        languageSelect
-          ? languageSelect.value
-          : "";
-
-
-      // ------------------------------------------------
-      // REQUIRED
-      // ------------------------------------------------
-
-      if (!word || !meaning) {
-
-        alert(
-          "Please fill in WORD and MEANING."
-        );
-
-        return;
-      }
-
-
-      try {
-
-        const wordDocument =
-          doc(
-            db,
-            "words",
-            selectedDocumentId
-          );
-
-
-        // ------------------------------------------------
-        // UPDATE DATA
-        // ------------------------------------------------
-
-        await updateDoc(
-          wordDocument,
-          {
-
-            word:
-              word,
-
-            meaning:
-              meaning,
-
-            synonyms:
-              synonyms,
-
-            language:
-              language
-
-          }
-        );
-
-
-        alert(
-          "Data updated successfully!"
-        );
-
-
-        // Clear after update
-
-        await clearForm();
-
-
-      } catch (error) {
-
-        console.error(
-          "Error updating data:",
-          error
-        );
-
-
-        alert(
-          "Error updating data: " +
-          error.message
-        );
-
-      }
-
-    }
+    updateWord
   );
 
 }
 
-
-// ======================================================
-// DELETE
-// ======================================================
 
 if (deleteButton) {
 
   deleteButton.addEventListener(
     "click",
-    async () => {
-
-      // ------------------------------------------------
-      // NO SELECTED DATA
-      // ------------------------------------------------
-
-      if (!selectedDocumentId) {
-
-        alert(
-          "Please search for a word first."
-        );
-
-        return;
-      }
-
-
-      // ------------------------------------------------
-      // CONFIRM
-      // ------------------------------------------------
-
-      const confirmDelete =
-        confirm(
-          "Are you sure you want to delete this word?"
-        );
-
-
-      if (!confirmDelete) {
-        return;
-      }
-
-
-      try {
-
-        const wordDocument =
-          doc(
-            db,
-            "words",
-            selectedDocumentId
-          );
-
-
-        // ------------------------------------------------
-        // DELETE
-        // ------------------------------------------------
-
-        await deleteDoc(
-          wordDocument
-        );
-
-
-        alert(
-          "Data deleted successfully!"
-        );
-
-
-        // Clear after delete
-
-        await clearForm();
-
-
-      } catch (error) {
-
-        console.error(
-          "Error deleting data:",
-          error
-        );
-
-
-        alert(
-          "Error deleting data: " +
-          error.message
-        );
-
-      }
-
-    }
+    deleteWord
   );
 
 }
 
 
-// ======================================================
-// SHOW ALL DATA
-// ======================================================
+if (clearButton) {
 
-if (
-  showDataButton &&
-  dataTable
-) {
-
-  showDataButton.addEventListener(
+  clearButton.addEventListener(
     "click",
-    async () => {
+    clearForm
+  );
 
-      try {
+}
 
-        // ----------------------------------------------
-        // GET DATABASE
-        // ----------------------------------------------
 
-        const snapshot =
-          await getDocs(
-            collection(db, "words")
-          );
+/* =========================================================
+   ENTER TO SEARCH
+   ========================================================= */
 
+if (searchInput) {
 
-        // ----------------------------------------------
-        // CLEAR TABLE
-        // ----------------------------------------------
+  searchInput.addEventListener(
+    "keydown",
+    event => {
 
-        dataTable.innerHTML =
-          "";
+      if (
+        event.key === "Enter"
+      ) {
 
+        event.preventDefault();
 
-        // ----------------------------------------------
-        // EMPTY DATABASE
-        // ----------------------------------------------
-
-        if (snapshot.empty) {
-
-          alert(
-            "There is no data in the database."
-          );
-
-          return;
-        }
-
-
-        // ----------------------------------------------
-        // STORE DATA
-        // ----------------------------------------------
-
-        const rows = [];
-
-
-        snapshot.forEach((firebaseDoc) => {
-
-          rows.push(
-            firebaseDoc.data()
-          );
-
-        });
-
-
-        // ----------------------------------------------
-        // SORT BY ID
-        // ----------------------------------------------
-
-        rows.sort(
-          (a, b) =>
-            Number(a.id) -
-            Number(b.id)
-        );
-
-
-        // ----------------------------------------------
-        // CREATE TABLE ROWS
-        // ----------------------------------------------
-
-        rows.forEach((data) => {
-
-          const row =
-            document.createElement("tr");
-
-
-          const idCell =
-            document.createElement("td");
-
-
-          const wordCell =
-            document.createElement("td");
-
-
-          const meaningCell =
-            document.createElement("td");
-
-
-          const synonymsCell =
-            document.createElement("td");
-
-
-          const languageCell =
-            document.createElement("td");
-
-
-          // --------------------------------------------
-          // VALUES
-          // --------------------------------------------
-
-          idCell.textContent =
-            data.id ?? "-";
-
-
-          wordCell.textContent =
-            data.word ?? "-";
-
-
-          meaningCell.textContent =
-            data.meaning ?? "-";
-
-
-          synonymsCell.textContent =
-            data.synonyms ?? "-";
-
-
-          languageCell.textContent =
-            data.language ?? "-";
-
-
-          // --------------------------------------------
-          // APPEND CELLS
-          // --------------------------------------------
-
-          row.appendChild(
-            idCell
-          );
-
-
-          row.appendChild(
-            wordCell
-          );
-
-
-          row.appendChild(
-            meaningCell
-          );
-
-
-          row.appendChild(
-            synonymsCell
-          );
-
-
-          row.appendChild(
-            languageCell
-          );
-
-
-          // --------------------------------------------
-          // APPEND ROW
-          // --------------------------------------------
-
-          dataTable.appendChild(
-            row
-          );
-
-        });
-
-
-      } catch (error) {
-
-        console.error(
-          "Error loading data:",
-          error
-        );
-
-
-        alert(
-          "Error loading data: " +
-          error.message
-        );
+        searchWord();
 
       }
 
@@ -1262,3 +1762,10 @@ if (
   );
 
 }
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+setNextId();
