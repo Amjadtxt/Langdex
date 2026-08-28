@@ -290,12 +290,12 @@ Width:85%;
   .form {
     justify-content: center;
     width: 280px;
-    height: 485px;
+    height: 490px;
   }
 
   input {
     width: 75%;
-    padding: 8px;
+    padding: 7px;
   }
 
   button {
@@ -312,11 +312,11 @@ Width:85%;
 
   select {
     width: 80%;
-    padding: 8px;
+    padding: 7px;
   }
 
   h1 {
-    font-size: 25px;
+    font-size: 20px;
   }
 
   nav ul {
@@ -368,7 +368,7 @@ Width:85%;
   }
 
   .search-section {
-Margin :6px;
+Margin :4px;
     width: 100%;
   }
 
