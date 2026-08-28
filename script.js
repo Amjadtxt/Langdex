@@ -1,21 +1,25 @@
+// ======================================================
+// FIREBASE
+// ======================================================
+
 import {
   initializeApp
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
   getFirestore,
   collection,
   addDoc,
   getDocs,
+  doc,
   updateDoc,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
-/* =========================
-   FIREBASE
-========================= */
+// ======================================================
+// FIREBASE CONFIGURATION
+// ======================================================
 
 const firebaseConfig = {
   apiKey: "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
@@ -24,53 +28,77 @@ const firebaseConfig = {
   storageBucket: "langdex.firebasestorage.app",
   messagingSenderId: "819838317933",
   appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-  measurementId: "G-F60CC2CDCJ"
+  measurementId: "G-F60CC2CDC"
 };
+
+
+// ======================================================
+// INITIALIZE FIREBASE
+// ======================================================
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 
-/* =========================
-   GOOGLE APPS SCRIPT
-========================= */
+// ======================================================
+// GOOGLE APPS SCRIPT
+// ======================================================
 
 const GOOGLE_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbxcWrYiajG8JfYibuc9bBFvDu3pWcGwNmX2fLXJEFWMW_90eHccNqW_4g7c-MvSnUU0lg/exec";
 
 
-/* =========================
-   FIRESTORE COLLECTION
-========================= */
+// ======================================================
+// COLLECTION
+// ======================================================
 
 const COLLECTION_NAME = "words";
 
 
-/* =========================
-   ELEMENTS
-========================= */
+// ======================================================
+// FORM
+// ======================================================
 
-const formInputs =
-  document.querySelectorAll(".form input");
+const form = document.querySelector(".form");
 
-const idInput = formInputs[0];
-const wordInput = formInputs[1];
-const meaningInput = formInputs[2];
-const synonymInput = formInputs[3];
+let idInput = null;
+let wordInput = null;
+let meaningInput = null;
+let synonymsInput = null;
+let languageSelect = null;
 
-const languageSelect =
-  document.querySelector(".form select");
 
-const searchInput =
-  document.querySelector(".search-txt");
+// ======================================================
+// GET FORM INPUTS
+// ======================================================
 
-const searchButton =
-  document.querySelector(".search-btn");
+if (form) {
 
-const searchResult =
-  document.querySelector(".search-result");
+  const inputs =
+    form.querySelectorAll("input");
 
-const saveButton =
+  idInput =
+    inputs[0] || null;
+
+  wordInput =
+    inputs[1] || null;
+
+  meaningInput =
+    inputs[2] || null;
+
+  synonymsInput =
+    inputs[3] || null;
+
+  languageSelect =
+    form.querySelector("select");
+}
+
+
+// ======================================================
+// BUTTONS
+// ======================================================
+
+const registerButton =
   document.querySelector(".reg");
 
 const updateButton =
@@ -82,245 +110,525 @@ const deleteButton =
 const clearButton =
   document.querySelector(".cel");
 
-
-/* =========================
-   CURRENT DOCUMENT
-========================= */
-
-let currentDocumentId = null;
+const generateButton =
+  document.querySelector(".gen");
 
 
-/* =========================
-   NORMALIZE
-========================= */
+// ======================================================
+// SEARCH
+// ======================================================
 
-function normalize(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase();
+const searchInput =
+  document.querySelector(".search-txt") ||
+  document.querySelector(".search-section input");
+
+const searchButton =
+  document.querySelector(".search-btn");
+
+const searchResult =
+  document.querySelector(".search-result");
+
+
+// ======================================================
+// SHOW DATA
+// ======================================================
+
+const showDataButton =
+  document.querySelector(".show-data");
+
+const dataTable =
+  document.querySelector("#data-table");
+
+
+// ======================================================
+// VARIABLES
+// ======================================================
+
+let selectedDocumentId = null;
+
+let isExistingData = false;
+
+let searchResults = [];
+
+let searchIndex = 0;
+
+let lastSearchText = "";
+
+
+// ======================================================
+// GENERATE BUTTON STATE
+// ======================================================
+
+function updateGenerateButton() {
+
+  if (!generateButton) {
+    return;
+  }
+
+  if (isExistingData) {
+
+    generateButton.disabled = true;
+
+    generateButton.style.opacity = "0.5";
+
+    generateButton.style.cursor =
+      "not-allowed";
+
+  } else {
+
+    generateButton.disabled = false;
+
+    generateButton.style.opacity = "1";
+
+    generateButton.style.cursor =
+      "pointer";
+  }
 }
 
 
-/* =========================
-   GET NEXT ID
-========================= */
+// ======================================================
+// GET NEXT ID
+// ======================================================
 
-async function getNextId() {
+async function setNextId() {
+
+  if (!idInput) {
+    return;
+  }
 
   try {
 
     const snapshot =
       await getDocs(
-        collection(db, COLLECTION_NAME)
+        collection(
+          db,
+          COLLECTION_NAME
+        )
       );
 
-    let maxId = 0;
+    let lastId = 0;
 
-    snapshot.forEach((item) => {
+    snapshot.forEach(
+      (firebaseDoc) => {
 
-      const data = item.data();
+        const data =
+          firebaseDoc.data();
 
-      const id = Number(data.id);
+        const currentId =
+          Number(data.id);
 
-      if (
-        Number.isFinite(id) &&
-        id > maxId
-      ) {
-        maxId = id;
+        if (
+          Number.isFinite(currentId) &&
+          currentId > lastId
+        ) {
+
+          lastId =
+            currentId;
+        }
       }
+    );
 
-    });
-
-    return maxId + 1;
+    idInput.value =
+      lastId + 1;
 
   } catch (error) {
 
     console.error(error);
 
-    return 1;
+    alert(
+      "حدث خطأ أثناء الحصول على الرقم التالي."
+    );
   }
 }
 
 
-/* =========================
-   LOAD ID
-========================= */
+// ======================================================
+// CLEAR FORM
+// ======================================================
 
-async function loadNextId() {
+async function clearForm() {
 
-  if (currentDocumentId) {
-    return;
+  if (wordInput) {
+    wordInput.value = "";
   }
 
-  idInput.value =
-    await getNextId();
+  if (meaningInput) {
+    meaningInput.value = "";
+  }
+
+  if (synonymsInput) {
+    synonymsInput.value = "";
+  }
+
+  if (languageSelect) {
+    languageSelect.selectedIndex = 0;
+  }
+
+  selectedDocumentId = null;
+
+  isExistingData = false;
+
+  searchResults = [];
+
+  searchIndex = 0;
+
+  lastSearchText = "";
+
+  if (searchInput) {
+    searchInput.value = "";
+  }
+
+  if (searchResult) {
+    searchResult.textContent = "";
+  }
+
+  updateGenerateButton();
+
+  await setNextId();
 }
 
 
-/* =========================
-   FIREBASE SEARCH
-========================= */
+// ======================================================
+// INITIAL ID
+// ======================================================
 
-async function findWord(word) {
+if (idInput) {
+  setNextId();
+}
+
+updateGenerateButton();
+
+
+// ======================================================
+// CLEAR BUTTON
+// ======================================================
+
+if (clearButton) {
+
+  clearButton.addEventListener(
+    "click",
+    async () => {
+
+      await clearForm();
+
+    }
+  );
+}
+
+
+// ======================================================
+// CHECK WORD IN FIREBASE
+// ======================================================
+
+async function findExactWord(word) {
 
   const snapshot =
     await getDocs(
-      collection(db, COLLECTION_NAME)
+      collection(
+        db,
+        COLLECTION_NAME
+      )
     );
 
   const target =
-    normalize(word);
+    String(word)
+      .trim()
+      .toLowerCase();
 
-  const results = [];
+  let result = null;
 
-  snapshot.forEach((item) => {
+  snapshot.forEach(
+    (firebaseDoc) => {
 
-    const data = item.data();
+      const data =
+        firebaseDoc.data();
 
-    if (
-      normalize(data.word) === target
-    ) {
+      const databaseWord =
+        String(
+          data.word ?? ""
+        )
+        .trim()
+        .toLowerCase();
 
-      results.push({
-        documentId: item.id,
-        ...data
-      });
+      if (
+        databaseWord === target
+      ) {
 
+        result = {
+
+          data: data,
+
+          documentId:
+            firebaseDoc.id
+
+        };
+      }
     }
+  );
 
-  });
-
-  return results;
+  return result;
 }
 
 
-/* =========================
-   PUT DATA IN FORM
-========================= */
+// ======================================================
+// SEARCH
+// ======================================================
 
-function fillForm(data) {
+if (
+  searchInput &&
+  searchButton
+) {
 
-  currentDocumentId =
-    data.documentId || null;
+  searchInput.focus();
 
-  idInput.value =
-    data.id ?? "";
+  searchButton.addEventListener(
+    "click",
+    async () => {
 
-  wordInput.value =
-    data.word ?? "";
+      const searchText =
+        searchInput.value
+          .trim()
+          .toLowerCase();
 
-  meaningInput.value =
-    data.meaning ?? "";
 
-  synonymInput.value =
-    data.synonyms ?? "";
+      if (!searchText) {
 
-  const language =
-    data.language ?? "";
+        alert(
+          "اكتب كلمة للبحث أولاً."
+        );
 
-  for (
-    let i = 0;
-    i < languageSelect.options.length;
-    i++
-  ) {
+        return;
+      }
 
-    if (
-      languageSelect.options[i].text.trim() ===
-      language.trim()
-    ) {
 
-      languageSelect.selectedIndex = i;
+      try {
 
-      break;
+        /*
+         * إذا كان البحث جديدًا
+         */
+
+        if (
+          searchText !==
+          lastSearchText
+        ) {
+
+          const snapshot =
+            await getDocs(
+              collection(
+                db,
+                COLLECTION_NAME
+              )
+            );
+
+
+          searchResults = [];
+
+
+          /*
+           * البحث في جميع الحقول
+           */
+
+          snapshot.forEach(
+            (firebaseDoc) => {
+
+              const data =
+                firebaseDoc.data();
+
+
+              const id =
+                String(
+                  data.id ?? ""
+                ).toLowerCase();
+
+
+              const word =
+                String(
+                  data.word ?? ""
+                ).toLowerCase();
+
+
+              const meaning =
+                String(
+                  data.meaning ?? ""
+                ).toLowerCase();
+
+
+              const synonyms =
+                String(
+                  data.synonyms ?? ""
+                ).toLowerCase();
+
+
+              const language =
+                String(
+                  data.language ?? ""
+                ).toLowerCase();
+
+
+              if (
+
+                id.includes(searchText) ||
+
+                word.includes(searchText) ||
+
+                meaning.includes(searchText) ||
+
+                synonyms.includes(searchText) ||
+
+                language.includes(searchText)
+
+              ) {
+
+                searchResults.push({
+
+                  data: data,
+
+                  documentId:
+                    firebaseDoc.id
+
+                });
+
+              }
+
+            }
+          );
+
+
+          searchIndex = 0;
+
+          lastSearchText =
+            searchText;
+        }
+
+
+        /*
+         * لو Firebase لقى نتيجة
+         */
+
+        if (
+          searchResults.length > 0
+        ) {
+
+          const result =
+            searchResults[
+              searchIndex
+            ];
+
+
+          const foundData =
+            result.data;
+
+
+          selectedDocumentId =
+            result.documentId;
+
+
+          isExistingData = true;
+
+
+          updateGenerateButton();
+
+
+          if (idInput) {
+
+            idInput.value =
+              foundData.id ?? "";
+
+          }
+
+
+          if (wordInput) {
+
+            wordInput.value =
+              foundData.word ?? "";
+
+          }
+
+
+          if (meaningInput) {
+
+            meaningInput.value =
+              foundData.meaning ?? "";
+
+          }
+
+
+          if (synonymsInput) {
+
+            synonymsInput.value =
+              foundData.synonyms ?? "";
+
+          }
+
+
+          if (languageSelect) {
+
+            languageSelect.value =
+              foundData.language ?? "";
+
+          }
+
+
+          if (searchResult) {
+
+            searchResult.textContent =
+              "تم العثور على الكلمة.";
+
+          }
+
+
+          searchIndex++;
+
+
+          if (
+            searchIndex >=
+            searchResults.length
+          ) {
+
+            searchIndex = 0;
+
+          }
+
+
+          return;
+        }
+
+
+        /*
+         * لا توجد في Firebase
+         * نبحث خارجيًا
+         */
+
+        await searchExternal(
+          searchText
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Search error:",
+          error
+        );
+
+        if (searchResult) {
+          searchResult.textContent = "";
+        }
+
+        alert(
+          "لم نتمكن من الحصول على بيانات الكلمة."
+        );
+      }
+
     }
-
-  }
-
+  );
 }
 
 
-/* =========================
-   SEARCH
-========================= */
+// ======================================================
+// SEARCH EXTERNAL
+// ======================================================
 
-async function searchWord() {
-
-  const word =
-    searchInput.value.trim();
-
-  if (!word) {
-
-    alert("اكتب كلمة للبحث أولاً.");
-
-    return;
-  }
-
-  searchResult.textContent =
-    "جاري البحث...";
-
-  try {
-
-    /*
-      البحث أولاً في Firebase
-    */
-
-    const localResults =
-      await findWord(word);
-
-
-    /*
-      الكلمة موجودة
-    */
-
-    if (localResults.length > 0) {
-
-      fillForm(
-        localResults[0]
-      );
-
-      searchResult.textContent =
-        "تم العثور على الكلمة في قاعدة البيانات.";
-
-      alert(
-        "الكلمة موجودة بالفعل في قاعدة البيانات."
-      );
-
-      return;
-    }
-
-
-    /*
-      الكلمة غير موجودة
-      نذهب إلى Gemini
-    */
-
-    await searchWithGoogle(word);
-
-  } catch (error) {
-
-    console.error(error);
-
-    searchResult.textContent =
-      "";
-
-    alert(
-      "حدث خطأ أثناء البحث."
-    );
-
-  }
-
-}
-
-
-/* =========================
-   GEMINI SEARCH
-========================= */
-
-async function searchWithGoogle(word) {
-
-  searchResult.textContent =
-    "جاري البحث في Google باستخدام Gemini...";
-
+async function searchExternal(word) {
 
   const url =
     GOOGLE_SCRIPT_URL +
@@ -335,9 +643,8 @@ async function searchWithGoogle(word) {
   if (!response.ok) {
 
     throw new Error(
-      "فشل الاتصال بـ Google."
+      "Google Apps Script Error"
     );
-
   }
 
 
@@ -349,75 +656,262 @@ async function searchWithGoogle(word) {
 
     throw new Error(
       result.message ||
-      "لم يتم العثور على نتيجة."
+      "Search failed"
     );
-
   }
 
 
-  let data = result.data;
+  let data =
+    result.data;
 
 
   /*
-    أحياناً Gemini يرجع JSON
-    كنص داخل data
-  */
-
-  if (typeof data === "string") {
-
-    try {
-
-      data = JSON.parse(data);
-
-    } catch (error) {
-
-      console.error(
-        "JSON غير صالح:",
-        data
-      );
-
-      throw new Error(
-        "Gemini أرسل نتيجة غير مفهومة."
-      );
-
-    }
-
-  }
-
-
-  /*
-    تعبئة الفورم
-  */
-
-  wordInput.value =
-    data.word || word;
-
-  meaningInput.value =
-    data.meaningArabic || "";
+   * Google Apps Script قد يرجع
+   * JSON كنص
+   */
 
   if (
-    Array.isArray(data.synonyms)
+    typeof data === "string"
   ) {
 
-    synonymInput.value =
-      data.synonyms.join(", ");
+    data =
+      parseGeminiJSON(data);
+  }
 
-  } else {
 
-    synonymInput.value =
-      data.synonyms || "";
+  if (
+    !data ||
+    typeof data !== "object"
+  ) {
 
+    throw new Error(
+      "Invalid data"
+    );
   }
 
 
   /*
-    اختيار اللغة
-  */
+   * الكلمة
+   */
 
-  const language =
-    data.language || "";
+  if (wordInput) {
 
-  let foundLanguage = false;
+    wordInput.value =
+      data.word || word;
+  }
+
+
+  /*
+   * المعاني العربية المتعددة
+   */
+
+  if (meaningInput) {
+
+    meaningInput.value =
+      formatMeanings(
+        data.meaningArabic
+      );
+  }
+
+
+  /*
+   * المرادفات الكثيرة
+   */
+
+  if (synonymsInput) {
+
+    synonymsInput.value =
+      formatSynonyms(
+        data.synonyms
+      );
+  }
+
+
+  /*
+   * اللغة التي حددها Gemini
+   */
+
+  if (languageSelect) {
+
+    setLanguage(
+      data.language
+    );
+  }
+
+
+  /*
+   * البيانات جديدة
+   */
+
+  selectedDocumentId = null;
+
+  isExistingData = false;
+
+  updateGenerateButton();
+
+
+  /*
+   * ID الجديد
+   */
+
+  await setNextId();
+
+
+  if (searchResult) {
+
+    searchResult.textContent =
+      "تم تجهيز البيانات للحفظ.";
+
+  }
+
+}
+
+
+// ======================================================
+// PARSE GEMINI JSON
+// ======================================================
+
+function parseGeminiJSON(text) {
+
+  let clean =
+    String(text)
+      .trim();
+
+
+  clean =
+    clean.replace(
+      /^```json\s*/i,
+      ""
+    );
+
+
+  clean =
+    clean.replace(
+      /^```\s*/i,
+      ""
+    );
+
+
+  clean =
+    clean.replace(
+      /```\s*$/i,
+      ""
+    );
+
+
+  const first =
+    clean.indexOf("{");
+
+
+  const last =
+    clean.lastIndexOf("}");
+
+
+  if (
+    first !== -1 &&
+    last !== -1
+  ) {
+
+    clean =
+      clean.substring(
+        first,
+        last + 1
+      );
+  }
+
+
+  try {
+
+    return JSON.parse(
+      clean
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Gemini JSON:",
+      clean
+    );
+
+    throw new Error(
+      "Invalid JSON"
+    );
+  }
+}
+
+
+// ======================================================
+// FORMAT MEANINGS
+// ======================================================
+
+function formatMeanings(value) {
+
+  if (
+    Array.isArray(value)
+  ) {
+
+    return value
+      .filter(
+        item => item
+      )
+      .join("، ");
+
+  }
+
+  return String(
+    value || ""
+  );
+}
+
+
+// ======================================================
+// FORMAT SYNONYMS
+// ======================================================
+
+function formatSynonyms(value) {
+
+  if (
+    Array.isArray(value)
+  ) {
+
+    return value
+      .filter(
+        item => item
+      )
+      .join(", ");
+
+  }
+
+  return String(
+    value || ""
+  );
+}
+
+
+// ======================================================
+// SET LANGUAGE
+// ======================================================
+
+function setLanguage(language) {
+
+  if (
+    !language ||
+    !languageSelect
+  ) {
+
+    return;
+  }
+
+
+  const value =
+    String(language)
+      .trim()
+      .toLowerCase();
+
+
+  /*
+   * المطابقة المباشرة
+   */
 
   for (
     let i = 0;
@@ -425,416 +919,718 @@ async function searchWithGoogle(word) {
     i++
   ) {
 
+    const option =
+      languageSelect.options[i];
+
+    const text =
+      option.text
+        .trim()
+        .toLowerCase();
+
+
     if (
-      languageSelect.options[i].text.trim() ===
-      language.trim()
+      text === value
     ) {
 
       languageSelect.selectedIndex =
         i;
 
-      foundLanguage = true;
-
-      break;
+      return;
     }
-
   }
 
 
   /*
-    لو Gemini رجع لغة مختلفة
-    نحاول مطابقتها
-  */
+   * English
+   */
 
-  if (!foundLanguage) {
+  if (
+    value.includes("english") ||
+    value.includes("إنجليزي") ||
+    value.includes("الإنجليزية")
+  ) {
 
-    const lower =
-      language.toLowerCase();
+    languageSelect.value =
+      "الإنجليزية";
 
-    if (
-      lower.includes("english")
-    ) {
-
-      languageSelect.value =
-        "الإنجليزية";
-
-    } else if (
-      lower.includes("urdu")
-    ) {
-
-      languageSelect.value =
-        "الأردية";
-
-    } else if (
-      lower.includes("hindi")
-    ) {
-
-      languageSelect.value =
-        "الهندية";
-    }
-
+    return;
   }
 
 
   /*
-    الكلمة الجديدة
-    لم تحفظ بعد
-  */
+   * Urdu
+   */
 
-  currentDocumentId = null;
+  if (
+    value.includes("urdu") ||
+    value.includes("أردو") ||
+    value.includes("الأردية")
+  ) {
 
-  idInput.value =
-    await getNextId();
+    languageSelect.value =
+      "الأردية";
+
+    return;
+  }
 
 
-  searchResult.textContent =
-    "تم العثور على البيانات. راجعها ثم اضغط حفظ.";
+  /*
+   * Hindi
+   */
 
-  alert(
-    "تم العثور على الكلمة وتعبئة البيانات.\nراجع البيانات ثم اضغط حفظ."
-  );
+  if (
+    value.includes("hindi") ||
+    value.includes("هندي") ||
+    value.includes("الهندية")
+  ) {
 
+    languageSelect.value =
+      "الهندية";
+
+    return;
+  }
 }
 
 
-/* =========================
-   SAVE
-========================= */
+// ======================================================
+// REGISTER / SAVE
+// ======================================================
 
-async function saveWord() {
+if (registerButton) {
 
-  const word =
-    wordInput.value.trim();
+  registerButton.addEventListener(
+    "click",
+    async () => {
 
-  const meaning =
-    meaningInput.value.trim();
+      /*
+       * لا تسمح بحفظ نتيجة موجودة
+       */
 
-  const synonyms =
-    synonymInput.value.trim();
+      if (isExistingData) {
 
-  const language =
-    languageSelect.value.trim();
+        alert(
+          "الكلمة موجودة بالفعل.\nاستخدم تحديث أو حذف."
+        );
 
-
-  if (!word) {
-
-    alert("اكتب الكلمة.");
-
-    return;
-  }
+        return;
+      }
 
 
-  if (!meaning) {
+      if (
+        !wordInput ||
+        !meaningInput
+      ) {
 
-    alert("اكتب المعنى بالعربي.");
+        alert(
+          "تعذر العثور على حقول البيانات."
+        );
 
-    return;
-  }
-
-
-  if (!language) {
-
-    alert("اختر اللغة.");
-
-    return;
-  }
+        return;
+      }
 
 
-  try {
-
-    /*
-      منع تكرار الكلمة
-    */
-
-    const existing =
-      await findWord(word);
+      const word =
+        wordInput.value.trim();
 
 
-    if (existing.length > 0) {
+      const meaning =
+        meaningInput.value.trim();
 
-      alert(
-        "الكلمة موجودة بالفعل.\nID: " +
-        existing[0].id
-      );
 
-      fillForm(existing[0]);
+      const synonyms =
+        synonymsInput
+          ? synonymsInput.value.trim()
+          : "";
 
-      return;
+
+      const language =
+        languageSelect
+          ? languageSelect.value.trim()
+          : "";
+
+
+      if (!word) {
+
+        alert(
+          "اكتب الكلمة."
+        );
+
+        return;
+      }
+
+
+      if (!meaning) {
+
+        alert(
+          "اكتب المعنى بالعربي."
+        );
+
+        return;
+      }
+
+
+      if (!language) {
+
+        alert(
+          "اختر اللغة."
+        );
+
+        return;
+      }
+
+
+      try {
+
+        /*
+         * منع التكرار
+         */
+
+        const existing =
+          await findExactWord(
+            word
+          );
+
+
+        if (existing) {
+
+          alert(
+            "الكلمة موجودة بالفعل في قاعدة البيانات."
+          );
+
+          selectedDocumentId =
+            existing.documentId;
+
+          isExistingData = true;
+
+          updateGenerateButton();
+
+          return;
+        }
+
+
+        /*
+         * ID جديد
+         */
+
+        const newId =
+          await getNextIdForSave();
+
+
+        /*
+         * الحفظ
+         */
+
+        await addDoc(
+          collection(
+            db,
+            COLLECTION_NAME
+          ),
+          {
+
+            id: newId,
+
+            word: word,
+
+            meaning: meaning,
+
+            synonyms: synonyms,
+
+            language: language
+
+          }
+        );
+
+
+        /*
+         * نجاح الحفظ
+         */
+
+        alert(
+          "تم حفظ الكلمة بنجاح."
+        );
+
+
+        /*
+         * مسح كل الحقول
+         * ما عدا ID
+         */
+
+        wordInput.value = "";
+
+        meaningInput.value = "";
+
+        if (synonymsInput) {
+          synonymsInput.value = "";
+        }
+
+        if (languageSelect) {
+          languageSelect.selectedIndex = 0;
+        }
+
+
+        selectedDocumentId = null;
+
+        isExistingData = false;
+
+
+        /*
+         * ID التالي
+         */
+
+        if (idInput) {
+
+          idInput.value =
+            newId + 1;
+
+        }
+
+
+        /*
+         * تنظيف البحث
+         */
+
+        if (searchInput) {
+          searchInput.value = "";
+        }
+
+        if (searchResult) {
+          searchResult.textContent = "";
+        }
+
+        searchResults = [];
+
+        searchIndex = 0;
+
+        lastSearchText = "";
+
+
+        updateGenerateButton();
+
+
+      } catch (error) {
+
+        console.error(
+          "Save error:",
+          error
+        );
+
+        alert(
+          "حدث خطأ أثناء حفظ الكلمة."
+        );
+      }
+
     }
+  );
+}
 
 
-    const newId =
-      await getNextId();
+// ======================================================
+// GET NEXT ID FOR SAVE
+// ======================================================
 
+async function getNextIdForSave() {
 
-    await addDoc(
+  const snapshot =
+    await getDocs(
       collection(
         db,
         COLLECTION_NAME
-      ),
-      {
-        id: newId,
-        word: word,
-        meaning: meaning,
-        synonyms: synonyms,
-        language: language
-      }
-    );
-
-
-    idInput.value =
-      newId;
-
-    currentDocumentId = null;
-
-
-    alert(
-      "تم حفظ الكلمة بنجاح."
-    );
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "حدث خطأ أثناء حفظ الكلمة."
-    );
-
-  }
-
-}
-
-
-/* =========================
-   UPDATE
-========================= */
-
-async function updateWord() {
-
-  if (!currentDocumentId) {
-
-    alert(
-      "ابحث عن كلمة موجودة أولاً."
-    );
-
-    return;
-  }
-
-
-  const word =
-    wordInput.value.trim();
-
-  const meaning =
-    meaningInput.value.trim();
-
-  const synonyms =
-    synonymInput.value.trim();
-
-  const language =
-    languageSelect.value.trim();
-
-
-  if (!word) {
-
-    alert("اكتب الكلمة.");
-
-    return;
-  }
-
-
-  if (!meaning) {
-
-    alert("اكتب المعنى بالعربي.");
-
-    return;
-  }
-
-
-  if (!language) {
-
-    alert("اختر اللغة.");
-
-    return;
-  }
-
-
-  try {
-
-    const reference =
-      doc(
-        db,
-        COLLECTION_NAME,
-        currentDocumentId
-      );
-
-
-    await updateDoc(
-      reference,
-      {
-        word: word,
-        meaning: meaning,
-        synonyms: synonyms,
-        language: language
-      }
-    );
-
-
-    alert(
-      "تم تحديث الكلمة بنجاح."
-    );
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "حدث خطأ أثناء التحديث."
-    );
-
-  }
-
-}
-
-
-/* =========================
-   DELETE
-========================= */
-
-async function deleteWord() {
-
-  if (!currentDocumentId) {
-
-    alert(
-      "ابحث عن كلمة موجودة أولاً."
-    );
-
-    return;
-  }
-
-
-  const confirmed =
-    confirm(
-      "هل أنت متأكد من حذف الكلمة؟"
-    );
-
-
-  if (!confirmed) {
-    return;
-  }
-
-
-  try {
-
-    await deleteDoc(
-      doc(
-        db,
-        COLLECTION_NAME,
-        currentDocumentId
       )
     );
 
 
-    alert(
-      "تم حذف الكلمة بنجاح."
-    );
+  let lastId = 0;
 
 
-    await clearForm();
+  snapshot.forEach(
+    (firebaseDoc) => {
+
+      const data =
+        firebaseDoc.data();
 
 
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "حدث خطأ أثناء الحذف."
-    );
-
-  }
-
-}
+      const currentId =
+        Number(data.id);
 
 
-/* =========================
-   CLEAR
-========================= */
+      if (
+        Number.isFinite(currentId) &&
+        currentId > lastId
+      ) {
 
-async function clearForm() {
-
-  currentDocumentId = null;
-
-  idInput.value = "";
-  wordInput.value = "";
-  meaningInput.value = "";
-  synonymInput.value = "";
-
-  languageSelect.selectedIndex = 0;
-
-  searchResult.textContent = "";
-
-  await loadNextId();
-
-}
-
-
-/* =========================
-   BUTTON EVENTS
-========================= */
-
-searchButton.addEventListener(
-  "click",
-  searchWord
-);
-
-
-saveButton.addEventListener(
-  "click",
-  saveWord
-);
-
-
-updateButton.addEventListener(
-  "click",
-  updateWord
-);
-
-
-deleteButton.addEventListener(
-  "click",
-  deleteWord
-);
-
-
-clearButton.addEventListener(
-  "click",
-  clearForm
-);
-
-
-/* =========================
-   ENTER
-========================= */
-
-searchInput.addEventListener(
-  "keydown",
-  function (event) {
-
-    if (event.key === "Enter") {
-
-      event.preventDefault();
-
-      searchWord();
+        lastId =
+          currentId;
+      }
 
     }
-
-  }
-);
+  );
 
 
-/* =========================
-   START
-========================= */
+  return lastId + 1;
+}
 
-loadNextId();
+
+// ======================================================
+// UPDATE
+// ======================================================
+
+if (updateButton) {
+
+  updateButton.addEventListener(
+    "click",
+    async () => {
+
+      if (!selectedDocumentId) {
+
+        alert(
+          "ابحث عن كلمة موجودة أولاً."
+        );
+
+        return;
+      }
+
+
+      const word =
+        wordInput
+          ? wordInput.value.trim()
+          : "";
+
+
+      const meaning =
+        meaningInput
+          ? meaningInput.value.trim()
+          : "";
+
+
+      const synonyms =
+        synonymsInput
+          ? synonymsInput.value.trim()
+          : "";
+
+
+      const language =
+        languageSelect
+          ? languageSelect.value.trim()
+          : "";
+
+
+      if (!word) {
+
+        alert(
+          "اكتب الكلمة."
+        );
+
+        return;
+      }
+
+
+      if (!meaning) {
+
+        alert(
+          "اكتب المعنى بالعربي."
+        );
+
+        return;
+      }
+
+
+      if (!language) {
+
+        alert(
+          "اختر اللغة."
+        );
+
+        return;
+      }
+
+
+      try {
+
+        const wordDocument =
+          doc(
+            db,
+            COLLECTION_NAME,
+            selectedDocumentId
+          );
+
+
+        await updateDoc(
+          wordDocument,
+          {
+
+            word:
+              word,
+
+            meaning:
+              meaning,
+
+            synonyms:
+              synonyms,
+
+            language:
+              language
+
+          }
+        );
+
+
+        alert(
+          "تم تحديث الكلمة بنجاح."
+        );
+
+
+        await clearForm();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "حدث خطأ أثناء تحديث الكلمة."
+        );
+      }
+
+    }
+  );
+}
+
+
+// ======================================================
+// DELETE
+// ======================================================
+
+if (deleteButton) {
+
+  deleteButton.addEventListener(
+    "click",
+    async () => {
+
+      if (!selectedDocumentId) {
+
+        alert(
+          "ابحث عن كلمة موجودة أولاً."
+        );
+
+        return;
+      }
+
+
+      const confirmDelete =
+        confirm(
+          "هل أنت متأكد من حذف هذه الكلمة؟"
+        );
+
+
+      if (!confirmDelete) {
+        return;
+      }
+
+
+      try {
+
+        const wordDocument =
+          doc(
+            db,
+            COLLECTION_NAME,
+            selectedDocumentId
+          );
+
+
+        await deleteDoc(
+          wordDocument
+        );
+
+
+        alert(
+          "تم حذف الكلمة بنجاح."
+        );
+
+
+        await clearForm();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "حدث خطأ أثناء حذف الكلمة."
+        );
+      }
+
+    }
+  );
+}
+
+
+// ======================================================
+// SHOW ALL DATA
+// ======================================================
+
+if (
+  showDataButton &&
+  dataTable
+) {
+
+  showDataButton.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        const snapshot =
+          await getDocs(
+            collection(
+              db,
+              COLLECTION_NAME
+            )
+          );
+
+
+        /*
+         * لا نغير طريقة عرض الجدول
+         */
+
+        dataTable.innerHTML =
+          "";
+
+
+        if (snapshot.empty) {
+
+          alert(
+            "لا توجد بيانات في قاعدة البيانات."
+          );
+
+          return;
+        }
+
+
+        const rows = [];
+
+
+        snapshot.forEach(
+          (firebaseDoc) => {
+
+            rows.push(
+              firebaseDoc.data()
+            );
+
+          }
+        );
+
+
+        /*
+         * ترتيب ID
+         */
+
+        rows.sort(
+          (a, b) =>
+            Number(a.id) -
+            Number(b.id)
+        );
+
+
+        /*
+         * إنشاء الصفوف
+         */
+
+        rows.forEach(
+          (data) => {
+
+            const row =
+              document.createElement("tr");
+
+
+            const idCell =
+              document.createElement("td");
+
+
+            const wordCell =
+              document.createElement("td");
+
+
+            const meaningCell =
+              document.createElement("td");
+
+
+            const synonymsCell =
+              document.createElement("td");
+
+
+            const languageCell =
+              document.createElement("td");
+
+
+            idCell.textContent =
+              data.id ?? "-";
+
+
+            wordCell.textContent =
+              data.word ?? "-";
+
+
+            meaningCell.textContent =
+              data.meaning ?? "-";
+
+
+            synonymsCell.textContent =
+              data.synonyms ?? "-";
+
+
+            languageCell.textContent =
+              data.language ?? "-";
+
+
+            row.appendChild(
+              idCell
+            );
+
+
+            row.appendChild(
+              wordCell
+            );
+
+
+            row.appendChild(
+              meaningCell
+            );
+
+
+            row.appendChild(
+              synonymsCell
+            );
+
+
+            row.appendChild(
+              languageCell
+            );
+
+
+            dataTable.appendChild(
+              row
+            );
+
+          }
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "حدث خطأ أثناء عرض البيانات."
+        );
+      }
+
+    }
+  );
+}
+
+
+// ======================================================
+// START
+// ======================================================
+
+updateGenerateButton();
