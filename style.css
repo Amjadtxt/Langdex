@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
 
 * {
-  padding: 0.1px;font-family: 'Cairo', sans-serif;
+  padding: 0.1px;
+  font-family: 'Cairo', sans-serif;
 }
 
 .content {
@@ -32,7 +33,7 @@
   border-collapse: collapse;
   background-color: transparent;
   color: #ffffff;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
 }
 
 
@@ -119,7 +120,7 @@
 body {
   display: flex;
   align-content: center;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
   flex-direction: column;
   background: #1E2C3C;
   justify-content: center;
@@ -139,12 +140,11 @@ header {
 /* NAVBAR */
 
 .bar {
-  margin-top:0;
+  margin-top: 0;
   width: 100%;
   display: flex;
   justify-content: center;
   border: 1px solid #FFFFFF;
- 
 }
 
 nav ul {
@@ -214,7 +214,7 @@ button {
   border: none;
   padding: 10px 20px;
   border-radius: 8px;
-  font-family: monospace;
+  font-family: 'Cairo', sans-serif;
   font-size: 16px;
   cursor: pointer;
   transition: 0.2s;
