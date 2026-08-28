@@ -1,10 +1,8 @@
-=====================================================
-// FIREBASE IMPORTS
+// ======================================================
+// FIREBASE
 // ======================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
 
 import {
   getFirestore,
@@ -22,7 +20,7 @@ import {
 // ======================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKshc43O6DYwfPheHH9CsraX3VpU2fjc",
+  apiKey: "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
   authDomain: "langdex.firebaseapp.com",
   projectId: "langdex",
   storageBucket: "langdex.firebasestorage.app",
@@ -38,17 +36,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const analytics = getAnalytics(app);
-
 const db = getFirestore(app);
 
 
 // ======================================================
-// FORM ELEMENTS
+// FORM
 // ======================================================
 
-const form =
-  document.querySelector(".form");
+const form = document.querySelector(".form");
 
 let idInput = null;
 let wordInput = null;
@@ -58,60 +53,39 @@ let languageSelect = null;
 
 
 // ======================================================
-// BUTTONS
-// ======================================================
-
-let registerButton = null;
-let updateButton = null;
-let deleteButton = null;
-let clearButton = null;
-
-
-// ======================================================
-// GET FORM ELEMENTS
+// GET FORM INPUTS
 // ======================================================
 
 if (form) {
 
-  const inputs =
-    form.querySelectorAll("input");
+  const inputs = form.querySelectorAll("input");
 
-
-  idInput =
-    inputs[0];
-
-  wordInput =
-    inputs[1];
-
-  meaningInput =
-    inputs[2];
-
-  synonymsInput =
-    inputs[3];
-
+  idInput = inputs[0] || null;
+  wordInput = inputs[1] || null;
+  meaningInput = inputs[2] || null;
+  synonymsInput = inputs[3] || null;
 
   languageSelect =
     form.querySelector("select");
-
-
-  registerButton =
-    document.querySelector(".reg");
-
-  updateButton =
-    document.querySelector(".upa");
-
-  deleteButton =
-    document.querySelector(".del");
-
-  clearButton =
-    document.querySelector(".cel");
 
 }
 
 
 // ======================================================
-// GENERATE BUTTON
+// BUTTONS
 // ======================================================
+
+const registerButton =
+  document.querySelector(".reg");
+
+const updateButton =
+  document.querySelector(".upa");
+
+const deleteButton =
+  document.querySelector(".del");
+
+const clearButton =
+  document.querySelector(".cel");
 
 const generateButton =
   document.querySelector(".gen");
@@ -122,6 +96,7 @@ const generateButton =
 // ======================================================
 
 const searchInput =
+  document.querySelector(".search-txt") ||
   document.querySelector(".search-section input");
 
 const searchButton =
@@ -129,7 +104,7 @@ const searchButton =
 
 
 // ======================================================
-// SHOW ALL DATA
+// SHOW DATA
 // ======================================================
 
 const showDataButton =
@@ -140,39 +115,26 @@ const dataTable =
 
 
 // ======================================================
-// SELECTED DOCUMENT
+// VARIABLES
 // ======================================================
 
-let selectedDocumentId =
-  null;
+// Firestore document ID
+let selectedDocumentId = null;
 
 
-// ======================================================
-// EXISTING DATA STATE
-// ======================================================
-
-let isExistingData =
-  false;
+// True when the form contains existing database data
+let isExistingData = false;
 
 
-// ======================================================
-// SEARCH RESULTS
-// ======================================================
-
+// All search results
 let searchResults = [];
 
 
-// ======================================================
-// SEARCH INDEX
-// ======================================================
-
+// Current search position
 let searchIndex = 0;
 
 
-// ======================================================
-// LAST SEARCH
-// ======================================================
-
+// Last search text
 let lastSearchText = "";
 
 
@@ -189,31 +151,19 @@ function updateGenerateButton() {
 
   if (isExistingData) {
 
-    generateButton.disabled =
-      true;
+    generateButton.disabled = true;
 
-    generateButton.style.opacity =
-      "0.5";
+    generateButton.style.opacity = "0.5";
 
-    generateButton.style.cursor =
-      "not-allowed";
-
-    generateButton.title =
-      "This data already exists. Update or delete it.";
+    generateButton.style.cursor = "not-allowed";
 
   } else {
 
-    generateButton.disabled =
-      false;
+    generateButton.disabled = false;
 
-    generateButton.style.opacity =
-      "1";
+    generateButton.style.opacity = "1";
 
-    generateButton.style.cursor =
-      "pointer";
-
-    generateButton.title =
-      "";
+    generateButton.style.cursor = "pointer";
 
   }
 
@@ -235,41 +185,34 @@ async function setNextId() {
 
     const snapshot =
       await getDocs(
-        collection(
-          db,
-          "words"
-        )
+        collection(db, "words")
       );
 
 
-    let lastId =
-      0;
+    let lastId = 0;
 
 
-    snapshot.forEach(
-      (firebaseDoc) => {
+    snapshot.forEach((firebaseDoc) => {
 
-        const data =
-          firebaseDoc.data();
-
-
-        const currentId =
-          Number(
-            data.id
-          );
+      const data =
+        firebaseDoc.data();
 
 
-        if (
-          currentId > lastId
-        ) {
+      const currentId =
+        Number(data.id);
 
-          lastId =
-            currentId;
 
-        }
+      if (
+        !isNaN(currentId) &&
+        currentId > lastId
+      ) {
+
+        lastId =
+          currentId;
 
       }
-    );
+
+    });
 
 
     idInput.value =
@@ -278,7 +221,10 @@ async function setNextId() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Error getting next ID:",
+      error
+    );
 
 
     alert(
@@ -297,57 +243,39 @@ async function setNextId() {
 
 async function clearForm() {
 
-  if (!form) {
-    return;
+  // Clear Word
+  if (wordInput) {
+    wordInput.value = "";
   }
 
 
-  // ==============================================
-  // CLEAR INPUTS
-  // ==============================================
-
-  wordInput.value =
-    "";
-
-  meaningInput.value =
-    "";
-
-  synonymsInput.value =
-    "";
+  // Clear Meaning
+  if (meaningInput) {
+    meaningInput.value = "";
+  }
 
 
-  // ==============================================
-  // RESET LANGUAGE
-  // ==============================================
+  // Clear Synonyms
+  if (synonymsInput) {
+    synonymsInput.value = "";
+  }
 
+
+  // Reset Language
   if (languageSelect) {
-
-    languageSelect.selectedIndex =
-      0;
-
+    languageSelect.selectedIndex = 0;
   }
 
 
-  // ==============================================
-  // RESET SELECTED DOCUMENT
-  // ==============================================
-
-  selectedDocumentId =
-    null;
+  // Remove selected Firestore document
+  selectedDocumentId = null;
 
 
-  // ==============================================
-  // DATA IS NEW AGAIN
-  // ==============================================
-
-  isExistingData =
-    false;
+  // Form is now ready for new data
+  isExistingData = false;
 
 
-  // ==============================================
-  // RESET SEARCH
-  // ==============================================
-
+  // Reset search
   searchResults = [];
 
   searchIndex = 0;
@@ -355,35 +283,34 @@ async function clearForm() {
   lastSearchText = "";
 
 
+  // Clear search input
   if (searchInput) {
-
-    searchInput.value =
-      "";
-
+    searchInput.value = "";
   }
 
 
-  // ==============================================
-  // UPDATE GENERATE STATE
-  // ==============================================
-
+  // Enable Generate
   updateGenerateButton();
 
 
-  // ==============================================
-  // GET LAST ID + 1
-  // ==============================================
-
+  // Get last ID + 1
   await setNextId();
 
 }
 
 
 // ======================================================
-// INITIAL SETUP
+// INITIALIZE ID
 // ======================================================
 
-setNextId();
+if (idInput) {
+  setNextId();
+}
+
+
+// ======================================================
+// INITIAL GENERATE STATE
+// ======================================================
 
 updateGenerateButton();
 
@@ -416,21 +343,37 @@ if (registerButton) {
     "click",
     async () => {
 
-
-      // ================================================
-      // DON'T REGISTER EXISTING SEARCHED DATA
-      // ================================================
+      // ------------------------------------------------
+      // DON'T ALLOW REGISTERING SEARCH RESULT
+      // ------------------------------------------------
 
       if (isExistingData) {
 
         alert(
-          "This word already exists in the database.\n\nYou can UPDATE or DELETE it."
+          "This word already exists.\n\nUse UPDATE or DELETE."
         );
 
         return;
-
       }
 
+
+      // ------------------------------------------------
+      // CHECK FORM
+      // ------------------------------------------------
+
+      if (!wordInput || !meaningInput) {
+
+        alert(
+          "Form elements were not found."
+        );
+
+        return;
+      }
+
+
+      // ------------------------------------------------
+      // GET VALUES
+      // ------------------------------------------------
 
       const word =
         wordInput.value.trim();
@@ -441,86 +384,80 @@ if (registerButton) {
 
 
       const synonyms =
-        synonymsInput.value.trim();
+        synonymsInput
+          ? synonymsInput.value.trim()
+          : "";
 
 
       const language =
-        languageSelect.value;
+        languageSelect
+          ? languageSelect.value
+          : "";
 
 
-      // ================================================
+      // ------------------------------------------------
       // REQUIRED FIELDS
-      // ================================================
+      // ------------------------------------------------
 
-      if (
-        !word ||
-        !meaning
-      ) {
+      if (!word || !meaning) {
 
         alert(
           "Please fill in WORD and MEANING."
         );
 
         return;
-
       }
 
 
       try {
 
-        // ==============================================
-        // GET ALL DATA
-        // ==============================================
+        // ----------------------------------------------
+        // GET DATABASE
+        // ----------------------------------------------
 
         const snapshot =
           await getDocs(
-            collection(
-              db,
-              "words"
-            )
+            collection(db, "words")
           );
 
 
-        // ==============================================
-        // CHECK DUPLICATE WORD
-        // ==============================================
+        // ----------------------------------------------
+        // CHECK DUPLICATE
+        // ----------------------------------------------
 
-        let existingWord =
-          null;
-
-
-        snapshot.forEach(
-          (firebaseDoc) => {
-
-            const data =
-              firebaseDoc.data();
+        let existingWord = null;
 
 
-            const databaseWord =
-              String(
-                data.word ?? ""
-              )
-              .trim()
-              .toLowerCase();
+        snapshot.forEach((firebaseDoc) => {
+
+          const data =
+            firebaseDoc.data();
 
 
-            if (
-              databaseWord ===
-              word.toLowerCase()
-            ) {
+          const databaseWord =
+            String(
+              data.word ?? ""
+            )
+            .trim()
+            .toLowerCase();
 
-              existingWord =
-                data;
 
-            }
+          if (
+            databaseWord ===
+            word.toLowerCase()
+          ) {
+
+            existingWord =
+              data;
 
           }
-        );
+
+        });
 
 
-        // ==============================================
-        // DUPLICATE
-        // ==============================================
+        // ----------------------------------------------
+        // DUPLICATE FOUND
+        // ----------------------------------------------
 
         if (existingWord) {
 
@@ -529,123 +466,112 @@ if (registerButton) {
           );
 
           return;
-
         }
 
 
-        // ==============================================
-        // GET LAST ID
-        // ==============================================
+        // ----------------------------------------------
+        // FIND LAST ID
+        // ----------------------------------------------
 
-        let lastId =
-          0;
-
-
-        snapshot.forEach(
-          (firebaseDoc) => {
-
-            const data =
-              firebaseDoc.data();
+        let lastId = 0;
 
 
-            const currentId =
-              Number(
-                data.id
-              );
+        snapshot.forEach((firebaseDoc) => {
+
+          const data =
+            firebaseDoc.data();
 
 
-            if (
-              currentId > lastId
-            ) {
+          const currentId =
+            Number(data.id);
 
-              lastId =
-                currentId;
 
-            }
+          if (
+            !isNaN(currentId) &&
+            currentId > lastId
+          ) {
+
+            lastId =
+              currentId;
 
           }
-        );
+
+        });
 
 
         const newId =
           lastId + 1;
 
 
-        // ==============================================
+        // ----------------------------------------------
         // ADD DATA
-        // ==============================================
+        // ----------------------------------------------
 
         await addDoc(
-          collection(
-            db,
-            "words"
-          ),
+          collection(db, "words"),
           {
 
-            id:
-              newId,
+            id: newId,
 
-            word:
-              word,
+            word: word,
 
-            meaning:
-              meaning,
+            meaning: meaning,
 
-            synonyms:
-              synonyms,
+            synonyms: synonyms,
 
-            language:
-              language
+            language: language
 
           }
         );
 
 
-        // ==============================================
+        // ----------------------------------------------
         // SUCCESS
-        // ==============================================
+        // ----------------------------------------------
 
         alert(
           "Data registered successfully!"
         );
 
 
-        // ==============================================
+        // ----------------------------------------------
         // PREPARE NEXT ID
-        // ==============================================
+        // ----------------------------------------------
 
-        idInput.value =
-          newId + 1;
-
-
-        wordInput.value =
-          "";
-
-        meaningInput.value =
-          "";
-
-        synonymsInput.value =
-          "";
+        if (idInput) {
+          idInput.value =
+            newId + 1;
+        }
 
 
-        languageSelect.selectedIndex =
-          0;
+        // Clear fields
+
+        wordInput.value = "";
+
+        meaningInput.value = "";
+
+        if (synonymsInput) {
+          synonymsInput.value = "";
+        }
+
+        if (languageSelect) {
+          languageSelect.selectedIndex = 0;
+        }
 
 
-        selectedDocumentId =
-          null;
+        selectedDocumentId = null;
 
-
-        isExistingData =
-          false;
-
+        isExistingData = false;
 
         updateGenerateButton();
 
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Error saving data:",
+          error
+        );
 
 
         alert(
@@ -670,9 +596,7 @@ if (
   searchButton
 ) {
 
-
-  // Focus search
-
+  // Focus Search
   searchInput.focus();
 
 
@@ -680,16 +604,15 @@ if (
     "click",
     async () => {
 
-
       const searchText =
         searchInput.value
           .trim()
           .toLowerCase();
 
 
-      // ================================================
+      // ------------------------------------------------
       // EMPTY SEARCH
-      // ================================================
+      // ------------------------------------------------
 
       if (!searchText) {
 
@@ -698,119 +621,101 @@ if (
         );
 
         return;
-
       }
 
 
       try {
 
-        // ==============================================
+        // ------------------------------------------------
         // NEW SEARCH
-        // ==============================================
+        // ------------------------------------------------
 
         if (
           searchText !==
           lastSearchText
         ) {
 
-
           const snapshot =
             await getDocs(
-              collection(
-                db,
-                "words"
-              )
+              collection(db, "words")
             );
 
 
           searchResults = [];
 
 
-          // ============================================
-          // FIND ALL MATCHES
-          // ============================================
+          // ----------------------------------------------
+          // SEARCH ALL FIELDS
+          // ----------------------------------------------
 
-          snapshot.forEach(
-            (firebaseDoc) => {
+          snapshot.forEach((firebaseDoc) => {
 
-              const data =
-                firebaseDoc.data();
-
-
-              const id =
-                String(
-                  data.id ?? ""
-                ).toLowerCase();
+            const data =
+              firebaseDoc.data();
 
 
-              const word =
-                String(
-                  data.word ?? ""
-                ).toLowerCase();
+            const id =
+              String(
+                data.id ?? ""
+              ).toLowerCase();
 
 
-              const meaning =
-                String(
-                  data.meaning ?? ""
-                ).toLowerCase();
+            const word =
+              String(
+                data.word ?? ""
+              ).toLowerCase();
 
 
-              const synonyms =
-                String(
-                  data.synonyms ?? ""
-                ).toLowerCase();
+            const meaning =
+              String(
+                data.meaning ?? ""
+              ).toLowerCase();
 
 
-              const language =
-                String(
-                  data.language ?? ""
-                ).toLowerCase();
+            const synonyms =
+              String(
+                data.synonyms ?? ""
+              ).toLowerCase();
 
 
-              if (
+            const language =
+              String(
+                data.language ?? ""
+              ).toLowerCase();
 
-                id.includes(
-                  searchText
-                ) ||
 
-                word.includes(
-                  searchText
-                ) ||
+            if (
 
-                meaning.includes(
-                  searchText
-                ) ||
+              id.includes(searchText) ||
 
-                synonyms.includes(
-                  searchText
-                ) ||
+              word.includes(searchText) ||
 
-                language.includes(
-                  searchText
-                )
+              meaning.includes(searchText) ||
 
-              ) {
+              synonyms.includes(searchText) ||
 
-                searchResults.push({
+              language.includes(searchText)
 
-                  data:
-                    data,
+            ) {
 
-                  documentId:
-                    firebaseDoc.id
+              searchResults.push({
 
-                });
+                data:
+                  data,
 
-              }
+                documentId:
+                  firebaseDoc.id
+
+              });
 
             }
-          );
+
+          });
 
 
           // Start from first result
 
-          searchIndex =
-            0;
+          searchIndex = 0;
 
 
           lastSearchText =
@@ -819,13 +724,12 @@ if (
         }
 
 
-        // ==============================================
+        // ------------------------------------------------
         // NO RESULTS
-        // ==============================================
+        // ------------------------------------------------
 
         if (
-          searchResults.length ===
-          0
+          searchResults.length === 0
         ) {
 
           alert(
@@ -833,13 +737,12 @@ if (
           );
 
           return;
-
         }
 
 
-        // ==============================================
+        // ------------------------------------------------
         // GET CURRENT RESULT
-        // ==============================================
+        // ------------------------------------------------
 
         const result =
           searchResults[
@@ -851,21 +754,17 @@ if (
           result.data;
 
 
-        const foundDocumentId =
+        // ------------------------------------------------
+        // SAVE FIRESTORE DOCUMENT ID
+        // ------------------------------------------------
+
+        selectedDocumentId =
           result.documentId;
 
 
-        // ==============================================
-        // SAVE DOCUMENT ID
-        // ==============================================
-
-        selectedDocumentId =
-          foundDocumentId;
-
-
-        // ==============================================
-        // EXISTING DATA
-        // ==============================================
+        // ------------------------------------------------
+        // THIS IS EXISTING DATA
+        // ------------------------------------------------
 
         isExistingData =
           true;
@@ -874,33 +773,53 @@ if (
         updateGenerateButton();
 
 
-        // ==============================================
-        // FILL FORM
-        // ==============================================
+        // ------------------------------------------------
+        // PUT DATA INTO FORM
+        // ------------------------------------------------
 
-        idInput.value =
-          foundData.id ?? "";
+        if (idInput) {
 
+          idInput.value =
+            foundData.id ?? "";
 
-        wordInput.value =
-          foundData.word ?? "";
-
-
-        meaningInput.value =
-          foundData.meaning ?? "";
+        }
 
 
-        synonymsInput.value =
-          foundData.synonyms ?? "";
+        if (wordInput) {
+
+          wordInput.value =
+            foundData.word ?? "";
+
+        }
 
 
-        languageSelect.value =
-          foundData.language ?? "";
+        if (meaningInput) {
+
+          meaningInput.value =
+            foundData.meaning ?? "";
+
+        }
 
 
-        // ==============================================
-        // NEXT RESULT
-        // ==============================================
+        if (synonymsInput) {
+
+          synonymsInput.value =
+            foundData.synonyms ?? "";
+
+        }
+
+
+        if (languageSelect) {
+
+          languageSelect.value =
+            foundData.language ?? "";
+
+        }
+
+
+        // ------------------------------------------------
+        // MOVE TO NEXT RESULT
+        // ------------------------------------------------
 
         searchIndex++;
 
@@ -910,15 +829,17 @@ if (
           searchResults.length
         ) {
 
-          searchIndex =
-            0;
+          searchIndex = 0;
 
         }
 
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Error searching database:",
+          error
+        );
 
 
         alert(
@@ -944,6 +865,9 @@ if (updateButton) {
     "click",
     async () => {
 
+      // ------------------------------------------------
+      // NO SELECTED DATA
+      // ------------------------------------------------
 
       if (!selectedDocumentId) {
 
@@ -952,37 +876,48 @@ if (updateButton) {
         );
 
         return;
-
       }
 
 
+      // ------------------------------------------------
+      // GET VALUES
+      // ------------------------------------------------
+
       const word =
-        wordInput.value.trim();
+        wordInput
+          ? wordInput.value.trim()
+          : "";
 
 
       const meaning =
-        meaningInput.value.trim();
+        meaningInput
+          ? meaningInput.value.trim()
+          : "";
 
 
       const synonyms =
-        synonymsInput.value.trim();
+        synonymsInput
+          ? synonymsInput.value.trim()
+          : "";
 
 
       const language =
-        languageSelect.value;
+        languageSelect
+          ? languageSelect.value
+          : "";
 
 
-      if (
-        !word ||
-        !meaning
-      ) {
+      // ------------------------------------------------
+      // REQUIRED
+      // ------------------------------------------------
+
+      if (!word || !meaning) {
 
         alert(
           "Please fill in WORD and MEANING."
         );
 
         return;
-
       }
 
 
@@ -995,6 +930,10 @@ if (updateButton) {
             selectedDocumentId
           );
 
+
+        // ------------------------------------------------
+        // UPDATE DATA
+        // ------------------------------------------------
 
         await updateDoc(
           wordDocument,
@@ -1021,12 +960,17 @@ if (updateButton) {
         );
 
 
+        // Clear after update
+
         await clearForm();
 
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Error updating data:",
+          error
+        );
 
 
         alert(
@@ -1052,6 +996,9 @@ if (deleteButton) {
     "click",
     async () => {
 
+      // ------------------------------------------------
+      // NO SELECTED DATA
+      // ------------------------------------------------
 
       if (!selectedDocumentId) {
 
@@ -1060,9 +1007,12 @@ if (deleteButton) {
         );
 
         return;
-
       }
 
+
+      // ------------------------------------------------
+      // CONFIRM
+      // ------------------------------------------------
 
       const confirmDelete =
         confirm(
@@ -1071,9 +1021,7 @@ if (deleteButton) {
 
 
       if (!confirmDelete) {
-
         return;
-
       }
 
 
@@ -1087,6 +1035,10 @@ if (deleteButton) {
           );
 
 
+        // ------------------------------------------------
+        // DELETE
+        // ------------------------------------------------
+
         await deleteDoc(
           wordDocument
         );
@@ -1097,12 +1049,17 @@ if (deleteButton) {
         );
 
 
+        // Clear after delete
+
         await clearForm();
 
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Error deleting data:",
+          error
+        );
 
 
         alert(
@@ -1131,66 +1088,59 @@ if (
     "click",
     async () => {
 
-
       try {
+
+        // ----------------------------------------------
+        // GET DATABASE
+        // ----------------------------------------------
 
         const snapshot =
           await getDocs(
-            collection(
-              db,
-              "words"
-            )
+            collection(db, "words")
           );
 
 
-        // Clear table
+        // ----------------------------------------------
+        // CLEAR TABLE
+        // ----------------------------------------------
 
         dataTable.innerHTML =
           "";
 
 
-        // ==============================================
+        // ----------------------------------------------
         // EMPTY DATABASE
-        // ==============================================
+        // ----------------------------------------------
 
-        if (
-          snapshot.empty
-        ) {
+        if (snapshot.empty) {
 
           alert(
             "There is no data in the database."
           );
 
           return;
-
         }
 
+
+        // ----------------------------------------------
+        // STORE DATA
+        // ----------------------------------------------
 
         const rows = [];
 
 
-        // ==============================================
-        // GET DATA
-        // ==============================================
+        snapshot.forEach((firebaseDoc) => {
 
-        snapshot.forEach(
-          (firebaseDoc) => {
+          rows.push(
+            firebaseDoc.data()
+          );
 
-            const data =
-              firebaseDoc.data();
+        });
 
 
-            rows.push(
-              data
-            );
-
-          }
-        );
-
-
-        // ==============================================
+        // ----------------------------------------------
         // SORT BY ID
-        // ==============================================
+        // ----------------------------------------------
 
         rows.sort(
           (a, b) =>
@@ -1199,114 +1149,106 @@ if (
         );
 
 
-        // ==============================================
-        // CREATE ROWS
-        // ==============================================
+        // ----------------------------------------------
+        // CREATE TABLE ROWS
+        // ----------------------------------------------
 
-        rows.forEach(
-          (data) => {
+        rows.forEach((data) => {
 
-
-            const row =
-              document.createElement(
-                "tr"
-              );
+          const row =
+            document.createElement("tr");
 
 
-            const idCell =
-              document.createElement(
-                "td"
-              );
+          const idCell =
+            document.createElement("td");
 
 
-            const wordCell =
-              document.createElement(
-                "td"
-              );
+          const wordCell =
+            document.createElement("td");
 
 
-            const meaningCell =
-              document.createElement(
-                "td"
-              );
+          const meaningCell =
+            document.createElement("td");
 
 
-            const synonymsCell =
-              document.createElement(
-                "td"
-              );
+          const synonymsCell =
+            document.createElement("td");
 
 
-            const languageCell =
-              document.createElement(
-                "td"
-              );
+          const languageCell =
+            document.createElement("td");
 
 
-            // ==========================================
-            // VALUES
-            // ==========================================
+          // --------------------------------------------
+          // VALUES
+          // --------------------------------------------
 
-            idCell.textContent =
-              data.id ?? "-";
-
-
-            wordCell.textContent =
-              data.word ?? "-";
+          idCell.textContent =
+            data.id ?? "-";
 
 
-            meaningCell.textContent =
-              data.meaning ?? "-";
+          wordCell.textContent =
+            data.word ?? "-";
 
 
-            synonymsCell.textContent =
-              data.synonyms ?? "-";
+          meaningCell.textContent =
+            data.meaning ?? "-";
 
 
-            languageCell.textContent =
-              data.language ?? "-";
+          synonymsCell.textContent =
+            data.synonyms ?? "-";
 
 
-            // ==========================================
-            // APPEND
-            // ==========================================
-
-            row.appendChild(
-              idCell
-            );
+          languageCell.textContent =
+            data.language ?? "-";
 
 
-            row.appendChild(
-              wordCell
-            );
+          // --------------------------------------------
+          // APPEND CELLS
+          // --------------------------------------------
+
+          row.appendChild(
+            idCell
+          );
 
 
-            row.appendChild(
-              meaningCell
-            );
+          row.appendChild(
+            wordCell
+          );
 
 
-            row.appendChild(
-              synonymsCell
-            );
+          row.appendChild(
+            meaningCell
+          );
 
 
-            row.appendChild(
-              languageCell
-            );
+          row.appendChild(
+            synonymsCell
+          );
 
 
-            dataTable.appendChild(
-              row
-            );
+          row.appendChild(
+            languageCell
+          );
 
-          }
-        );
+
+          // --------------------------------------------
+          // APPEND ROW
+          // --------------------------------------------
+
+          dataTable.appendChild(
+            row
+          );
+
+        });
 
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Error loading data:",
+          error
+        );
 
 
         alert(
