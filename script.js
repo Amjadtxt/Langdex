@@ -1,9 +1,15 @@
 // ======================================================
-// LANGDEX - FIREBASE + WIKTIONARY
+// LANGDEX - FIREBASE + WIKTAPI + MYMEMORY
 // ======================================================
 
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+// ======================================================
+// FIREBASE
+// ======================================================
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
   getFirestore,
@@ -13,8 +19,7 @@ import {
   doc,
   updateDoc,
   deleteDoc
-} from
-  "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 
 // ======================================================
@@ -22,29 +27,65 @@ import {
 // ======================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
-  authDomain: "langdex.firebaseapp.com",
-  projectId: "langdex",
-  storageBucket: "langdex.firebasestorage.app",
-  messagingSenderId: "819838317933",
-  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-  measurementId: "G-F60CC2CDC"
+
+  apiKey:
+    "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
+
+  authDomain:
+    "langdex.firebaseapp.com",
+
+  projectId:
+    "langdex",
+
+  storageBucket:
+    "langdex.firebasestorage.app",
+
+  messagingSenderId:
+    "819838317933",
+
+  appId:
+    "1:819838317933:web:cae7f4531ea32f958c5664",
+
+  measurementId:
+    "G-F60CC2CDC"
+
 };
 
 
-const app = initializeApp(firebaseConfig);
+// ======================================================
+// INITIALIZE FIREBASE
+// ======================================================
 
-const db = getFirestore(app);
+const app =
+  initializeApp(firebaseConfig);
 
-const WORDS_COLLECTION = "words";
+const db =
+  getFirestore(app);
 
 
 // ======================================================
-// FORM ELEMENTS
+// CONSTANTS
+// ======================================================
+
+const COLLECTION_NAME = "words";
+
+const WIKTAPI_BASE =
+  "https://api.wiktapi.dev/v1";
+
+const MYMEMORY_BASE =
+  "https://api.mymemory.translated.net/get";
+
+const FREE_DICTIONARY_BASE =
+  "https://api.dictionaryapi.dev/api/v2/entries/en";
+
+
+// ======================================================
+// FORM
 // ======================================================
 
 const form =
   document.querySelector(".form");
+
 
 let idInput = null;
 let wordInput = null;
@@ -72,7 +113,6 @@ if (form) {
 
   languageSelect =
     form.querySelector("select");
-
 }
 
 
@@ -99,13 +139,12 @@ const clearButton =
 
 const searchInput =
   document.querySelector(".search-txt") ||
-  document.querySelector(".search-section input");
+  document.querySelector(
+    ".search-section input"
+  );
 
 const searchButton =
   document.querySelector(".search-btn");
-
-const searchResult =
-  document.querySelector(".search-result");
 
 
 // ======================================================
@@ -135,7 +174,7 @@ let lastSearchText = "";
 
 
 // ======================================================
-// HELPERS
+// NORMALIZE
 // ======================================================
 
 function normalize(value) {
@@ -147,33 +186,325 @@ function normalize(value) {
 }
 
 
-function cleanText(value) {
+// ======================================================
+// SAFE STRING
+// ======================================================
 
-  return String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
+function safeString(value) {
 
-}
+  if (
+    value === null ||
+    value === undefined
+  ) {
 
+    return "";
 
-function uniqueValues(array) {
+  }
 
-  return [
-    ...new Set(
-      array
-        .map(cleanText)
-        .filter(Boolean)
-    )
-  ];
+  return String(value).trim();
 
 }
 
 
 // ======================================================
-// NEXT ID
+// UNIQUE ARRAY
 // ======================================================
 
-async function getNextId() {
+function uniqueArray(values) {
+
+  const result = [];
+
+  const seen =
+    new Set();
+
+  for (
+    const value of values
+  ) {
+
+    const text =
+      safeString(value);
+
+    if (!text) {
+      continue;
+    }
+
+    const key =
+      normalize(text);
+
+    if (
+      !seen.has(key)
+    ) {
+
+      seen.add(key);
+
+      result.push(text);
+
+    }
+
+  }
+
+  return result;
+
+}
+
+
+// ======================================================
+// LANGUAGE CODE
+// ======================================================
+
+function getLanguageCode(language) {
+
+  const value =
+    normalize(language);
+
+
+  if (
+    value === "english" ||
+    value === "en"
+  ) {
+
+    return "en";
+
+  }
+
+
+  if (
+    value === "urdu" ||
+    value === "ur"
+  ) {
+
+    return "ur";
+
+  }
+
+
+  if (
+    value === "hindi" ||
+    value === "hi"
+  ) {
+
+    return "hi";
+
+  }
+
+
+  // Common languages
+
+  const languages = {
+
+    french: "fr",
+
+    german: "de",
+
+    spanish: "es",
+
+    italian: "it",
+
+    portuguese: "pt",
+
+    russian: "ru",
+
+    japanese: "ja",
+
+    korean: "ko",
+
+    chinese: "zh",
+
+    arabic: "ar",
+
+    turkish: "tr",
+
+    persian: "fa",
+
+    bengali: "bn",
+
+    punjabi: "pa",
+
+    dutch: "nl",
+
+    polish: "pl",
+
+    greek: "el"
+
+  };
+
+
+  return languages[value] || null;
+
+}
+
+
+// ======================================================
+// LANGUAGE NAME
+// ======================================================
+
+function languageName(languageCode) {
+
+  const code =
+    normalize(languageCode);
+
+
+  const languages = {
+
+    en: "English",
+
+    ur: "Urdu",
+
+    hi: "Hindi",
+
+    ar: "Arabic",
+
+    fr: "French",
+
+    de: "German",
+
+    es: "Spanish",
+
+    it: "Italian",
+
+    pt: "Portuguese",
+
+    ru: "Russian",
+
+    ja: "Japanese",
+
+    ko: "Korean",
+
+    zh: "Chinese",
+
+    fa: "Persian",
+
+    bn: "Bengali",
+
+    pa: "Punjabi",
+
+    nl: "Dutch",
+
+    pl: "Polish",
+
+    el: "Greek",
+
+    tr: "Turkish"
+
+  };
+
+
+  return (
+    languages[code] ||
+    language ||
+    "Unknown"
+  );
+
+}
+
+
+// ======================================================
+// SET LANGUAGE SELECT
+// ======================================================
+
+function setLanguage(language) {
+
+  if (!languageSelect) {
+    return;
+  }
+
+
+  const wanted =
+    normalize(language);
+
+
+  let found = false;
+
+
+  for (
+    let i = 0;
+    i < languageSelect.options.length;
+    i++
+  ) {
+
+    const option =
+      languageSelect.options[i];
+
+    const optionText =
+      normalize(option.text);
+
+    const optionValue =
+      normalize(option.value);
+
+
+    if (
+      optionText === wanted ||
+      optionValue === wanted
+    ) {
+
+      languageSelect.selectedIndex =
+        i;
+
+      found = true;
+
+      break;
+
+    }
+
+  }
+
+
+  if (found) {
+    return;
+  }
+
+
+  const code =
+    getLanguageCode(language);
+
+
+  if (!code) {
+    return;
+  }
+
+
+  for (
+    let i = 0;
+    i < languageSelect.options.length;
+    i++
+  ) {
+
+    const option =
+      languageSelect.options[i];
+
+    const optionText =
+      normalize(option.text);
+
+
+    if (
+      optionText ===
+      normalize(
+        languageName(code)
+      )
+    ) {
+
+      languageSelect.selectedIndex =
+        i;
+
+      break;
+
+    }
+
+  }
+
+}
+
+
+// ======================================================
+// GET NEXT ID
+// ======================================================
+
+async function setNextId() {
+
+  if (!idInput) {
+    return;
+  }
+
 
   try {
 
@@ -181,7 +512,7 @@ async function getNextId() {
       await getDocs(
         collection(
           db,
-          WORDS_COLLECTION
+          COLLECTION_NAME
         )
       );
 
@@ -212,17 +543,18 @@ async function getNextId() {
     );
 
 
-    return maxId + 1;
+    idInput.value =
+      maxId + 1;
 
 
   } catch (error) {
 
     console.error(
-      "NEXT ID ERROR:",
+      "Next ID error:",
       error
     );
 
-    return 1;
+    idInput.value = "1";
 
   }
 
@@ -230,104 +562,78 @@ async function getNextId() {
 
 
 // ======================================================
-// SET NEXT ID
+// GET ALL FIREBASE DATA
 // ======================================================
 
-async function setNextId() {
+async function getAllWords() {
 
-  if (!idInput) {
+  const snapshot =
+    await getDocs(
+      collection(
+        db,
+        COLLECTION_NAME
+      )
+    );
+
+
+  const results = [];
+
+
+  snapshot.forEach(
+    firebaseDoc => {
+
+      results.push({
+
+        documentId:
+          firebaseDoc.id,
+
+        data:
+          firebaseDoc.data()
+
+      });
+
+    }
+  );
+
+
+  return results;
+
+}
+
+
+// ======================================================
+// FIND EXACT WORD IN FIREBASE
+// ======================================================
+
+async function findExactWord(word) {
+
+  const all =
+    await getAllWords();
+
+
+  const target =
+    normalize(word);
+
+
+  return all.filter(
+    item =>
+      normalize(
+        item.data.word
+      ) === target
+  );
+
+}
+
+
+// ======================================================
+// FILL FORM
+// ======================================================
+
+function fillForm(data) {
+
+  if (!data) {
     return;
   }
-
-  idInput.value =
-    await getNextId();
-
-}
-
-
-// ======================================================
-// CLEAR FORM
-// ======================================================
-
-async function clearForm() {
-
-  selectedDocumentId =
-    null;
-
-  isExistingData =
-    false;
-
-  searchResults = [];
-
-  searchIndex = 0;
-
-  lastSearchText = "";
-
-
-  if (wordInput) {
-
-    wordInput.value =
-      "";
-
-  }
-
-
-  if (meaningInput) {
-
-    meaningInput.value =
-      "";
-
-  }
-
-
-  if (synonymsInput) {
-
-    synonymsInput.value =
-      "";
-
-  }
-
-
-  if (languageSelect) {
-
-    languageSelect.selectedIndex =
-      0;
-
-  }
-
-
-  if (searchInput) {
-
-    searchInput.value =
-      "";
-
-  }
-
-
-  if (searchResult) {
-
-    searchResult.textContent =
-      "";
-
-  }
-
-
-  await setNextId();
-
-}
-
-
-// ======================================================
-// PUT FIREBASE DATA INTO FORM
-// ======================================================
-
-function fillForm(data, documentId) {
-
-  selectedDocumentId =
-    documentId || null;
-
-  isExistingData =
-    true;
 
 
   if (idInput) {
@@ -339,14 +645,6 @@ function fillForm(data, documentId) {
 
 
   if (wordInput) {
-
-    wordInput.value =
-      data.word ?? "";
-
-  }
-
-
-  if (meaningInput) {
 
     wordInput.value =
       data.word ?? "";
@@ -382,228 +680,305 @@ function fillForm(data, documentId) {
 
 
 // ======================================================
-// SET LANGUAGE
+// EXTRACT WIKTAPI SYNONYMS
 // ======================================================
 
-function setLanguage(language) {
+function extractSynonyms(entries) {
 
-  if (!languageSelect) {
-    return;
+  const synonyms = [];
+
+
+  if (!Array.isArray(entries)) {
+
+    return synonyms;
+
   }
-
-
-  const target =
-    normalize(language);
 
 
   for (
-    let i = 0;
-    i < languageSelect.options.length;
-    i++
-  ) {
-
-    const option =
-      languageSelect.options[i];
-
-    if (
-      normalize(option.value) ===
-      target ||
-
-      normalize(option.text) ===
-      target
-    ) {
-
-      languageSelect.selectedIndex =
-        i;
-
-      return;
-
-    }
-
-  }
-
-
-  // ----------------------------------------
-  // Common language names
-  // ----------------------------------------
-
-  if (
-    target.includes("english") ||
-    target.includes("إنجليزي") ||
-    target.includes("انجليزي")
-  ) {
-
-    selectLanguageByName(
-      "English"
-    );
-
-    return;
-
-  }
-
-
-  if (
-    target.includes("urdu") ||
-    target.includes("أردو") ||
-    target.includes("اردو")
-  ) {
-
-    selectLanguageByName(
-      "Urdu"
-    );
-
-    return;
-
-  }
-
-
-  if (
-    target.includes("hindi") ||
-    target.includes("هندي") ||
-    target.includes("هندى")
-  ) {
-
-    selectLanguageByName(
-      "Hindi"
-    );
-
-  }
-
-}
-
-
-function selectLanguageByName(name) {
-
-  if (!languageSelect) {
-    return;
-  }
-
-
-  const target =
-    normalize(name);
-
-
-  for (
-    let i = 0;
-    i < languageSelect.options.length;
-    i++
+    const entry of entries
   ) {
 
     if (
-      normalize(
-        languageSelect.options[i].text
-      ) === target
-    ) {
-
-      languageSelect.selectedIndex =
-        i;
-
-      return;
-
-    }
-
-  }
-
-}
-
-
-// ======================================================
-// FIREBASE SEARCH
-// ======================================================
-
-async function searchFirebase(text) {
-
-  const snapshot =
-    await getDocs(
-      collection(
-        db,
-        WORDS_COLLECTION
+      !Array.isArray(
+        entry.synonyms
       )
-    );
+    ) {
+
+      continue;
+
+    }
 
 
-  const target =
-    normalize(text);
-
-
-  const results = [];
-
-
-  snapshot.forEach(
-    firebaseDoc => {
-
-      const data =
-        firebaseDoc.data();
-
-
-      const id =
-        normalize(data.id);
-
-      const word =
-        normalize(data.word);
-
-      const meaning =
-        normalize(data.meaning);
-
-      const synonyms =
-        normalize(data.synonyms);
-
-      const language =
-        normalize(data.language);
-
+    for (
+      const synonym of
+      entry.synonyms
+    ) {
 
       if (
-
-        id.includes(target) ||
-
-        word.includes(target) ||
-
-        meaning.includes(target) ||
-
-        synonyms.includes(target) ||
-
-        language.includes(target)
-
+        typeof synonym ===
+        "string"
       ) {
 
-        results.push({
+        synonyms.push(
+          synonym
+        );
 
-          documentId:
-            firebaseDoc.id,
+      } else if (
+        synonym &&
+        typeof synonym ===
+        "object"
+      ) {
 
-          data:
-            data
+        if (synonym.word) {
 
-        });
+          synonyms.push(
+            synonym.word
+          );
+
+        }
 
       }
 
     }
+
+  }
+
+
+  return uniqueArray(
+    synonyms
   );
-
-
-  return results;
 
 }
 
 
 // ======================================================
-// WIKTIONARY
+// EXTRACT DEFINITIONS
 // ======================================================
 
-async function searchWiktionary(word) {
+function extractDefinitions(entries) {
 
-  const encoded =
-    encodeURIComponent(word.trim());
+  const definitions = [];
 
 
-  // ----------------------------------------------------
-  // English Wiktionary structured definition endpoint
-  // ----------------------------------------------------
+  if (!Array.isArray(entries)) {
 
-  const url =
-    "https://en.wiktionary.org/api/rest_v1/page/definition/" +
-    encoded;
+    return definitions;
+
+  }
+
+
+  for (
+    const entry of
+    entries
+  ) {
+
+    if (
+      !Array.isArray(
+        entry.senses
+      )
+    ) {
+
+      continue;
+
+    }
+
+
+    for (
+      const sense of
+      entry.senses
+    ) {
+
+      if (
+        !sense ||
+        !Array.isArray(
+          sense.glosses
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      for (
+        const gloss of
+        sense.glosses
+      ) {
+
+        if (
+          typeof gloss ===
+          "string"
+        ) {
+
+          definitions.push(
+            gloss
+          );
+
+        }
+
+      }
+
+    }
+
+  }
+
+
+  return uniqueArray(
+    definitions
+  );
+
+}
+
+
+// ======================================================
+// RECURSIVE ARABIC TRANSLATION FINDER
+// ======================================================
+
+function extractArabicTranslations(object) {
+
+  const results = [];
+
+
+  function walk(value) {
+
+    if (!value) {
+      return;
+    }
+
+
+    if (
+      Array.isArray(value)
+    ) {
+
+      for (
+        const item of value
+      ) {
+
+        walk(item);
+
+      }
+
+      return;
+
+    }
+
+
+    if (
+      typeof value !==
+      "object"
+    ) {
+
+      return;
+
+    }
+
+
+    const langCode =
+      safeString(
+        value.lang_code ||
+        value.language_code ||
+        value.langCode
+      );
+
+
+    const lang =
+      normalize(
+        value.lang ||
+        value.language ||
+        value.lang_name
+      );
+
+
+    const isArabic =
+      langCode === "ar" ||
+      lang.includes("arabic") ||
+      lang.includes("العربية") ||
+      lang.includes("عربي");
+
+
+    if (isArabic) {
+
+      const word =
+        value.word ||
+        value.term ||
+        value.translation;
+
+
+      if (
+        typeof word ===
+        "string"
+      ) {
+
+        results.push(
+          word
+        );
+
+      }
+
+    }
+
+
+    for (
+      const key in value
+    ) {
+
+      if (
+        Object.prototype.hasOwnProperty
+          .call(value, key)
+      ) {
+
+        walk(
+          value[key]
+        );
+
+      }
+
+    }
+
+  }
+
+
+  walk(object);
+
+
+  return uniqueArray(
+    results
+  );
+
+}
+
+
+// ======================================================
+// WIKTAPI REQUEST
+// ======================================================
+
+async function getFromWiktAPI(
+  word,
+  languageCode
+) {
+
+  const encodedWord =
+    encodeURIComponent(
+      word
+    );
+
+
+  let url =
+    WIKTAPI_BASE +
+    "/en/word/" +
+    encodedWord;
+
+
+  if (languageCode) {
+
+    url +=
+      "?lang=" +
+      encodeURIComponent(
+        languageCode
+      );
+
+  }
 
 
   const response =
@@ -613,383 +988,783 @@ async function searchWiktionary(word) {
   if (!response.ok) {
 
     throw new Error(
-      "Wiktionary لم يجد الكلمة."
+      "WiktAPI HTTP " +
+      response.status
     );
 
   }
 
 
-  const json =
+  return await response.json();
+
+}
+
+
+// ======================================================
+// WIKTAPI TRANSLATIONS REQUEST
+// ======================================================
+
+async function getWiktTranslations(
+  word,
+  languageCode
+) {
+
+  const encodedWord =
+    encodeURIComponent(
+      word
+    );
+
+
+  let url =
+    WIKTAPI_BASE +
+    "/en/word/" +
+    encodedWord +
+    "/translations";
+
+
+  if (languageCode) {
+
+    url +=
+      "?lang=" +
+      encodeURIComponent(
+        languageCode
+      );
+
+  }
+
+
+  const response =
+    await fetch(url);
+
+
+  if (!response.ok) {
+
+    return null;
+
+  }
+
+
+  return await response.json();
+
+}
+
+
+// ======================================================
+// TRANSLATE TO ARABIC - MYMEMORY
+// ======================================================
+
+async function translateToArabic(
+  text,
+  sourceLanguage
+) {
+
+  const cleanText =
+    safeString(text);
+
+
+  if (!cleanText) {
+    return "";
+  }
+
+
+  const sourceCode =
+    sourceLanguage ||
+    "en";
+
+
+  const url =
+    MYMEMORY_BASE +
+    "?q=" +
+    encodeURIComponent(
+      cleanText.substring(
+        0,
+        450
+      )
+    ) +
+    "&langpair=" +
+    encodeURIComponent(
+      sourceCode + "|ar"
+    );
+
+
+  try {
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      return "";
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      data &&
+      data.responseData &&
+      data.responseData.translatedText
+    ) {
+
+      return safeString(
+        data.responseData
+          .translatedText
+      );
+
+    }
+
+
+    return "";
+
+  } catch (error) {
+
+    console.warn(
+      "Translation fallback failed:",
+      error
+    );
+
+    return "";
+
+  }
+
+}
+
+
+// ======================================================
+// TRANSLATE MANY DEFINITIONS
+// ======================================================
+
+async function translateDefinitions(
+  definitions,
+  languageCode
+) {
+
+  const translated = [];
+
+
+  // Don't translate if already Arabic
+
+  if (
+    languageCode === "ar"
+  ) {
+
+    return uniqueArray(
+      definitions
+    ).slice(0, 6);
+
+  }
+
+
+  for (
+    const definition of
+    definitions.slice(0, 6)
+  ) {
+
+    const result =
+      await translateToArabic(
+        definition,
+        languageCode
+      );
+
+
+    if (result) {
+
+      translated.push(
+        result
+      );
+
+    }
+
+  }
+
+
+  return uniqueArray(
+    translated
+  ).slice(0, 6);
+
+}
+
+
+// ======================================================
+// ENGLISH DICTIONARY API
+// ======================================================
+
+async function getEnglishDictionary(
+  word
+) {
+
+  const url =
+    FREE_DICTIONARY_BASE +
+    "/" +
+    encodeURIComponent(
+      word
+    );
+
+
+  const response =
+    await fetch(url);
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      "English Dictionary HTTP " +
+      response.status
+    );
+
+  }
+
+
+  const data =
     await response.json();
 
 
-  return parseWiktionaryResult(
-    json,
-    word
+  return data;
+
+}
+
+
+// ======================================================
+// EXTRACT ENGLISH DEFINITIONS
+// ======================================================
+
+function extractEnglishDefinitions(
+  data
+) {
+
+  const definitions = [];
+
+
+  if (!Array.isArray(data)) {
+
+    return definitions;
+
+  }
+
+
+  for (
+    const entry of data
+  ) {
+
+    if (
+      !Array.isArray(
+        entry.meanings
+      )
+    ) {
+
+      continue;
+
+    }
+
+
+    for (
+      const meaning of
+      entry.meanings
+    ) {
+
+      if (
+        !Array.isArray(
+          meaning.definitions
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      for (
+        const definition of
+        meaning.definitions
+      ) {
+
+        if (
+          definition &&
+          definition.definition
+        ) {
+
+          definitions.push(
+            definition.definition
+          );
+
+        }
+
+      }
+
+    }
+
+  }
+
+
+  return uniqueArray(
+    definitions
   );
 
 }
 
 
 // ======================================================
-// PARSE WIKTIONARY RESULT
+// EXTRACT ENGLISH SYNONYMS
 // ======================================================
 
-function parseWiktionaryResult(data, originalWord) {
-
-  const meanings = [];
+function extractEnglishSynonyms(
+  data
+) {
 
   const synonyms = [];
 
-  let detectedLanguage =
-    "";
 
+  if (!Array.isArray(data)) {
 
-  /*
-   * Wiktionary structured endpoint
-   * عادةً يكون التنظيم:
-   *
-   * language
-   *   partOfSpeech
-   *      definitions
-   */
-
-
-  if (
-    !data ||
-    typeof data !== "object"
-  ) {
-
-    throw new Error(
-      "بيانات Wiktionary غير صالحة."
-    );
+    return synonyms;
 
   }
 
 
-  // ----------------------------------------------------
-  // Loop languages
-  // ----------------------------------------------------
+  for (
+    const entry of data
+  ) {
 
-  Object.keys(data).forEach(
-    languageKey => {
+    if (
+      !Array.isArray(
+        entry.meanings
+      )
+    ) {
 
-      const languageData =
-        data[languageKey];
+      continue;
+
+    }
+
+
+    for (
+      const meaning of
+      entry.meanings
+    ) {
+
+      if (
+        Array.isArray(
+          meaning.synonyms
+        )
+      ) {
+
+        synonyms.push(
+          ...meaning.synonyms
+        );
+
+      }
 
 
       if (
-        !Array.isArray(languageData)
+        Array.isArray(
+          meaning.definitions
+        )
       ) {
-        return;
-      }
 
-
-      // Detect language
-      if (!detectedLanguage) {
-
-        detectedLanguage =
-          convertLanguageCode(
-            languageKey
-          );
-
-      }
-
-
-      languageData.forEach(
-        part => {
-
-          if (!part) {
-            return;
-          }
-
-
-          // --------------------------------------------
-          // Definitions
-          // --------------------------------------------
+        for (
+          const definition of
+          meaning.definitions
+        ) {
 
           if (
             Array.isArray(
-              part.definitions
+              definition.synonyms
             )
           ) {
 
-            part.definitions.forEach(
-              definition => {
-
-                if (
-                  typeof definition ===
-                  "string"
-                ) {
-
-                  meanings.push(
-                    cleanDefinition(
-                      definition
-                    )
-                  );
-
-                }
-
-                else if (
-                  definition &&
-                  definition.definition
-                ) {
-
-                  meanings.push(
-                    cleanDefinition(
-                      definition.definition
-                    )
-                  );
-
-                }
-
-              }
-            );
-
-          }
-
-
-          // --------------------------------------------
-          // Synonyms
-          // --------------------------------------------
-
-          if (
-            Array.isArray(
-              part.synonyms
-            )
-          ) {
-
-            part.synonyms.forEach(
-              synonym => {
-
-                if (
-                  typeof synonym ===
-                  "string"
-                ) {
-
-                  synonyms.push(
-                    cleanSynonym(
-                      synonym
-                    )
-                  );
-
-                }
-
-                else if (
-                  synonym &&
-                  synonym.word
-                ) {
-
-                  synonyms.push(
-                    cleanSynonym(
-                      synonym.word
-                    )
-                  );
-
-                }
-
-              }
+            synonyms.push(
+              ...definition.synonyms
             );
 
           }
 
         }
+
+      }
+
+    }
+
+  }
+
+
+  return uniqueArray(
+    synonyms
+  );
+
+}
+
+
+// ======================================================
+// BUILD EXTERNAL RESULT
+// ======================================================
+
+async function buildExternalResult(
+  word
+) {
+
+  let selectedLanguage =
+    languageSelect
+      ? languageSelect.value.trim()
+      : "";
+
+
+  let languageCode =
+    getLanguageCode(
+      selectedLanguage
+    );
+
+
+  let wiktData = null;
+
+
+  // ====================================================
+  // TRY WIKTAPI
+  // ====================================================
+
+  try {
+
+    wiktData =
+      await getFromWiktAPI(
+        word,
+        languageCode
+      );
+
+  } catch (error) {
+
+    console.warn(
+      "WiktAPI language request failed:",
+      error
+    );
+
+
+    // Try without language filter
+
+    try {
+
+      wiktData =
+        await getFromWiktAPI(
+          word,
+          null
+        );
+
+    } catch (secondError) {
+
+      console.warn(
+        "WiktAPI general request failed:",
+        secondError
       );
 
     }
-  );
+
+  }
 
 
-  const finalMeanings =
-    uniqueValues(
-      meanings
-    ).slice(0, 8);
-
-
-  const finalSynonyms =
-    uniqueValues(
-      synonyms
-    ).slice(0, 12);
-
-
-  /*
-   * لو مفيش نتائج واضحة
-   */
+  // ====================================================
+  // CHECK WIKTAPI DATA
+  // ====================================================
 
   if (
-    finalMeanings.length === 0
+    wiktData &&
+    Array.isArray(
+      wiktData.entries
+    ) &&
+    wiktData.entries.length > 0
   ) {
 
-    throw new Error(
-      "تم العثور على الصفحة ولكن لم يتم العثور على معاني واضحة."
+    const entries =
+      wiktData.entries;
+
+
+    // -----------------------------------------------
+    // Find best language entry
+    // -----------------------------------------------
+
+    let selectedEntry =
+      entries[0];
+
+
+    if (languageCode) {
+
+      const matching =
+        entries.find(
+          entry =>
+            normalize(
+              entry.lang_code
+            ) ===
+            normalize(
+              languageCode
+            )
+        );
+
+
+      if (matching) {
+
+        selectedEntry =
+          matching;
+
+      }
+
+    }
+
+
+    const detectedLanguage =
+      selectedEntry.lang_code ||
+      languageCode ||
+      "";
+
+
+    const detectedName =
+      selectedEntry.lang ||
+      languageName(
+        detectedLanguage
+      );
+
+
+    // -----------------------------------------------
+    // Definitions
+    // -----------------------------------------------
+
+    let definitions =
+      extractDefinitions(
+        [selectedEntry]
+      );
+
+
+    // -----------------------------------------------
+    // Synonyms
+    // -----------------------------------------------
+
+    let synonyms =
+      extractSynonyms(
+        [selectedEntry]
+      );
+
+
+    // -----------------------------------------------
+    // Arabic translations directly from WiktAPI
+    // -----------------------------------------------
+
+    let arabicMeanings =
+      extractArabicTranslations(
+        wiktData
+      );
+
+
+    // -----------------------------------------------
+    // Try translation endpoint
+    // -----------------------------------------------
+
+    if (
+      arabicMeanings.length === 0
+    ) {
+
+      try {
+
+        const translations =
+          await getWiktTranslations(
+            word,
+            detectedLanguage
+          );
+
+
+        if (translations) {
+
+          arabicMeanings =
+            extractArabicTranslations(
+              translations
+            );
+
+        }
+
+      } catch (error) {
+
+        console.warn(
+          "WiktAPI translations failed:",
+          error
+        );
+
+      }
+
+    }
+
+
+    // -----------------------------------------------
+    // Translate definitions if needed
+    // -----------------------------------------------
+
+    if (
+      arabicMeanings.length === 0 &&
+      definitions.length > 0
+    ) {
+
+      arabicMeanings =
+        await translateDefinitions(
+          definitions,
+          detectedLanguage
+        );
+
+    }
+
+
+    // -----------------------------------------------
+    // Final Wikt result
+    // -----------------------------------------------
+
+    if (
+      arabicMeanings.length > 0 ||
+      definitions.length > 0
+    ) {
+
+      return {
+
+        word:
+          safeString(
+            selectedEntry.word
+          ) ||
+          word,
+
+        language:
+          detectedName,
+
+        meaningArabic:
+          uniqueArray(
+            arabicMeanings
+          ).slice(0, 6),
+
+        synonyms:
+          uniqueArray(
+            synonyms
+          ).slice(0, 8)
+
+      };
+
+    }
+
+  }
+
+
+  // ====================================================
+  // ENGLISH FALLBACK
+  // ====================================================
+
+  let englishData = null;
+
+
+  try {
+
+    englishData =
+      await getEnglishDictionary(
+        word
+      );
+
+  } catch (error) {
+
+    console.warn(
+      "English Dictionary failed:",
+      error
     );
 
   }
 
 
-  /*
-   * Wiktionary English endpoint
-   * قد يرجع اللغة المصدر كـ en.
-   */
+  if (englishData) {
 
-  if (!detectedLanguage) {
+    const definitions =
+      extractEnglishDefinitions(
+        englishData
+      );
 
-    detectedLanguage =
-      "English";
+
+    const synonyms =
+      extractEnglishSynonyms(
+        englishData
+      );
+
+
+    const meaningsArabic =
+      await translateDefinitions(
+        definitions,
+        "en"
+      );
+
+
+    if (
+      meaningsArabic.length > 0
+    ) {
+
+      return {
+
+        word:
+          word,
+
+        language:
+          "English",
+
+        meaningArabic:
+          meaningsArabic,
+
+        synonyms:
+          synonyms.slice(0, 8)
+
+      };
+
+    }
 
   }
 
 
-  return {
+  // ====================================================
+  // NOTHING FOUND
+  // ====================================================
 
-    word:
-      originalWord,
-
-    language:
-      detectedLanguage,
-
-    meaningArabic:
-      finalMeanings,
-
-    synonyms:
-      finalSynonyms
-
-  };
-
-}
-
-
-// ======================================================
-// CLEAN DEFINITION
-// ======================================================
-
-function cleanDefinition(value) {
-
-  let text =
-    cleanText(value);
-
-
-  // Remove wiki markup
-  text =
-    text.replace(
-      /\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g,
-      "$2"
-    );
-
-
-  // Remove templates
-  text =
-    text.replace(
-      /\{\{[^{}]*\}\}/g,
-      ""
-    );
-
-
-  // Remove HTML
-  text =
-    text.replace(
-      /<[^>]*>/g,
-      ""
-    );
-
-
-  // Remove leading numbering
-  text =
-    text.replace(
-      /^\s*\d+[\.\)]\s*/,
-      ""
-    );
-
-
-  return cleanText(
-    text
+  throw new Error(
+    "لم يتم العثور على بيانات كافية للكلمة."
   );
 
 }
 
 
 // ======================================================
-// CLEAN SYNONYM
+// EXTERNAL SEARCH
 // ======================================================
 
-function cleanSynonym(value) {
+async function searchExternalWord(
+  word
+) {
 
-  let text =
-    cleanText(value);
+  try {
+
+    const result =
+      await buildExternalResult(
+        word
+      );
 
 
-  text =
-    text.replace(
-      /\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/g,
-      "$2"
+    if (!result) {
+
+      throw new Error(
+        "No result"
+      );
+
+    }
+
+
+    return result;
+
+  } catch (error) {
+
+    console.error(
+      "External dictionary error:",
+      error
     );
 
 
-  text =
-    text.replace(
-      /\{\{[^{}]*\}\}/g,
-      ""
-    );
+    throw error;
 
-
-  text =
-    text.replace(
-      /<[^>]*>/g,
-      ""
-    );
-
-
-  return cleanText(
-    text
-  );
-
-}
-
-
-// ======================================================
-// LANGUAGE CODE
-// ======================================================
-
-function convertLanguageCode(code) {
-
-  const map = {
-
-    en: "English",
-
-    ur: "Urdu",
-
-    hi: "Hindi",
-
-    ar: "Arabic",
-
-    fr: "French",
-
-    de: "German",
-
-    es: "Spanish",
-
-    it: "Italian",
-
-    tr: "Turkish",
-
-    fa: "Persian",
-
-    ru: "Russian",
-
-    bn: "Bengali",
-
-    zh: "Chinese",
-
-    ja: "Japanese"
-
-  };
-
-
-  return (
-    map[code] ||
-    code ||
-    "Unknown"
-  );
+  }
 
 }
 
@@ -1003,9 +1778,28 @@ if (
   searchButton
 ) {
 
+  searchInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        event.preventDefault();
+
+        searchButton.click();
+
+      }
+
+    }
+  );
+
+
   searchButton.addEventListener(
     "click",
-    async function () {
+    async () => {
 
       const searchText =
         searchInput.value.trim();
@@ -1022,149 +1816,275 @@ if (
       }
 
 
+      const normalizedSearch =
+        normalize(
+          searchText
+        );
+
+
       try {
 
-        // ==================================================
-        // FIREBASE FIRST
-        // ==================================================
+        // =================================================
+        // NEW SEARCH
+        // =================================================
 
         if (
-          searchText !==
+          normalizedSearch !==
           lastSearchText
         ) {
 
-          searchResults =
-            await searchFirebase(
-              searchText
+          searchResults = [];
+
+          searchIndex = 0;
+
+
+          // -----------------------------------------------
+          // FIREBASE FIRST
+          // -----------------------------------------------
+
+          const firebaseResults =
+            await getAllWords();
+
+
+          for (
+            const item of
+            firebaseResults
+          ) {
+
+            const data =
+              item.data;
+
+
+            const id =
+              normalize(
+                data.id
+              );
+
+            const word =
+              normalize(
+                data.word
+              );
+
+            const meaning =
+              normalize(
+                data.meaning
+              );
+
+            const synonyms =
+              normalize(
+                data.synonyms
+              );
+
+            const language =
+              normalize(
+                data.language
+              );
+
+
+            if (
+
+              id.includes(
+                normalizedSearch
+              ) ||
+
+              word.includes(
+                normalizedSearch
+              ) ||
+
+              meaning.includes(
+                normalizedSearch
+              ) ||
+
+              synonyms.includes(
+                normalizedSearch
+              ) ||
+
+              language.includes(
+                normalizedSearch
+              )
+
+            ) {
+
+              searchResults.push({
+
+                source:
+                  "firebase",
+
+                documentId:
+                  item.documentId,
+
+                data:
+                  data
+
+              });
+
+            }
+
+          }
+
+
+          // -----------------------------------------------
+          // IF FIREBASE FOUND EXACT WORD
+          // DON'T GO OUTSIDE
+          // -----------------------------------------------
+
+          const exactFirebase =
+            searchResults.find(
+              result =>
+                normalize(
+                  result.data.word
+                ) ===
+                normalizedSearch
             );
 
-          searchIndex =
-            0;
+
+          if (exactFirebase) {
+
+            searchResults = [
+              exactFirebase
+            ];
+
+          }
+
+
+          // -----------------------------------------------
+          // IF WORD NOT FOUND IN FIREBASE
+          // SEARCH EXTERNAL
+          // -----------------------------------------------
+
+          if (
+            searchResults.length === 0
+          ) {
+
+            const external =
+              await searchExternalWord(
+                searchText
+              );
+
+
+            searchResults.push({
+
+              source:
+                "external",
+
+              documentId:
+                null,
+
+              data:
+                external
+
+            });
+
+          }
+
 
           lastSearchText =
-            searchText;
+            normalizedSearch;
+
+          searchIndex = 0;
 
         }
 
 
-        // ==================================================
-        // FIREBASE RESULTS
-        // ==================================================
+        // =================================================
+        // NO RESULTS
+        // =================================================
 
         if (
-          searchResults.length > 0
+          searchResults.length === 0
         ) {
 
-          const result =
-            searchResults[
-              searchIndex
-            ];
-
-
-          fillForm(
-            result.data,
-            result.documentId
+          alert(
+            "No results found."
           );
-
-
-          searchIndex++;
-
-
-          if (
-            searchIndex >=
-            searchResults.length
-          ) {
-
-            searchIndex = 0;
-
-          }
-
-
-          if (searchResult) {
-
-            searchResult.textContent =
-              "";
-
-          }
-
 
           return;
 
         }
 
 
-        // ==================================================
-        // NOT IN FIREBASE
-        // SEARCH WIKTIONARY
-        // ==================================================
+        // =================================================
+        // CURRENT RESULT
+        // =================================================
 
-        const externalData =
-          await searchWiktionary(
-            searchText
+        const result =
+          searchResults[
+            searchIndex
+          ];
+
+
+        if (
+          !result
+        ) {
+
+          searchIndex = 0;
+
+          return;
+
+        }
+
+
+        // =================================================
+        // FIREBASE RESULT
+        // =================================================
+
+        if (
+          result.source ===
+          "firebase"
+        ) {
+
+          selectedDocumentId =
+            result.documentId;
+
+          isExistingData =
+            true;
+
+          fillForm(
+            result.data
+          );
+
+        }
+
+
+        // =================================================
+        // EXTERNAL RESULT
+        // =================================================
+
+        else {
+
+          selectedDocumentId =
+            null;
+
+          isExistingData =
+            false;
+
+          fillForm(
+            result.data
           );
 
 
-        // --------------------------------------------------
-        // Put external data in form
-        // --------------------------------------------------
+          if (idInput) {
 
-        if (wordInput) {
+            await setNextId();
 
-          wordInput.value =
-            externalData.word;
+          }
 
         }
 
 
-        if (meaningInput) {
+        // =================================================
+        // NEXT RESULT
+        // =================================================
 
-          /*
-           * Wiktionary definitions غالباً باللغة
-           * المصدر، لذلك نحافظ عليها بدل ما ندعي
-           * أنها ترجمة عربية.
-           */
-
-          meaningInput.value =
-            externalData
-              .meaningArabic
-              .join(" • ");
-
-        }
+        searchIndex++;
 
 
-        if (synonymsInput) {
+        if (
+          searchIndex >=
+          searchResults.length
+        ) {
 
-          synonymsInput.value =
-            externalData
-              .synonyms
-              .join(", ");
-
-        }
-
-
-        setLanguage(
-          externalData.language
-        );
-
-
-        selectedDocumentId =
-          null;
-
-        isExistingData =
-          false;
-
-
-        /*
-         * ID جديد
-         */
-
-        await setNextId();
-
-
-        if (searchResult) {
-
-          searchResult.textContent =
-            "";
+          searchIndex = 0;
 
         }
 
@@ -1172,17 +2092,9 @@ if (
       } catch (error) {
 
         console.error(
-          "SEARCH ERROR:",
+          "Search error:",
           error
         );
-
-
-        if (searchResult) {
-
-          searchResult.textContent =
-            "";
-
-        }
 
 
         alert(
@@ -1205,23 +2117,14 @@ if (registerButton) {
 
   registerButton.addEventListener(
     "click",
-    async function () {
+    async () => {
 
-      if (!wordInput || !meaningInput) {
-
-        alert(
-          "Form elements were not found."
-        );
-
-        return;
-
-      }
-
-
-      if (isExistingData) {
+      if (
+        isExistingData
+      ) {
 
         alert(
-          "This word already exists.\nUse Update or Delete."
+          "This word already exists.\nUse UPDATE or DELETE."
         );
 
         return;
@@ -1230,11 +2133,15 @@ if (registerButton) {
 
 
       const word =
-        wordInput.value.trim();
+        wordInput
+          ? wordInput.value.trim()
+          : "";
 
 
       const meaning =
-        meaningInput.value.trim();
+        meaningInput
+          ? meaningInput.value.trim()
+          : "";
 
 
       const synonyms =
@@ -1252,7 +2159,7 @@ if (registerButton) {
       if (!word) {
 
         alert(
-          "Please enter a word."
+          "Please enter the word."
         );
 
         return;
@@ -1263,7 +2170,7 @@ if (registerButton) {
       if (!meaning) {
 
         alert(
-          "Please enter a meaning."
+          "Please enter the meaning."
         );
 
         return;
@@ -1274,7 +2181,7 @@ if (registerButton) {
       if (!language) {
 
         alert(
-          "Please choose a language."
+          "Please choose the language."
         );
 
         return;
@@ -1284,34 +2191,33 @@ if (registerButton) {
 
       try {
 
-        // ----------------------------------------------
-        // Check duplicate
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // CHECK DUPLICATE
+        // -----------------------------------------------
 
         const existing =
-          await searchFirebase(
+          await findExactWord(
             word
           );
 
 
-        const exact =
-          existing.find(
-            item =>
-              normalize(
-                item.data.word
-              ) === normalize(word)
-          );
-
-
-        if (exact) {
+        if (
+          existing.length > 0
+        ) {
 
           alert(
-            `This word already exists with ID ${exact.data.id}.`
+            "This word already exists with ID " +
+            existing[0].data.id
           );
 
+          selectedDocumentId =
+            existing[0].documentId;
+
+          isExistingData =
+            true;
+
           fillForm(
-            exact.data,
-            exact.documentId
+            existing[0].data
           );
 
           return;
@@ -1319,22 +2225,51 @@ if (registerButton) {
         }
 
 
-        // ----------------------------------------------
-        // New ID
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // NEW ID
+        // -----------------------------------------------
+
+        const all =
+          await getAllWords();
+
+
+        let maxId = 0;
+
+
+        for (
+          const item of all
+        ) {
+
+          const id =
+            Number(
+              item.data.id
+            );
+
+
+          if (
+            Number.isFinite(id) &&
+            id > maxId
+          ) {
+
+            maxId = id;
+
+          }
+
+        }
+
 
         const newId =
-          await getNextId();
+          maxId + 1;
 
 
-        // ----------------------------------------------
-        // Save
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // SAVE
+        // -----------------------------------------------
 
         await addDoc(
           collection(
             db,
-            WORDS_COLLECTION
+            COLLECTION_NAME
           ),
           {
 
@@ -1357,20 +2292,57 @@ if (registerButton) {
         );
 
 
+        // -----------------------------------------------
+        // SUCCESS
+        // -----------------------------------------------
+
         alert(
           "Data registered successfully!"
         );
 
 
-        // ----------------------------------------------
-        // Clear everything except ID
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // CLEAR EVERYTHING EXCEPT ID
+        // -----------------------------------------------
+
+        if (wordInput) {
+
+          wordInput.value =
+            "";
+
+        }
+
+
+        if (meaningInput) {
+
+          meaningInput.value =
+            "";
+
+        }
+
+
+        if (synonymsInput) {
+
+          synonymsInput.value =
+            "";
+
+        }
+
+
+        if (languageSelect) {
+
+          languageSelect.selectedIndex =
+            0;
+
+        }
+
 
         selectedDocumentId =
           null;
 
         isExistingData =
           false;
+
 
         searchResults =
           [];
@@ -1382,26 +2354,6 @@ if (registerButton) {
           "";
 
 
-        wordInput.value =
-          "";
-
-        meaningInput.value =
-          "";
-
-        if (synonymsInput) {
-
-          synonymsInput.value =
-            "";
-
-        }
-
-        if (languageSelect) {
-
-          languageSelect.selectedIndex =
-            0;
-
-        }
-
         if (searchInput) {
 
           searchInput.value =
@@ -1410,15 +2362,8 @@ if (registerButton) {
         }
 
 
-        if (searchResult) {
+        // EXACTLY NEW ID = LAST ID + 1
 
-          searchResult.textContent =
-            "";
-
-        }
-
-
-        // new ID = old ID + 1
         if (idInput) {
 
           idInput.value =
@@ -1430,7 +2375,7 @@ if (registerButton) {
       } catch (error) {
 
         console.error(
-          "REGISTER ERROR:",
+          "Register error:",
           error
         );
 
@@ -1456,9 +2401,11 @@ if (updateButton) {
 
   updateButton.addEventListener(
     "click",
-    async function () {
+    async () => {
 
-      if (!selectedDocumentId) {
+      if (
+        !selectedDocumentId
+      ) {
 
         alert(
           "Please search for a word first."
@@ -1507,7 +2454,7 @@ if (updateButton) {
       if (!language) {
 
         alert(
-          "Please choose a language."
+          "Please choose the language."
         );
 
         return;
@@ -1517,16 +2464,14 @@ if (updateButton) {
 
       try {
 
-        const reference =
+        await updateDoc(
+
           doc(
             db,
-            WORDS_COLLECTION,
+            COLLECTION_NAME,
             selectedDocumentId
-          );
+          ),
 
-
-        await updateDoc(
-          reference,
           {
 
             word:
@@ -1542,6 +2487,7 @@ if (updateButton) {
               language
 
           }
+
         );
 
 
@@ -1556,7 +2502,7 @@ if (updateButton) {
       } catch (error) {
 
         console.error(
-          "UPDATE ERROR:",
+          "Update error:",
           error
         );
 
@@ -1582,9 +2528,11 @@ if (deleteButton) {
 
   deleteButton.addEventListener(
     "click",
-    async function () {
+    async () => {
 
-      if (!selectedDocumentId) {
+      if (
+        !selectedDocumentId
+      ) {
 
         alert(
           "Please search for a word first."
@@ -1609,11 +2557,13 @@ if (deleteButton) {
       try {
 
         await deleteDoc(
+
           doc(
             db,
-            WORDS_COLLECTION,
+            COLLECTION_NAME,
             selectedDocumentId
           )
+
         );
 
 
@@ -1628,7 +2578,7 @@ if (deleteButton) {
       } catch (error) {
 
         console.error(
-          "DELETE ERROR:",
+          "Delete error:",
           error
         );
 
@@ -1647,50 +2597,69 @@ if (deleteButton) {
 
 
 // ======================================================
-// CLEAR BUTTON
+// CLEAR
 // ======================================================
 
-if (clearButton) {
+async function clearForm() {
 
-  clearButton.addEventListener(
-    "click",
-    async function () {
+  selectedDocumentId =
+    null;
 
-      await clearForm();
-
-    }
-  );
-
-}
+  isExistingData =
+    false;
 
 
-// ======================================================
-// ENTER SEARCH
-// ======================================================
+  searchResults =
+    [];
 
-if (searchInput) {
+  searchIndex =
+    0;
 
-  searchInput.addEventListener(
-    "keydown",
-    function (event) {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        event.preventDefault();
+  lastSearchText =
+    "";
 
 
-        if (searchButton) {
+  if (wordInput) {
 
-          searchButton.click();
+    wordInput.value =
+      "";
 
-        }
+  }
 
-      }
 
-    }
-  );
+  if (meaningInput) {
+
+    meaningInput.value =
+      "";
+
+  }
+
+
+  if (synonymsInput) {
+
+    synonymsInput.value =
+      "";
+
+  }
+
+
+  if (languageSelect) {
+
+    languageSelect.selectedIndex =
+      0;
+
+  }
+
+
+  if (searchInput) {
+
+    searchInput.value =
+      "";
+
+  }
+
+
+  await setNextId();
 
 }
 
@@ -1706,7 +2675,7 @@ if (
 
   showDataButton.addEventListener(
     "click",
-    async function () {
+    async () => {
 
       try {
 
@@ -1714,20 +2683,22 @@ if (
           await getDocs(
             collection(
               db,
-              WORDS_COLLECTION
+              COLLECTION_NAME
             )
           );
 
-
-        // ----------------------------------------------
-        // Clear old rows
-        // ----------------------------------------------
 
         dataTable.innerHTML =
           "";
 
 
-        if (snapshot.empty) {
+        if (
+          snapshot.empty
+        ) {
+
+          alert(
+            "There is no data in the database."
+          );
 
           return;
 
@@ -1742,11 +2713,11 @@ if (
 
             rows.push({
 
-              data:
-                firebaseDoc.data(),
-
               documentId:
-                firebaseDoc.id
+                firebaseDoc.id,
+
+              data:
+                firebaseDoc.data()
 
             });
 
@@ -1754,20 +2725,24 @@ if (
         );
 
 
-        // ----------------------------------------------
-        // Sort by ID
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // SORT BY ID
+        // -----------------------------------------------
 
         rows.sort(
           (a, b) =>
-            Number(a.data.id || 0) -
-            Number(b.data.id || 0)
+            Number(
+              a.data.id
+            ) -
+            Number(
+              b.data.id
+            )
         );
 
 
-        // ----------------------------------------------
-        // Render
-        // ----------------------------------------------
+        // -----------------------------------------------
+        // CREATE TABLE
+        // -----------------------------------------------
 
         rows.forEach(
           item => {
@@ -1807,11 +2782,9 @@ if (
 
 
                 cell.textContent =
-                  value === undefined ||
-                  value === null ||
-                  String(value).trim() === ""
-                    ? "-"
-                    : String(value);
+                  safeString(
+                    value
+                  ) || "-";
 
 
                 row.appendChild(
@@ -1833,7 +2806,7 @@ if (
       } catch (error) {
 
         console.error(
-          "SHOW DATA ERROR:",
+          "Show data error:",
           error
         );
 
@@ -1852,7 +2825,11 @@ if (
 
 
 // ======================================================
-// START
+// INITIALIZE
 // ======================================================
 
-setNextId();
+if (idInput) {
+
+  setNextId();
+
+}
