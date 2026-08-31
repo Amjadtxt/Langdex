@@ -1,8 +1,3 @@
-// ======================================================
-// LANGDEX - auth-guard.js
-// Protect index.html and data.html
-// ======================================================
-
 import {
     initializeApp,
     getApps,
@@ -15,25 +10,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 
-// ======================================================
-// FIREBASE CONFIG
-// ======================================================
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
-  authDomain: "langdex.firebaseapp.com",
-  projectId: "langdex",
-  storageBucket: "langdex.firebasestorage.app",
-  messagingSenderId: "819838317933",
-  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-  measurementId: "G-F60CC2CDCJ"
+    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    authDomain: "langdex.firebaseapp.com",
+    projectId: "langdex",
+    storageBucket: "langdex.firebasestorage.app",
+    messagingSenderId: "819838317933",
+    appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+    measurementId: "G-F60CC2CDCJ"
 };
 
-
-// ======================================================
-// FIREBASE
-// ======================================================
 
 const app =
     getApps().length > 0
@@ -43,36 +29,26 @@ const app =
 const auth = getAuth(app);
 
 
-// ======================================================
-// HIDE PAGE IMMEDIATELY
-// ======================================================
-
+// نخفي الصفحة لحد ما Firebase يحدد حالة المستخدم
 document.documentElement.style.visibility = "hidden";
 
 
-// ======================================================
-// AUTH CHECK
-// ======================================================
-
 onAuthStateChanged(auth, (user) => {
 
-    // --------------------------------------
-    // NOT LOGGED IN
-    // --------------------------------------
+    if (user) {
 
-    if (!user) {
+        // مسجل دخول
+        // أظهر الصفحة
+
+        document.documentElement.style.visibility = "visible";
+
+    } else {
+
+        // مش مسجل
+        // متظهرش الصفحة وحوله للوجين
 
         window.location.replace("login.html");
 
-        return;
     }
-
-
-    // --------------------------------------
-    // LOGGED IN
-    // --------------------------------------
-
-    document.documentElement.style.visibility =
-        "visible";
 
 });
