@@ -1,8 +1,3 @@
-// ======================================================
-// LANGDEX - auth-guard.js
-// Protect pages + Username + Logout
-// ======================================================
-
 import {
     initializeApp,
     getApps,
@@ -11,14 +6,8 @@ import {
 
 import {
     getAuth,
-    onAuthStateChanged,
-    signOut
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-
-
-// ======================================================
-// FIREBASE CONFIG
-// ======================================================
 
 const firebaseConfig = {
     apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
@@ -30,11 +19,6 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-
-// ======================================================
-// INITIALIZE FIREBASE
-// ======================================================
-
 const app =
     getApps().length > 0
         ? getApp()
@@ -42,88 +26,10 @@ const app =
 
 const auth = getAuth(app);
 
-
-// ======================================================
-// ELEMENTS
-// ======================================================
-
-const usernameElement =
-    document.querySelector("#username");
-
-const logoutButton =
-    document.querySelector("#logout-btn");
-
-
-// ======================================================
-// AUTH GUARD
-// ======================================================
-
 onAuthStateChanged(auth, (user) => {
 
-    // --------------------------------------
-    // NOT LOGGED IN
-    // --------------------------------------
-
     if (!user) {
-
         window.location.replace("login.html");
-
-        return;
-    }
-
-
-    // --------------------------------------
-    // LOGGED IN
-    // --------------------------------------
-
-    if (usernameElement) {
-
-        const email =
-            user.email || "User";
-
-        // يأخذ الكلام قبل @
-
-        const username =
-            email.split("@")[0];
-
-        usernameElement.textContent =
-            `مرحباً، ${username}`;
-
     }
 
 });
-
-
-// ======================================================
-// LOGOUT
-// ======================================================
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                await signOut(auth);
-
-                // بعد الخروج يرجع لصفحة تسجيل الدخول
-
-                window.location.replace(
-                    "login.html"
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Logout Error:",
-                    error
-                );
-
-            }
-
-        }
-    );
-
-}
