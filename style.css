@@ -8,7 +8,30 @@
   display: block;
   width:43%;
 }
-.content2 {
+.loginput{
+  width:80%;
+  padding:8px 30px;
+}
+.loginbut{
+  width:100%;
+  margin-top: 10px;
+  padding :8px 65px;
+}
+.login-form{border: 0px solid #FFFFFF;
+  border-radius: 25px;
+  width :25%;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 100px;background:#274f5d;
+  padding:50px;
+}
+.login-links a,p{
+  color : #Dddddd;
+  text-decoration-color: royalblue;
+}
+.content2, {
   border: 0px solid #Ffffff;
   border-radius: 25px;
   display: flex;
@@ -208,7 +231,9 @@ nav ul a {
   padding: 2px;
 font-weight:bold;
 }
-
+.bar a.active {
+    color: #2196F3;
+}
 nav li {
   list-style: none;
 }
@@ -473,6 +498,29 @@ Margin :1px;
   font-size: 40px;
   padding:3px;
   margin:0;
+}
+  .loginput{
+  width:60%;
+  padding:8px 30px;
+}
+.loginbut{
+  width:80%;
+  margin-top: 10px;
+  padding :8px 50px;
+}
+.login-form{border: 0px solid #FFFFFF;
+  border-radius: 25px;
+  width :70%;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 20px 40px;background:#274f5d;
+  padding:30px;
+}
+.login-links a,p{
+  color : #Dddddd;
+  text-decoration-color: royalblue;
 }
 }
 
