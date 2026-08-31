@@ -1,10 +1,12 @@
 // ======================================================
-// LANGDEX - AUTH GUARD
-// حماية الصفحات من المستخدمين غير المسجلين
+// LANGDEX - auth-guard.js
+// Protect pages from unauthenticated users
 // ======================================================
 
 import {
-    initializeApp
+    initializeApp,
+    getApps,
+    getApp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
@@ -29,72 +31,34 @@ const firebaseConfig = {
 
 
 // ======================================================
-// INITIALIZE FIREBASE
+// INITIALIZE FIREBASE SAFELY
 // ======================================================
 
-const app = initializeApp(firebaseConfig);
+const app =
+    getApps().length > 0
+        ? getApp()
+        : initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
 
-
-// ======================================================
-// CURRENT PAGE
-// ======================================================
-
-const currentPage =
-    window.location.pathname
-        .split("/")
-        .pop();
+const auth =
+    getAuth(app);
 
 
 // ======================================================
-// PAGES THAT DO NOT NEED LOGIN
+// AUTH GUARD
 // ======================================================
 
-const publicPages = [
-    "login.html",
-    "register.html"
-];
+onAuthStateChanged(
+    auth,
+    (user) => {
 
+        if (!user) {
 
-// ======================================================
-// AUTH CHECK
-// ======================================================
-
-onAuthStateChanged(auth, (user) => {
-
-    // ------------------------------------------
-    // لو الصفحة Login أو Register
-    // ------------------------------------------
-
-    if (publicPages.includes(currentPage)) {
-
-        if (user) {
-
-            window.location.href =
-                "index.html";
+            window.location.replace(
+                "login.html"
+            );
 
         }
 
-        return;
-
     }
-
-
-    // ------------------------------------------
-    // باقي الصفحات
-    // لازم يكون المستخدم مسجل دخول
-    // ------------------------------------------
-
-    if (!user) {
-
-        window.location.replace(
-            "login.html"
-        );
-
-        return;
-
-    }
-
-});
-
+);
