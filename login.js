@@ -68,7 +68,6 @@ function showMessage(text) {
     if (!message) return;
 
     message.textContent = text;
-
     message.style.color = "#FFFFFF";
 
 }
@@ -80,211 +79,186 @@ function showMessage(text) {
 
 if (loginButton) {
 
-    loginButton.addEventListener(
-        "click",
-        async function () {
+    loginButton.addEventListener("click", async function (event) {
 
-            const email =
-                emailInput
-                    ? emailInput.value.trim()
-                    : "";
+        event.preventDefault();
 
-            const password =
-                passwordInput
-                    ? passwordInput.value
-                    : "";
 
+        const email =
+            emailInput
+                ? emailInput.value.trim()
+                : "";
 
-            // --------------------------------------
-            // VALIDATION
-            // --------------------------------------
+        const password =
+            passwordInput
+                ? passwordInput.value
+                : "";
 
-            if (!email) {
 
-                showMessage(
-                    "اكتب البريد الإلكتروني."
-                );
+        // ==================================================
+        // VALIDATION
+        // ==================================================
 
-                return;
+        if (!email) {
 
-            }
+            showMessage(
+                "اكتب البريد الإلكتروني."
+            );
 
-
-            if (!password) {
-
-                showMessage(
-                    "اكتب كلمة المرور."
-                );
-
-                return;
-
-            }
-
-
-            // --------------------------------------
-            // LOGIN
-            // --------------------------------------
-
-            try {
-
-                loginButton.disabled = true;
-
-                loginButton.textContent =
-                    "جاري تسجيل الدخول...";
-
-
-                const userCredential =
-                    await signInWithEmailAndPassword(
-                        auth,
-                        email,
-                        password
-                    );
-
-
-                const user =
-                    userCredential.user;
-
-
-                console.log(
-                    "Login successful:",
-                    user.uid
-                );
-
-
-                showMessage(
-                    "تم تسجيل الدخول بنجاح."
-                );
-
-
-                // --------------------------------------
-                // GO TO INDEX
-                // --------------------------------------
-
-                setTimeout(() => {
-
-                    window.location.replace(
-                        "index.html"
-                    );
-
-                }, 500);
-
-
-            } catch (error) {
-
-                console.error(
-                    "Firebase Login Error:",
-                    error
-                );
-
-                console.error(
-                    "Error Code:",
-                    error.code
-                );
-
-                console.error(
-                    "Error Message:",
-                    error.message
-                );
-
-
-                // --------------------------------------
-                // FIREBASE ERRORS
-                // --------------------------------------
-
-                switch (error.code) {
-
-                    case "auth/invalid-credential":
-
-                        showMessage(
-                            "البريد الإلكتروني أو كلمة المرور غير صحيحة."
-                        );
-
-                        break;
-
-
-                    case "auth/user-not-found":
-
-                        showMessage(
-                            "هذا الحساب غير موجود."
-                        );
-
-                        break;
-
-
-                    case "auth/wrong-password":
-
-                        showMessage(
-                            "كلمة المرور غير صحيحة."
-                        );
-
-                        break;
-
-
-                    case "auth/invalid-email":
-
-                        showMessage(
-                            "البريد الإلكتروني غير صحيح."
-                        );
-
-                        break;
-
-
-                    case "auth/user-disabled":
-
-                        showMessage(
-                            "تم تعطيل هذا الحساب."
-                        );
-
-                        break;
-
-
-                    case "auth/too-many-requests":
-
-                        showMessage(
-                            "تمت محاولات كثيرة. حاول مرة أخرى لاحقًا."
-                        );
-
-                        break;
-
-
-                    case "auth/network-request-failed":
-
-                        showMessage(
-                            "حدثت مشكلة في الاتصال بالإنترنت."
-                        );
-
-                        break;
-
-
-                    case "auth/operation-not-allowed":
-
-                        showMessage(
-                            "تسجيل الدخول بالبريد الإلكتروني غير مفعّل في Firebase."
-                        );
-
-                        break;
-
-
-                    default:
-
-                        showMessage(
-                            "حدث خطأ في تسجيل الدخول: " +
-                            error.code
-                        );
-
-                        break;
-
-                }
-
-
-                loginButton.disabled = false;
-
-                loginButton.textContent =
-                    "تسجيل الدخول";
-
-            }
+            return;
 
         }
-    );
+
+
+        if (!password) {
+
+            showMessage(
+                "اكتب كلمة المرور."
+            );
+
+            return;
+
+        }
+
+
+        // ==================================================
+        // LOGIN
+        // ==================================================
+
+        try {
+
+            loginButton.disabled = true;
+
+            loginButton.textContent =
+                "جاري تسجيل الدخول...";
+
+
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+
+            showMessage(
+                "تم تسجيل الدخول بنجاح."
+            );
+
+
+            // ==================================================
+            // REDIRECT
+            // ==================================================
+
+            window.location.replace(
+                "index.html"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Firebase Login Error:",
+                error.code,
+                error.message
+            );
+
+
+            // ==================================================
+            // FIREBASE ERRORS
+            // ==================================================
+
+            switch (error.code) {
+
+                case "auth/invalid-credential":
+
+                    showMessage(
+                        "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+                    );
+
+                    break;
+
+
+                case "auth/invalid-email":
+
+                    showMessage(
+                        "البريد الإلكتروني غير صحيح."
+                    );
+
+                    break;
+
+
+                case "auth/user-disabled":
+
+                    showMessage(
+                        "هذا الحساب تم تعطيله."
+                    );
+
+                    break;
+
+
+                case "auth/user-not-found":
+
+                    showMessage(
+                        "هذا الحساب غير موجود."
+                    );
+
+                    break;
+
+
+                case "auth/wrong-password":
+
+                    showMessage(
+                        "كلمة المرور غير صحيحة."
+                    );
+
+                    break;
+
+
+                case "auth/too-many-requests":
+
+                    showMessage(
+                        "تمت محاولات كثيرة، حاول مرة أخرى لاحقًا."
+                    );
+
+                    break;
+
+
+                case "auth/network-request-failed":
+
+                    showMessage(
+                        "مشكلة في الاتصال بالإنترنت."
+                    );
+
+                    break;
+
+
+                case "auth/operation-not-allowed":
+
+                    showMessage(
+                        "تسجيل الدخول بالبريد الإلكتروني غير مفعل في Firebase."
+                    );
+
+                    break;
+
+
+                default:
+
+                    showMessage(
+                        "حدث خطأ: " + error.code
+                    );
+
+                    break;
+
+            }
+
+
+            loginButton.disabled = false;
+
+            loginButton.textContent =
+                "تسجيل الدخول";
+
+        }
+
+    });
 
 }
