@@ -1,6 +1,6 @@
 // ======================================================
 // LANGDEX - auth-guard.js
-// Protect pages from unauthenticated users
+// Protect index.html and data.html
 // ======================================================
 
 import {
@@ -20,7 +20,7 @@ import {
 // ======================================================
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    apiKey: "AIzaSyCKsh43zOQ6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
     projectId: "langdex",
     storageBucket: "langdex.firebasestorage.app",
@@ -43,26 +43,35 @@ const auth = getAuth(app);
 
 
 // ======================================================
-// AUTH GUARD
+// HIDE PAGE IMMEDIATELY
+// ======================================================
+
+document.documentElement.style.visibility = "hidden";
+
+
+// ======================================================
+// AUTH CHECK
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
 
-    if (user) {
+    // --------------------------------------
+    // NOT LOGGED IN
+    // --------------------------------------
 
-        // المستخدم مسجل دخول
-        // أظهر الصفحة
-
-        document.documentElement.style.visibility =
-            "visible";
-
-    } else {
-
-        // المستخدم غير مسجل
-        // لا تظهر الصفحة نهائيًا
+    if (!user) {
 
         window.location.replace("login.html");
 
+        return;
     }
+
+
+    // --------------------------------------
+    // LOGGED IN
+    // --------------------------------------
+
+    document.documentElement.style.visibility =
+        "visible";
 
 });
