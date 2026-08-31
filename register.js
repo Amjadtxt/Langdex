@@ -16,14 +16,15 @@ import {
 // FIREBASE CONFIG
 // ======================================================
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
-    authDomain: "langdex.firebaseapp.com",
-    projectId: "langdex",
-    storageBucket: "langdex.firebasestorage.app",
-    messagingSenderId: "819838317933",
-    appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-    measurementId: "G-F60CC2CDCJ"
+  apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
+  authDomain: "langdex.firebaseapp.com",
+  projectId: "langdex",
+  storageBucket: "langdex.firebasestorage.app",
+  messagingSenderId: "819838317933",
+  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+  measurementId: "G-F60CC2CDCJ"
 };
 
 
