@@ -31,7 +31,7 @@ const firebaseConfig = {
 
 
 // ======================================================
-// INITIALIZE FIREBASE
+// FIREBASE
 // ======================================================
 
 const app =
@@ -50,7 +50,7 @@ document.documentElement.style.visibility = "hidden";
 
 
 // ======================================================
-// AUTH CHECK
+// CHECK LOGIN
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
