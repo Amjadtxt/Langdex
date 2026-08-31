@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="ar" dir="rtl">
@@ -73,80 +74,35 @@
     </nav>
 
   </header>
-
-
-  <!-- ==================================================
-       CONTENT
-  ================================================== -->
-
-  <div class="content">
-
+  <div class="content2">
     <section class="data-section">
-
-
       <h1>
         جميع البيانات
       </h1>
-
-
-      <!-- ==================================================
-           SHOW DATA
-      ================================================== -->
-
-      <button
-        type="button"
-        class="show-data">
-
-        عرض
-
-      </button>
-
-
-      <!-- ==================================================
-           DATA CONTROLS
-      ================================================== -->
-
       <div class="data-controls">
-
-
         <!-- LANGUAGE FILTER -->
-
-        <select id="language-filter">
-
+        <select id="language-filter" class="language-filter">
           <option value="all">
             جميع اللغات
           </option>
-
-          <!--
-            سيتم إضافة اللغات الموجودة
-            في Firebase تلقائيًا هنا
-          -->
-
         </select>
-
-
-        <!-- CLEAR FILTER -->
-
+            <div class="cntrl">
+                  <button
+        type="button"
+        class="show-data">
+        عرض البيانات
+      </button>
         <button
           type="button"
-          id="clear-filter">
-
+          id="clear-filter" class="clear-filter">
           إلغاء الفلتر
-
         </button>
-
-
-        <!-- PDF -->
-
         <button
           type="button"
-          id="download-pdf">
-
+          id="download-pdf" class="download-pdf">
           تحميل PDF
-
         </button>
-
-
+                  </div>
       </div>
 
 
