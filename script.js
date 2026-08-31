@@ -1,12 +1,7 @@
 // ======================================================
 // LANGDEX - SCRIPT.JS
-// Firebase + Search + Register + Update + Delete
-// Clear + Auto ID + Show Data + Language Filter + PDF
-// ======================================================
-
-
-// ======================================================
-// FIREBASE
+// Firebase + Register / Update / Delete / Search
+// Show Data + Dynamic Language Filter + Clear Filter
 // ======================================================
 
 import {
@@ -25,61 +20,35 @@ import {
 
 
 // ======================================================
-// FIREBASE CONFIGURATION
+// FIREBASE CONFIG
 // ======================================================
 
 const firebaseConfig = {
-
-  apiKey:
-    "AIzaSyCKsh43O6DYwfPheHH9CsraX3VpU2fjc",
-
-  authDomain:
-    "langdex.firebaseapp.com",
-
-  projectId:
-    "langdex",
-
-  storageBucket:
-    "langdex.firebasestorage.app",
-
-  messagingSenderId:
-    "819838317933",
-
-  appId:
-    "1:819838317933:web:cae7f4531ea32f958c5664",
-
-  measurementId:
-    "G-F60CC2CDC"
-
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.firebasestorage.app",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 
 // ======================================================
-// INITIALIZE FIREBASE
+// FIREBASE
 // ======================================================
 
-const app =
-  initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const db =
-  getFirestore(app);
-
-
-// ======================================================
-// FIRESTORE COLLECTION
-// ======================================================
-
-const wordsCollection =
-  collection(db, "words");
+const wordsCollection = collection(db, "words");
 
 
 // ======================================================
-// FORM
+// FORM ELEMENTS
 // ======================================================
 
 const form =
   document.querySelector(".form");
-
 
 let idInput = null;
 let wordInput = null;
@@ -87,36 +56,25 @@ let meaningInput = null;
 let synonymsInput = null;
 let languageSelect = null;
 
-
-// ======================================================
-// GET FORM INPUTS
-// ======================================================
-
 if (form) {
 
   const inputs =
     form.querySelectorAll("input");
 
-
   idInput =
     inputs[0] || null;
-
 
   wordInput =
     inputs[1] || null;
 
-
   meaningInput =
     inputs[2] || null;
-
 
   synonymsInput =
     inputs[3] || null;
 
-
   languageSelect =
-    form.querySelector("select");
-
+    form.querySelector("select") || null;
 }
 
 
@@ -164,6 +122,9 @@ const dataTable =
 const languageFilter =
   document.querySelector("#language-filter");
 
+const clearFilterButton =
+  document.querySelector("#clear-filter");
+
 const downloadPdfButton =
   document.querySelector("#download-pdf");
 
@@ -172,32 +133,21 @@ const downloadPdfButton =
 // VARIABLES
 // ======================================================
 
-// Firestore document ID
 let selectedDocumentId = null;
 
-
-// Whether form currently contains existing Firebase data
 let isExistingData = false;
 
+let allTableData = [];
 
-// Search results
 let searchResults = [];
 
-
-// Current search result
 let searchIndex = 0;
 
-
-// Previous search text
 let lastSearchText = "";
 
 
-// All data loaded into Data page
-let allTableData = [];
-
-
 // ======================================================
-// NORMALIZE TEXT
+// NORMALIZE
 // ======================================================
 
 function normalize(value) {
@@ -218,11 +168,11 @@ async function getNextId() {
   try {
 
     const snapshot =
-      await getDocs(wordsCollection);
-
+      await getDocs(
+        wordsCollection
+      );
 
     let maxId = 0;
-
 
     snapshot.forEach(
       firebaseDoc => {
@@ -230,35 +180,29 @@ async function getNextId() {
         const data =
           firebaseDoc.data();
 
-
-        const currentId =
+        const id =
           Number(data.id);
 
-
         if (
-          Number.isFinite(currentId) &&
-          currentId > maxId
+          Number.isFinite(id) &&
+          id > maxId
         ) {
 
-          maxId =
-            currentId;
+          maxId = id;
 
         }
 
       }
     );
 
-
     return maxId + 1;
-
 
   } catch (error) {
 
     console.error(
-      "Error getting next ID:",
+      "Get next ID error:",
       error
     );
-
 
     return 1;
 
@@ -277,24 +221,8 @@ async function setNextId() {
     return;
   }
 
-
   idInput.value =
     await getNextId();
-
-}
-
-
-// ======================================================
-// CLEAR SEARCH STATE
-// ======================================================
-
-function clearSearchState() {
-
-  searchResults = [];
-
-  searchIndex = 0;
-
-  lastSearchText = "";
 
 }
 
@@ -305,84 +233,39 @@ function clearSearchState() {
 
 async function clearForm() {
 
-  // --------------------------------------------------
-  // CLEAR INPUTS
-  // --------------------------------------------------
-
   if (wordInput) {
-
-    wordInput.value =
-      "";
-
+    wordInput.value = "";
   }
-
 
   if (meaningInput) {
-
-    meaningInput.value =
-      "";
-
+    meaningInput.value = "";
   }
-
 
   if (synonymsInput) {
-
-    synonymsInput.value =
-      "";
-
+    synonymsInput.value = "";
   }
-
-
-  // --------------------------------------------------
-  // RESET LANGUAGE
-  // --------------------------------------------------
 
   if (languageSelect) {
-
-    languageSelect.selectedIndex =
-      0;
-
+    languageSelect.selectedIndex = 0;
   }
 
+  selectedDocumentId = null;
 
-  // --------------------------------------------------
-  // RESET SELECTED DOCUMENT
-  // --------------------------------------------------
+  isExistingData = false;
 
-  selectedDocumentId =
-    null;
+  searchResults = [];
 
+  searchIndex = 0;
 
-  isExistingData =
-    false;
-
-
-  // --------------------------------------------------
-  // RESET SEARCH
-  // --------------------------------------------------
-
-  clearSearchState();
-
+  lastSearchText = "";
 
   if (searchInput) {
-
-    searchInput.value =
-      "";
-
+    searchInput.value = "";
   }
-
 
   if (searchResult) {
-
-    searchResult.textContent =
-      "";
-
+    searchResult.textContent = "";
   }
-
-
-  // --------------------------------------------------
-  // GET NEW ID
-  // --------------------------------------------------
 
   await setNextId();
 
@@ -390,7 +273,7 @@ async function clearForm() {
 
 
 // ======================================================
-// FILL FORM WITH FIREBASE DATA
+// FILL FORM
 // ======================================================
 
 function fillForm(
@@ -401,51 +284,33 @@ function fillForm(
   selectedDocumentId =
     documentId;
 
-
   isExistingData =
     true;
 
-
   if (idInput) {
-
     idInput.value =
       data.id ?? "";
-
   }
-
 
   if (wordInput) {
-
     wordInput.value =
       data.word ?? "";
-
   }
-
 
   if (meaningInput) {
-
     meaningInput.value =
       data.meaning ?? "";
-
   }
-
 
   if (synonymsInput) {
-
     synonymsInput.value =
       data.synonyms ?? "";
-
   }
-
 
   if (languageSelect) {
 
-    const language =
-      data.language ?? "";
-
-
     languageSelect.value =
-      language;
+      data.language ?? "";
 
   }
 
@@ -453,23 +318,17 @@ function fillForm(
 
 
 // ======================================================
-// SEARCH FIREBASE
+// GET ALL WORDS
 // ======================================================
 
-async function searchFirebase(
-  searchText
-) {
+async function getAllWords() {
 
   const snapshot =
-    await getDocs(wordsCollection);
+    await getDocs(
+      wordsCollection
+    );
 
-
-  const target =
-    normalize(searchText);
-
-
-  const results = [];
-
+  const rows = [];
 
   snapshot.forEach(
     firebaseDoc => {
@@ -477,73 +336,364 @@ async function searchFirebase(
       const data =
         firebaseDoc.data();
 
+      rows.push({
 
-      const id =
-        normalize(data.id);
+        ...data,
 
+        _documentId:
+          firebaseDoc.id
 
-      const word =
-        normalize(data.word);
+      });
 
-
-      const meaning =
-        normalize(data.meaning);
-
-
-      const synonyms =
-        normalize(data.synonyms);
+    }
+  );
 
 
-      const language =
-        normalize(data.language);
+  rows.sort(
+    (a, b) =>
+      Number(a.id) -
+      Number(b.id)
+  );
 
 
-      // ------------------------------------------------
-      // SEARCH ALL FIELDS
-      // ------------------------------------------------
+  return rows;
 
-      if (
+}
 
-        id.includes(target) ||
 
-        word.includes(target) ||
+// ======================================================
+// SHOW DATA
+// ======================================================
 
-        meaning.includes(target) ||
+if (showDataButton) {
 
-        synonyms.includes(target) ||
+  showDataButton.addEventListener(
+    "click",
+    async function () {
 
-        language.includes(target)
+      try {
 
-      ) {
+        allTableData =
+          await getAllWords();
 
-        results.push({
 
-          data:
-            data,
+        if (
+          allTableData.length === 0
+        ) {
 
-          documentId:
-            firebaseDoc.id
+          renderTable([]);
 
-        });
+          alert(
+            "لا توجد بيانات."
+          );
+
+          return;
+
+        }
+
+
+        // ----------------------------------------------
+        // APPLY CURRENT FILTER
+        // ----------------------------------------------
+
+        renderFilteredTable();
+
+
+      } catch (error) {
+
+        console.error(
+          "Show data error:",
+          error
+        );
+
+        alert(
+          "حدث خطأ أثناء عرض البيانات:\n" +
+          error.message
+        );
 
       }
 
     }
   );
 
+}
 
-  // ----------------------------------------------------
-  // SORT RESULTS BY ID
-  // ----------------------------------------------------
 
-  results.sort(
-    (a, b) =>
-      Number(a.data.id) -
-      Number(b.data.id)
+// ======================================================
+// RENDER TABLE
+// ======================================================
+
+function renderTable(rows) {
+
+  if (!dataTable) {
+    return;
+  }
+
+
+  dataTable.innerHTML = "";
+
+
+  rows.forEach(
+    data => {
+
+      const row =
+        document.createElement("tr");
+
+
+      const values = [
+
+        data.id,
+
+        data.word,
+
+        data.meaning,
+
+        data.synonyms,
+
+        data.language
+
+      ];
+
+
+      values.forEach(
+        value => {
+
+          const cell =
+            document.createElement("td");
+
+
+          cell.textContent =
+            value || "-";
+
+
+          row.appendChild(cell);
+
+        }
+      );
+
+
+      dataTable.appendChild(row);
+
+    }
   );
 
+}
 
-  return results;
+
+// ======================================================
+// DYNAMIC LANGUAGE FILTER
+// ======================================================
+//
+// IMPORTANT:
+//
+// لا توجد هنا قائمة ثابتة للغات.
+//
+// الـvalue المختار من الـselect
+// يتم مقارنته مباشرة مع language
+// الموجودة في Firebase.
+//
+// يعني لو أضفت:
+// French
+//
+// أو:
+// German
+//
+// أو:
+// Spanish
+//
+// أو أي لغة أخرى:
+//
+// الفلتر يشتغل تلقائيًا.
+//
+// ======================================================
+
+function renderFilteredTable() {
+
+  if (!languageFilter) {
+
+    renderTable(
+      allTableData
+    );
+
+    return;
+
+  }
+
+
+  const selectedLanguage =
+    languageFilter.value.trim();
+
+
+  // ----------------------------------------------
+  // ALL LANGUAGES
+  // ----------------------------------------------
+
+  if (
+    !selectedLanguage ||
+    selectedLanguage === "all"
+  ) {
+
+    renderTable(
+      allTableData
+    );
+
+    return;
+
+  }
+
+
+  // ----------------------------------------------
+  // FILTER
+  // ----------------------------------------------
+
+  const filteredData =
+    allTableData.filter(
+      item => {
+
+        const firebaseLanguage =
+          normalize(
+            item.language
+          );
+
+        const selected =
+          normalize(
+            selectedLanguage
+          );
+
+
+        return (
+          firebaseLanguage ===
+          selected
+        );
+
+      }
+    );
+
+
+  // ----------------------------------------------
+  // DISPLAY
+  // ----------------------------------------------
+
+  renderTable(
+    filteredData
+  );
+
+}
+
+
+// ======================================================
+// LANGUAGE FILTER EVENT
+// ======================================================
+
+if (languageFilter) {
+
+  languageFilter.addEventListener(
+    "change",
+    function () {
+
+      // لو البيانات لسه متحملتش
+      if (
+        allTableData.length === 0
+      ) {
+
+        return;
+
+      }
+
+
+      renderFilteredTable();
+
+    }
+  );
+
+}
+
+
+// ======================================================
+// CLEAR FILTER
+// ======================================================
+
+if (clearFilterButton) {
+
+  clearFilterButton.addEventListener(
+    "click",
+    function () {
+
+      // ----------------------------------------------
+      // RESET SELECT
+      // ----------------------------------------------
+
+      if (languageFilter) {
+
+        languageFilter.value =
+          "all";
+
+      }
+
+
+      // ----------------------------------------------
+      // SHOW ALL DATA
+      // ----------------------------------------------
+
+      renderTable(
+        allTableData
+      );
+
+    }
+  );
+
+}
+
+
+// ======================================================
+// SEARCH
+// ======================================================
+
+async function searchFirebase(
+  searchText
+) {
+
+  const rows =
+    await getAllWords();
+
+  const target =
+    normalize(
+      searchText
+    );
+
+
+  return rows.filter(
+    item => {
+
+      return (
+
+        normalize(item.id)
+          .includes(target)
+
+        ||
+
+        normalize(item.word)
+          .includes(target)
+
+        ||
+
+        normalize(item.meaning)
+          .includes(target)
+
+        ||
+
+        normalize(item.synonyms)
+          .includes(target)
+
+        ||
+
+        normalize(item.language)
+          .includes(target)
+
+      );
+
+    }
+  );
 
 }
 
@@ -557,24 +707,15 @@ if (
   searchInput
 ) {
 
-  searchInput.focus();
-
-
   searchButton.addEventListener(
     "click",
     async function () {
 
-      const searchText =
-        normalize(
-          searchInput.value
-        );
+      const text =
+        searchInput.value.trim();
 
 
-      // ------------------------------------------------
-      // EMPTY SEARCH
-      // ------------------------------------------------
-
-      if (!searchText) {
+      if (!text) {
 
         alert(
           "اكتب شيئًا للبحث."
@@ -587,34 +728,31 @@ if (
 
       try {
 
-        // ------------------------------------------------
+        // --------------------------------------------
         // NEW SEARCH
-        // ------------------------------------------------
+        // --------------------------------------------
 
         if (
-          searchText !==
-          lastSearchText
+          normalize(text) !==
+          normalize(lastSearchText)
         ) {
 
           searchResults =
             await searchFirebase(
-              searchText
+              text
             );
 
-
-          searchIndex =
-            0;
-
+          searchIndex = 0;
 
           lastSearchText =
-            searchText;
+            text;
 
         }
 
 
-        // ------------------------------------------------
+        // --------------------------------------------
         // NO RESULTS
-        // ------------------------------------------------
+        // --------------------------------------------
 
         if (
           searchResults.length === 0
@@ -629,9 +767,9 @@ if (
         }
 
 
-        // ------------------------------------------------
+        // --------------------------------------------
         // CURRENT RESULT
-        // ------------------------------------------------
+        // --------------------------------------------
 
         const result =
           searchResults[
@@ -639,31 +777,19 @@ if (
           ];
 
 
-        // ------------------------------------------------
-        // FILL FORM
-        // ------------------------------------------------
-
         fillForm(
-          result.data,
-          result.documentId
+          result,
+          result._documentId
         );
 
-
-        // ------------------------------------------------
-        // SEARCH RESULT MESSAGE
-        // ------------------------------------------------
 
         if (searchResult) {
 
           searchResult.textContent =
-            `تم العثور على النتيجة ${searchIndex + 1} من ${searchResults.length}`;
+            `تم العثور على ${searchIndex + 1} من ${searchResults.length}`;
 
         }
 
-
-        // ------------------------------------------------
-        // NEXT RESULT
-        // ------------------------------------------------
 
         searchIndex++;
 
@@ -673,8 +799,7 @@ if (
           searchResults.length
         ) {
 
-          searchIndex =
-            0;
+          searchIndex = 0;
 
         }
 
@@ -685,7 +810,6 @@ if (
           "Search error:",
           error
         );
-
 
         alert(
           "حدث خطأ أثناء البحث:\n" +
@@ -710,52 +834,26 @@ if (registerButton) {
     "click",
     async function () {
 
-      // ------------------------------------------------
-      // PREVENT REGISTER OF EXISTING DATA
-      // ------------------------------------------------
-
-      if (isExistingData) {
-
-        alert(
-          "هذه الكلمة موجودة بالفعل.\nاستخدم Update أو Delete."
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------
-      // GET VALUES
-      // ------------------------------------------------
-
       const word =
         wordInput
           ? wordInput.value.trim()
           : "";
-
 
       const meaning =
         meaningInput
           ? meaningInput.value.trim()
           : "";
 
-
       const synonyms =
         synonymsInput
           ? synonymsInput.value.trim()
           : "";
-
 
       const language =
         languageSelect
           ? languageSelect.value.trim()
           : "";
 
-
-      // ------------------------------------------------
-      // VALIDATION
-      // ------------------------------------------------
 
       if (!word) {
 
@@ -790,66 +888,38 @@ if (registerButton) {
       }
 
 
-      // ------------------------------------------------
-      // ONLY THREE LANGUAGES
-      // ------------------------------------------------
-
-      const allowedLanguages = [
-
-        "English",
-        "Urdu",
-        "Hindi"
-
-      ];
-
-
-      if (
-        !allowedLanguages.includes(
-          language
-        )
-      ) {
-
-        alert(
-          "اللغة يجب أن تكون English أو Urdu أو Hindi."
-        );
-
-        return;
-
-      }
-
-
       try {
 
-        // ------------------------------------------------
+        // --------------------------------------------
         // CHECK DUPLICATE
-        // ------------------------------------------------
+        // --------------------------------------------
 
-        const existing =
-          await searchFirebase(
-            word
-          );
+        const allWords =
+          await getAllWords();
 
 
-        const exactMatch =
-          existing.find(
+        const duplicate =
+          allWords.find(
             item =>
               normalize(
-                item.data.word
+                item.word
               ) ===
-              normalize(word)
+              normalize(
+                word
+              )
           );
 
 
-        if (exactMatch) {
+        if (duplicate) {
 
           alert(
-            `هذه الكلمة موجودة بالفعل.\nID: ${exactMatch.data.id}`
+            `الكلمة موجودة بالفعل.\nID: ${duplicate.id}`
           );
 
 
           fillForm(
-            exactMatch.data,
-            exactMatch.documentId
+            duplicate,
+            duplicate._documentId
           );
 
 
@@ -858,17 +928,17 @@ if (registerButton) {
         }
 
 
-        // ------------------------------------------------
-        // GET NEW ID
-        // ------------------------------------------------
+        // --------------------------------------------
+        // NEW ID
+        // --------------------------------------------
 
         const newId =
           await getNextId();
 
 
-        // ------------------------------------------------
-        // SAVE TO FIREBASE
-        // ------------------------------------------------
+        // --------------------------------------------
+        // SAVE
+        // --------------------------------------------
 
         await addDoc(
           wordsCollection,
@@ -898,10 +968,6 @@ if (registerButton) {
         );
 
 
-        // ------------------------------------------------
-        // CLEAR FORM
-        // ------------------------------------------------
-
         await clearForm();
 
 
@@ -911,7 +977,6 @@ if (registerButton) {
           "Register error:",
           error
         );
-
 
         alert(
           "حدث خطأ أثناء الحفظ:\n" +
@@ -936,10 +1001,6 @@ if (updateButton) {
     "click",
     async function () {
 
-      // ------------------------------------------------
-      // NO SELECTED DOCUMENT
-      // ------------------------------------------------
-
       if (!selectedDocumentId) {
 
         alert(
@@ -951,27 +1012,20 @@ if (updateButton) {
       }
 
 
-      // ------------------------------------------------
-      // GET VALUES
-      // ------------------------------------------------
-
       const word =
         wordInput
           ? wordInput.value.trim()
           : "";
-
 
       const meaning =
         meaningInput
           ? meaningInput.value.trim()
           : "";
 
-
       const synonyms =
         synonymsInput
           ? synonymsInput.value.trim()
           : "";
-
 
       const language =
         languageSelect
@@ -979,14 +1033,32 @@ if (updateButton) {
           : "";
 
 
-      // ------------------------------------------------
-      // VALIDATION
-      // ------------------------------------------------
-
-      if (!word || !meaning) {
+      if (!word) {
 
         alert(
-          "أكمل الكلمة والمعنى."
+          "اكتب الكلمة."
+        );
+
+        return;
+
+      }
+
+
+      if (!meaning) {
+
+        alert(
+          "اكتب المعنى."
+        );
+
+        return;
+
+      }
+
+
+      if (!language) {
+
+        alert(
+          "اختر اللغة."
         );
 
         return;
@@ -996,7 +1068,7 @@ if (updateButton) {
 
       try {
 
-        const wordDocument =
+        const wordRef =
           doc(
             db,
             "words",
@@ -1005,7 +1077,7 @@ if (updateButton) {
 
 
         await updateDoc(
-          wordDocument,
+          wordRef,
           {
 
             word:
@@ -1039,7 +1111,6 @@ if (updateButton) {
           error
         );
 
-
         alert(
           "حدث خطأ أثناء التحديث:\n" +
           error.message
@@ -1066,10 +1137,6 @@ if (deleteButton) {
       event.preventDefault();
 
 
-      // ------------------------------------------------
-      // NO SELECTED DOCUMENT
-      // ------------------------------------------------
-
       if (!selectedDocumentId) {
 
         alert(
@@ -1081,10 +1148,6 @@ if (deleteButton) {
       }
 
 
-      // ------------------------------------------------
-      // CONFIRM
-      // ------------------------------------------------
-
       const confirmed =
         confirm(
           "هل أنت متأكد من حذف هذه الكلمة؟"
@@ -1092,15 +1155,13 @@ if (deleteButton) {
 
 
       if (!confirmed) {
-
         return;
-
       }
 
 
       try {
 
-        const wordDocument =
+        const wordRef =
           doc(
             db,
             "words",
@@ -1109,7 +1170,7 @@ if (deleteButton) {
 
 
         await deleteDoc(
-          wordDocument
+          wordRef
         );
 
 
@@ -1128,7 +1189,6 @@ if (deleteButton) {
           error
         );
 
-
         alert(
           "حدث خطأ أثناء الحذف:\n" +
           error.message
@@ -1143,7 +1203,7 @@ if (deleteButton) {
 
 
 // ======================================================
-// CLEAR BUTTON
+// CLEAR FORM BUTTON
 // ======================================================
 
 if (clearButton) {
@@ -1163,120 +1223,51 @@ if (clearButton) {
 
 
 // ======================================================
-// RENDER TABLE
+// PDF
 // ======================================================
 
-function renderTable(
-  rows
-) {
+if (downloadPdfButton) {
 
-  if (!dataTable) {
-
-    return;
-
-  }
-
-
-  dataTable.innerHTML =
-    "";
-
-
-  rows.forEach(
-    data => {
-
-      const row =
-        document.createElement(
-          "tr"
-        );
-
-
-      const values = [
-
-        data.id,
-
-        data.word,
-
-        data.meaning,
-
-        data.synonyms,
-
-        data.language
-
-      ];
-
-
-      values.forEach(
-        value => {
-
-          const cell =
-            document.createElement(
-              "td"
-            );
-
-
-          cell.textContent =
-            value ?? "-";
-
-
-          row.appendChild(
-            cell
-          );
-
-        }
-      );
-
-
-      dataTable.appendChild(
-        row
-      );
-
-    }
-  );
-
-}
-
-
-// ======================================================
-// SHOW ALL DATA
-// ======================================================
-
-if (
-  showDataButton &&
-  dataTable
-) {
-
-  showDataButton.addEventListener(
+  downloadPdfButton.addEventListener(
     "click",
     async function () {
 
+      if (
+        typeof html2pdf ===
+        "undefined"
+      ) {
+
+        alert(
+          "مكتبة PDF غير محملة."
+        );
+
+        return;
+
+      }
+
+
       try {
 
-        const snapshot =
-          await getDocs(
-            wordsCollection
-          );
+        // --------------------------------------------
+        // LOAD DATA IF NECESSARY
+        // --------------------------------------------
 
-
-        // ------------------------------------------------
-        // CLEAR TABLE
-        // ------------------------------------------------
-
-        dataTable.innerHTML =
-          "";
-
-
-        // ------------------------------------------------
-        // EMPTY DATABASE
-        // ------------------------------------------------
-
-        if (snapshot.empty) {
+        if (
+          allTableData.length === 0
+        ) {
 
           allTableData =
-            [];
+            await getAllWords();
 
+        }
+
+
+        if (
+          allTableData.length === 0
+        ) {
 
           alert(
-            "لا توجد بيانات في قاعدة البيانات."
+            "لا توجد بيانات."
           );
 
           return;
@@ -1284,93 +1275,294 @@ if (
         }
 
 
-        // ------------------------------------------------
-        // GET DATA
-        // ------------------------------------------------
+        // --------------------------------------------
+        // GET CURRENT FILTER
+        // --------------------------------------------
 
-        const rows = [];
+        let rows =
+          allTableData;
 
 
-        snapshot.forEach(
-          firebaseDoc => {
+        if (languageFilter) {
 
-            rows.push(
-              firebaseDoc.data()
+          const selected =
+            languageFilter.value.trim();
+
+
+          if (
+            selected &&
+            selected !== "all"
+          ) {
+
+            rows =
+              allTableData.filter(
+                item =>
+                  normalize(
+                    item.language
+                  ) ===
+                  normalize(
+                    selected
+                  )
+              );
+
+          }
+
+        }
+
+
+        if (rows.length === 0) {
+
+          alert(
+            "لا توجد بيانات لهذه اللغة."
+          );
+
+          return;
+
+        }
+
+
+        // --------------------------------------------
+        // CREATE PDF CONTAINER
+        // --------------------------------------------
+
+        const container =
+          document.createElement("div");
+
+
+        container.style.padding =
+          "20px";
+
+        container.style.background =
+          "#ffffff";
+
+        container.style.color =
+          "#000000";
+
+        container.style.direction =
+          "rtl";
+
+        container.style.fontFamily =
+          "Cairo, Arial, sans-serif";
+
+
+        const title =
+          document.createElement("h1");
+
+
+        title.textContent =
+          "Langdex - البيانات";
+
+
+        title.style.textAlign =
+          "center";
+
+
+        container.appendChild(
+          title
+        );
+
+
+        // --------------------------------------------
+        // TABLE
+        // --------------------------------------------
+
+        const table =
+          document.createElement("table");
+
+
+        table.style.width =
+          "100%";
+
+        table.style.borderCollapse =
+          "collapse";
+
+
+        // --------------------------------------------
+        // HEADER
+        // --------------------------------------------
+
+        const headers = [
+
+          "ID",
+          "الكلمة",
+          "المعنى",
+          "المرادف",
+          "اللغة"
+
+        ];
+
+
+        const thead =
+          document.createElement("thead");
+
+
+        const headerRow =
+          document.createElement("tr");
+
+
+        headers.forEach(
+          text => {
+
+            const th =
+              document.createElement("th");
+
+
+            th.textContent =
+              text;
+
+
+            th.style.border =
+              "1px solid #000";
+
+            th.style.padding =
+              "8px";
+
+            th.style.background =
+              "#eeeeee";
+
+
+            headerRow.appendChild(
+              th
             );
 
           }
         );
 
 
-        // ------------------------------------------------
-        // SORT BY ID
-        // ------------------------------------------------
-
-        rows.sort(
-          (a, b) =>
-            Number(a.id) -
-            Number(b.id)
+        thead.appendChild(
+          headerRow
         );
 
 
-        // ------------------------------------------------
-        // SAVE ALL DATA
-        // ------------------------------------------------
-
-        allTableData =
-          rows;
+        table.appendChild(
+          thead
+        );
 
 
-        // ------------------------------------------------
-        // APPLY CURRENT FILTER
-        // ------------------------------------------------
+        // --------------------------------------------
+        // BODY
+        // --------------------------------------------
 
-        let visibleRows =
-          allTableData;
-
-
-        if (
-          languageFilter &&
-          languageFilter.value !== "all"
-        ) {
-
-          const selectedLanguage =
-            languageFilter.value;
+        const tbody =
+          document.createElement("tbody");
 
 
-          visibleRows =
-            allTableData.filter(
-              item =>
-                normalize(
-                  item.language
-                ) ===
-                normalize(
-                  selectedLanguage
-                )
+        rows.forEach(
+          data => {
+
+            const row =
+              document.createElement("tr");
+
+
+            [
+
+              data.id,
+              data.word,
+              data.meaning,
+              data.synonyms,
+              data.language
+
+            ].forEach(
+              value => {
+
+                const td =
+                  document.createElement("td");
+
+
+                td.textContent =
+                  value || "-";
+
+
+                td.style.border =
+                  "1px solid #000";
+
+                td.style.padding =
+                  "8px";
+
+
+                row.appendChild(td);
+
+              }
             );
 
-        }
 
+            tbody.appendChild(row);
 
-        // ------------------------------------------------
-        // RENDER
-        // ------------------------------------------------
-
-        renderTable(
-          visibleRows
+          }
         );
+
+
+        table.appendChild(
+          tbody
+        );
+
+
+        container.appendChild(
+          table
+        );
+
+
+        document.body.appendChild(
+          container
+        );
+
+
+        // --------------------------------------------
+        // PDF
+        // --------------------------------------------
+
+        await html2pdf()
+          .set({
+
+            margin: 10,
+
+            filename:
+              "Langdex-Data.pdf",
+
+            image: {
+
+              type: "jpeg",
+
+              quality: 0.98
+
+            },
+
+            html2canvas: {
+
+              scale: 2,
+
+              useCORS: true
+
+            },
+
+            jsPDF: {
+
+              unit: "mm",
+
+              format: "a4",
+
+              orientation:
+                "landscape"
+
+            }
+
+          })
+          .from(container)
+          .save();
+
+
+        container.remove();
 
 
       } catch (error) {
 
         console.error(
-          "Show Data error:",
+          "PDF error:",
           error
         );
 
-
         alert(
-          "حدث خطأ أثناء عرض البيانات:\n" +
+          "حدث خطأ أثناء إنشاء PDF:\n" +
           error.message
         );
 
@@ -1383,582 +1575,7 @@ if (
 
 
 // ======================================================
-// LANGUAGE FILTER
-// ======================================================
-
-if (languageFilter) {
-
-  languageFilter.addEventListener(
-    "change",
-    function () {
-
-      // ------------------------------------------------
-      // DATABASE NOT LOADED YET
-      // ------------------------------------------------
-
-      if (
-        allTableData.length === 0
-      ) {
-
-        return;
-
-      }
-
-
-      const selectedLanguage =
-        languageFilter.value;
-
-
-      // ------------------------------------------------
-      // ALL
-      // ------------------------------------------------
-
-      if (
-        selectedLanguage ===
-        "all"
-      ) {
-
-        renderTable(
-          allTableData
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------
-      // FILTER
-      // ------------------------------------------------
-
-      const filteredRows =
-        allTableData.filter(
-          item =>
-            normalize(
-              item.language
-            ) ===
-            normalize(
-              selectedLanguage
-            )
-        );
-
-
-      renderTable(
-        filteredRows
-      );
-
-    }
-  );
-
-}
-
-
-// ======================================================
-// DOWNLOAD PDF
-// ======================================================
-
-if (downloadPdfButton) {
-
-  downloadPdfButton.addEventListener(
-    "click",
-    function () {
-
-      // ------------------------------------------------
-      // CHECK LIBRARY
-      // ------------------------------------------------
-
-      if (
-        typeof html2pdf ===
-        "undefined"
-      ) {
-
-        alert(
-          "لم يتم تحميل مكتبة PDF."
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------
-      // CHECK DATA
-      // ------------------------------------------------
-
-      if (
-        allTableData.length === 0
-      ) {
-
-        alert(
-          "اضغط عرض أولاً."
-        );
-
-        return;
-
-      }
-
-
-      // ------------------------------------------------
-      // GET LANGUAGE
-      // ------------------------------------------------
-
-      const selectedLanguage =
-        languageFilter
-          ? languageFilter.value
-          : "all";
-
-
-      // ------------------------------------------------
-      // FILTER DATA
-      // ------------------------------------------------
-
-      let dataToDownload;
-
-
-      if (
-        selectedLanguage ===
-        "all"
-      ) {
-
-        dataToDownload =
-          allTableData;
-
-      } else {
-
-        dataToDownload =
-          allTableData.filter(
-            item =>
-              normalize(
-                item.language
-              ) ===
-              normalize(
-                selectedLanguage
-              )
-          );
-
-      }
-
-
-      // ------------------------------------------------
-      // NO DATA
-      // ------------------------------------------------
-
-      if (
-        dataToDownload.length === 0
-      ) {
-
-        alert(
-          "لا توجد كلمات لهذه اللغة."
-        );
-
-        return;
-
-      }
-
-
-      // ==================================================
-      // CREATE PDF CONTAINER
-      // ==================================================
-
-      const pdfContainer =
-        document.createElement(
-          "div"
-        );
-
-
-      pdfContainer.style.padding =
-        "20px";
-
-
-      pdfContainer.style.background =
-        "#ffffff";
-
-
-      pdfContainer.style.color =
-        "#000000";
-
-
-      pdfContainer.style.direction =
-        "rtl";
-
-
-      pdfContainer.style.fontFamily =
-        "Cairo, Arial, sans-serif";
-
-
-      // ==================================================
-      // TITLE
-      // ==================================================
-
-      const title =
-        document.createElement(
-          "h1"
-        );
-
-
-      if (
-        selectedLanguage ===
-        "all"
-      ) {
-
-        title.textContent =
-          "Langdex - جميع الكلمات";
-
-      } else {
-
-        title.textContent =
-          `Langdex - ${selectedLanguage}`;
-
-      }
-
-
-      title.style.textAlign =
-        "center";
-
-
-      title.style.marginBottom =
-        "20px";
-
-
-      pdfContainer.appendChild(
-        title
-      );
-
-
-      // ==================================================
-      // TABLE
-      // ==================================================
-
-      const table =
-        document.createElement(
-          "table"
-        );
-
-
-      table.style.width =
-        "100%";
-
-
-      table.style.borderCollapse =
-        "collapse";
-
-
-      table.style.direction =
-        "rtl";
-
-
-      // ==================================================
-      // HEADER
-      // ==================================================
-
-      const thead =
-        document.createElement(
-          "thead"
-        );
-
-
-      const headerRow =
-        document.createElement(
-          "tr"
-        );
-
-
-      const headers = [
-
-        "ID",
-
-        "الكلمة",
-
-        "المعنى",
-
-        "المرادف",
-
-        "اللغة"
-
-      ];
-
-
-      headers.forEach(
-        text => {
-
-          const th =
-            document.createElement(
-              "th"
-            );
-
-
-          th.textContent =
-            text;
-
-
-          th.style.border =
-            "1px solid #000";
-
-
-          th.style.padding =
-            "8px";
-
-
-          th.style.textAlign =
-            "center";
-
-
-          th.style.background =
-            "#eeeeee";
-
-
-          headerRow.appendChild(
-            th
-          );
-
-        }
-      );
-
-
-      thead.appendChild(
-        headerRow
-      );
-
-
-      table.appendChild(
-        thead
-      );
-
-
-      // ==================================================
-      // BODY
-      // ==================================================
-
-      const tbody =
-        document.createElement(
-          "tbody"
-        );
-
-
-      dataToDownload.forEach(
-        data => {
-
-          const row =
-            document.createElement(
-              "tr"
-            );
-
-
-          const values = [
-
-            data.id,
-
-            data.word,
-
-            data.meaning,
-
-            data.synonyms,
-
-            data.language
-
-          ];
-
-
-          values.forEach(
-            value => {
-
-              const td =
-                document.createElement(
-                  "td"
-                );
-
-
-              td.textContent =
-                value ?? "-";
-
-
-              td.style.border =
-                "1px solid #000";
-
-
-              td.style.padding =
-                "8px";
-
-
-              td.style.textAlign =
-                "right";
-
-
-              td.style.verticalAlign =
-                "top";
-
-
-              row.appendChild(
-                td
-              );
-
-            }
-          );
-
-
-          tbody.appendChild(
-            row
-          );
-
-        }
-      );
-
-
-      table.appendChild(
-        tbody
-      );
-
-
-      pdfContainer.appendChild(
-        table
-      );
-
-
-      // ==================================================
-      // ADD TEMPORARILY TO PAGE
-      // ==================================================
-
-      document.body.appendChild(
-        pdfContainer
-      );
-
-
-      // ==================================================
-      // FILE NAME
-      // ==================================================
-
-      let fileName;
-
-
-      if (
-        selectedLanguage ===
-        "all"
-      ) {
-
-        fileName =
-          "Langdex-All-Words.pdf";
-
-      } else {
-
-        fileName =
-          `Langdex-${selectedLanguage}.pdf`;
-
-      }
-
-
-      // ==================================================
-      // PDF OPTIONS
-      // ==================================================
-
-      const options = {
-
-        margin:
-          10,
-
-        filename:
-          fileName,
-
-        image: {
-
-          type:
-            "jpeg",
-
-          quality:
-            0.98
-
-        },
-
-        html2canvas: {
-
-          scale:
-            2,
-
-          useCORS:
-            true
-
-        },
-
-        jsPDF: {
-
-          unit:
-            "mm",
-
-          format:
-            "a4",
-
-          orientation:
-            "landscape"
-
-        }
-
-      };
-
-
-      // ==================================================
-      // GENERATE PDF
-      // ==================================================
-
-      html2pdf()
-
-        .set(options)
-
-        .from(pdfContainer)
-
-        .save()
-
-        .then(
-          function () {
-
-            if (
-              pdfContainer.parentNode
-            ) {
-
-              pdfContainer.parentNode
-                .removeChild(
-                  pdfContainer
-                );
-
-            }
-
-          }
-        )
-
-        .catch(
-          function (error) {
-
-            console.error(
-              "PDF error:",
-              error
-            );
-
-
-            if (
-              pdfContainer.parentNode
-            ) {
-
-              pdfContainer.parentNode
-                .removeChild(
-                  pdfContainer
-                );
-
-            }
-
-
-            alert(
-              "حدث خطأ أثناء إنشاء PDF."
-            );
-
-          }
-        );
-
-    }
-  );
-
-}
-
-
-// ======================================================
-// INITIAL ID
+// START
 // ======================================================
 
 if (idInput) {
