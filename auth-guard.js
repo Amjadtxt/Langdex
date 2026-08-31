@@ -1,6 +1,6 @@
 // ======================================================
 // LANGDEX - auth-guard.js
-// Protect index.html + data.html
+// Protect pages from unauthenticated users
 // ======================================================
 
 import {
@@ -43,34 +43,26 @@ const auth = getAuth(app);
 
 
 // ======================================================
-// HIDE PAGE IMMEDIATELY
-// ======================================================
-
-document.documentElement.style.visibility = "hidden";
-
-
-// ======================================================
-// CHECK LOGIN
+// AUTH GUARD
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
 
-    // --------------------------------------
-    // NOT LOGGED IN
-    // --------------------------------------
+    if (user) {
 
-    if (!user) {
+        // المستخدم مسجل دخول
+        // أظهر الصفحة
+
+        document.documentElement.style.visibility =
+            "visible";
+
+    } else {
+
+        // المستخدم غير مسجل
+        // لا تظهر الصفحة نهائيًا
 
         window.location.replace("login.html");
 
-        return;
     }
-
-
-    // --------------------------------------
-    // LOGGED IN
-    // --------------------------------------
-
-    document.documentElement.style.visibility = "visible";
 
 });
