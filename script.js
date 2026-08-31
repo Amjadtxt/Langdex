@@ -1,15 +1,6 @@
 // ======================================================
 // LANGDEX - script.js
 // ======================================================
-// Firebase
-// Register / Update / Delete
-// Search
-// Show Data
-// Dynamic Language Filter
-// Clear Filter
-// Download PDF
-// Smart ID
-// ======================================================
 
 
 // ======================================================
@@ -36,27 +27,13 @@ import {
 // ======================================================
 
 const firebaseConfig = {
-
-    apiKey:
-        "AIzaSyCKsh43zO6DYwfPheHH9CsraX3VpU2fjc",
-
-    authDomain:
-        "langdex.firebaseapp.com",
-
-    projectId:
-        "langdex",
-
-    storageBucket:
-        "langdex.firebasestorage.app",
-
-    messagingSenderId:
-        "819838317933",
-
-    appId:
-        "1:819838317933:web:cae7f4531ea32f958c5664",
-
-    measurementId:
-        "G-F60CC2CDCJ"
+    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    authDomain: "langdex.firebaseapp.com",
+    projectId: "langdex",
+    storageBucket: "langdex.firebasestorage.app",
+    messagingSenderId: "819838317933",
+    appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+    measurementId: "G-F60CC2CDCJ"
 };
 
 
@@ -64,31 +41,18 @@ const firebaseConfig = {
 // INITIALIZE FIREBASE
 // ======================================================
 
-const app =
-    initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-const db =
-    getFirestore(app);
+const db = getFirestore(app);
 
-
-// ======================================================
-// FIRESTORE COLLECTION
-// ======================================================
-
-const wordsCollection =
-    collection(
-        db,
-        "words"
-    );
+const wordsCollection = collection(db, "words");
 
 
 // ======================================================
 // FORM ELEMENTS
 // ======================================================
 
-const form =
-    document.querySelector(".form");
-
+const form = document.querySelector(".form");
 
 let idInput = null;
 let wordInput = null;
@@ -99,25 +63,12 @@ let languageSelect = null;
 
 if (form) {
 
-    const inputs =
-        form.querySelectorAll("input");
+    const inputs = form.querySelectorAll("input");
 
-
-    idInput =
-        inputs[0] || null;
-
-
-    wordInput =
-        inputs[1] || null;
-
-
-    meaningInput =
-        inputs[2] || null;
-
-
-    synonymsInput =
-        inputs[3] || null;
-
+    idInput = inputs[0] || null;
+    wordInput = inputs[1] || null;
+    meaningInput = inputs[2] || null;
+    synonymsInput = inputs[3] || null;
 
     languageSelect =
         form.querySelector("select") || null;
@@ -125,60 +76,51 @@ if (form) {
 
 
 // ======================================================
-// FORM BUTTONS
+// BUTTONS
 // ======================================================
 
 const registerButton =
     document.querySelector(".reg");
 
-
 const updateButton =
     document.querySelector(".upa");
 
-
 const deleteButton =
     document.querySelector(".del");
-
 
 const clearButton =
     document.querySelector(".cel");
 
 
 // ======================================================
-// SEARCH ELEMENTS
+// SEARCH
 // ======================================================
 
 const searchInput =
     document.querySelector(".search-txt");
 
-
 const searchButton =
     document.querySelector(".search-btn");
-
 
 const searchResult =
     document.querySelector(".search-result");
 
 
 // ======================================================
-// DATA PAGE ELEMENTS
+// DATA PAGE
 // ======================================================
 
 const showDataButton =
     document.querySelector(".show-data");
 
-
 const dataTable =
     document.querySelector("#data-table");
-
 
 const languageFilter =
     document.querySelector("#language-filter");
 
-
 const clearFilterButton =
     document.querySelector("#clear-filter");
-
 
 const downloadPdfButton =
     document.querySelector("#download-pdf");
@@ -213,52 +155,43 @@ function normalize(value) {
 
 
 // ======================================================
-// GET ALL DATA
+// GET ALL WORDS
 // ======================================================
 
 async function getAllWords() {
 
     const snapshot =
-        await getDocs(
-            wordsCollection
-        );
-
+        await getDocs(wordsCollection);
 
     const rows = [];
 
+    snapshot.forEach(firebaseDoc => {
 
-    snapshot.forEach(
-        firebaseDoc => {
+        const data =
+            firebaseDoc.data();
 
-            const data =
-                firebaseDoc.data();
+        rows.push({
 
+            ...data,
 
-            rows.push({
+            _documentId:
+                firebaseDoc.id
 
-                ...data,
+        });
 
-                _documentId:
-                    firebaseDoc.id
-
-            });
-
-        }
-    );
+    });
 
 
-    // ترتيب حسب ID
+    // ترتيب Firebase حسب ID
 
-    rows.sort(
-        (a, b) => {
+    rows.sort((a, b) => {
 
-            return (
-                Number(a.id || 0) -
-                Number(b.id || 0)
-            );
+        return (
+            Number(a.id || 0) -
+            Number(b.id || 0)
+        );
 
-        }
-    );
+    });
 
 
     return rows;
@@ -270,9 +203,9 @@ async function getAllWords() {
 // SMART ID
 // ======================================================
 //
-// يبحث عن أول ID ناقص.
-//
 // مثال:
+//
+// Firebase:
 //
 // 1
 // 3
@@ -281,19 +214,19 @@ async function getAllWords() {
 // الجديد = 2
 //
 //
+// Firebase:
 //
 // 1
 // 2
 // 3
-// 4
 //
-// الجديد = 5
+// الجديد = 4
 //
 //
+// Firebase:
 //
 // 2
 // 3
-// 4
 //
 // الجديد = 1
 //
@@ -306,29 +239,26 @@ async function getNextId() {
         const rows =
             await getAllWords();
 
-
         const usedIds =
             new Set();
 
 
-        rows.forEach(
-            item => {
+        rows.forEach(item => {
 
-                const id =
-                    Number(item.id);
+            const id =
+                Number(item.id);
 
 
-                if (
-                    Number.isInteger(id) &&
-                    id > 0
-                ) {
+            if (
+                Number.isInteger(id) &&
+                id > 0
+            ) {
 
-                    usedIds.add(id);
-
-                }
+                usedIds.add(id);
 
             }
-        );
+
+        });
 
 
         let nextId = 1;
@@ -369,10 +299,8 @@ async function setNextId() {
 
     if (!idInput) return;
 
-
     const nextId =
         await getNextId();
-
 
     idInput.value =
         nextId;
@@ -388,64 +316,51 @@ async function clearForm() {
 
     if (wordInput) {
 
-        wordInput.value =
-            "";
+        wordInput.value = "";
 
     }
 
 
     if (meaningInput) {
 
-        meaningInput.value =
-            "";
+        meaningInput.value = "";
 
     }
 
 
     if (synonymsInput) {
 
-        synonymsInput.value =
-            "";
+        synonymsInput.value = "";
 
     }
 
 
     if (languageSelect) {
 
-        languageSelect.selectedIndex =
-            0;
+        languageSelect.selectedIndex = 0;
 
     }
 
 
-    selectedDocumentId =
-        null;
+    selectedDocumentId = null;
 
+    searchResults = [];
 
-    searchResults =
-        [];
+    searchIndex = 0;
 
-
-    searchIndex =
-        0;
-
-
-    lastSearchText =
-        "";
+    lastSearchText = "";
 
 
     if (searchInput) {
 
-        searchInput.value =
-            "";
+        searchInput.value = "";
 
     }
 
 
     if (searchResult) {
 
-        searchResult.textContent =
-            "";
+        searchResult.textContent = "";
 
     }
 
@@ -459,10 +374,7 @@ async function clearForm() {
 // FILL FORM
 // ======================================================
 
-function fillForm(
-    data,
-    documentId
-) {
+function fillForm(data, documentId) {
 
     selectedDocumentId =
         documentId;
@@ -511,17 +423,14 @@ function fillForm(
 
 
 // ======================================================
-// CREATE LANGUAGE FILTER
+// POPULATE LANGUAGE FILTER
 // ======================================================
 //
-// لا توجد لغات مكتوبة يدويًا.
-//
-// السكربت يقرأ كل اللغات من Firebase.
+// اللغات يتم جلبها تلقائيًا من Firebase.
+// لا نكتب English / Urdu / Hindi يدويًا.
 // ======================================================
 
-function populateLanguageFilter(
-    rows
-) {
+function populateLanguageFilter(rows) {
 
     if (!languageFilter) return;
 
@@ -530,119 +439,110 @@ function populateLanguageFilter(
         languageFilter.value;
 
 
-    languageFilter.innerHTML =
-        "";
+    languageFilter.innerHTML = "";
 
 
     // جميع اللغات
 
     const allOption =
-        document.createElement(
-            "option"
-        );
+        document.createElement("option");
 
-
-    allOption.value =
-        "all";
-
+    allOption.value = "all";
 
     allOption.textContent =
         "جميع اللغات";
-
 
     languageFilter.appendChild(
         allOption
     );
 
 
-    // اللغات الموجودة في Firebase
+    // مجموعة اللغات
 
     const languages =
         new Map();
 
 
-    rows.forEach(
-        item => {
+    rows.forEach(item => {
 
-            const language =
-                String(
-                    item.language ?? ""
-                ).trim();
-
-
-            if (!language) return;
+        const language =
+            String(
+                item.language ?? ""
+            ).trim();
 
 
-            const key =
-                normalize(language);
+        if (!language) return;
 
 
-            if (!languages.has(key)) {
+        const key =
+            normalize(language);
 
-                languages.set(
-                    key,
-                    language
-                );
 
-            }
+        if (!languages.has(key)) {
+
+            languages.set(
+                key,
+                language
+            );
 
         }
-    );
+
+    });
 
 
     // إضافة اللغات
 
     [...languages.values()]
-        .sort(
-            (a, b) =>
-                a.localeCompare(
-                    b,
-                    "ar"
-                )
+        .sort((a, b) =>
+            a.localeCompare(
+                b,
+                "ar"
+            )
         )
-        .forEach(
-            language => {
+        .forEach(language => {
 
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                option.value =
-                    language;
-
-
-                option.textContent =
-                    language;
-
-
-                languageFilter.appendChild(
-                    option
+            const option =
+                document.createElement(
+                    "option"
                 );
 
-            }
-        );
+
+            option.value =
+                language;
 
 
-    // استرجاع الاختيار السابق
+            option.textContent =
+                language;
 
-    const stillExists =
+
+            languageFilter.appendChild(
+                option
+            );
+
+        });
+
+
+    // الحفاظ على اللغة المختارة
+
+    const exists =
         [...languageFilter.options]
-            .some(
-                option =>
+            .some(option => {
+
+                return (
                     normalize(
                         option.value
                     ) ===
                     normalize(
                         oldValue
                     )
-            );
+                );
+
+            });
 
 
     if (
         oldValue &&
-        stillExists
+        exists
     ) {
 
         languageFilter.value =
@@ -662,68 +562,49 @@ function populateLanguageFilter(
 // RENDER TABLE
 // ======================================================
 
-function renderTable(
-    rows
-) {
+function renderTable(rows) {
 
     if (!dataTable) return;
 
 
-    dataTable.innerHTML =
-        "";
+    dataTable.innerHTML = "";
 
 
-    rows.forEach(
-        data => {
+    rows.forEach(data => {
 
-            const row =
-                document.createElement(
-                    "tr"
-                );
+        const row =
+            document.createElement("tr");
 
 
-            const values = [
+        const values = [
 
-                data.id,
+            data.id,
+            data.word,
+            data.meaning,
+            data.synonyms,
+            data.language
 
-                data.word,
-
-                data.meaning,
-
-                data.synonyms,
-
-                data.language
-
-            ];
+        ];
 
 
-            values.forEach(
-                value => {
+        values.forEach(value => {
 
-                    const cell =
-                        document.createElement(
-                            "td"
-                        );
+            const cell =
+                document.createElement("td");
 
 
-                    cell.textContent =
-                        value || "-";
+            cell.textContent =
+                value || "-";
 
 
-                    row.appendChild(
-                        cell
-                    );
+            row.appendChild(cell);
 
-                }
-            );
+        });
 
 
-            dataTable.appendChild(
-                row
-            );
+        dataTable.appendChild(row);
 
-        }
-    );
+    });
 
 }
 
@@ -759,23 +640,21 @@ function applyLanguageFilter() {
     }
 
 
-    // لغة محددة
+    // لغة واحدة فقط
 
     const filteredData =
-        allTableData.filter(
-            item => {
+        allTableData.filter(item => {
 
-                return (
-                    normalize(
-                        item.language
-                    ) ===
-                    normalize(
-                        selectedLanguage
-                    )
-                );
+            return (
+                normalize(
+                    item.language
+                ) ===
+                normalize(
+                    selectedLanguage
+                )
+            );
 
-            }
-        );
+        });
 
 
     renderTable(
@@ -831,7 +710,7 @@ if (showDataButton) {
 
 
 // ======================================================
-// LANGUAGE FILTER CHANGE
+// FILTER CHANGE
 // ======================================================
 
 if (languageFilter) {
@@ -841,8 +720,6 @@ if (languageFilter) {
         async function () {
 
             try {
-
-                // تحميل البيانات إذا لم تكن محملة
 
                 if (
                     allTableData.length === 0
@@ -858,8 +735,6 @@ if (languageFilter) {
 
                 }
 
-
-                // تطبيق الفلتر
 
                 applyLanguageFilter();
 
@@ -888,52 +763,43 @@ if (languageFilter) {
 // ======================================================
 // CLEAR FILTER
 // ======================================================
+//
+// هنا إلغاء الفلتر = إلغاء عرض البيانات بالكامل.
+//
+// لا يرجع جميع اللغات.
+// الجدول يصبح فارغًا.
+//
+// ======================================================
 
 if (clearFilterButton) {
 
     clearFilterButton.addEventListener(
         "click",
-        async function () {
+        function () {
 
-            try {
+            // إرجاع الفلتر للوضع الطبيعي
 
-                if (
-                    allTableData.length === 0
-                ) {
+            if (languageFilter) {
 
-                    allTableData =
-                        await getAllWords();
-
-                }
-
-
-                if (languageFilter) {
-
-                    languageFilter.value =
-                        "all";
-
-                }
-
-
-                renderTable(
-                    allTableData
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Clear Filter Error:",
-                    error
-                );
-
-
-                alert(
-                    "حدث خطأ أثناء إلغاء الفلتر:\n" +
-                    error.message
-                );
+                languageFilter.value =
+                    "all";
 
             }
+
+
+            // مسح الجدول
+
+            if (dataTable) {
+
+                dataTable.innerHTML =
+                    "";
+
+            }
+
+
+            // مسح البيانات المحملة
+
+            allTableData = [];
 
         }
     );
@@ -945,9 +811,7 @@ if (clearFilterButton) {
 // SEARCH
 // ======================================================
 
-async function searchFirebase(
-    text
-) {
+async function searchFirebase(text) {
 
     const rows =
         await getAllWords();
@@ -957,38 +821,36 @@ async function searchFirebase(
         normalize(text);
 
 
-    return rows.filter(
-        item => {
+    return rows.filter(item => {
 
-            return (
+        return (
 
-                normalize(item.id)
-                    .includes(target)
+            normalize(item.id)
+                .includes(target)
 
-                ||
+            ||
 
-                normalize(item.word)
-                    .includes(target)
+            normalize(item.word)
+                .includes(target)
 
-                ||
+            ||
 
-                normalize(item.meaning)
-                    .includes(target)
+            normalize(item.meaning)
+                .includes(target)
 
-                ||
+            ||
 
-                normalize(item.synonyms)
-                    .includes(target)
+            normalize(item.synonyms)
+                .includes(target)
 
-                ||
+            ||
 
-                normalize(item.language)
-                    .includes(target)
+            normalize(item.language)
+                .includes(target)
 
-            );
+        );
 
-        }
-    );
+    });
 
 }
 
@@ -1036,17 +898,13 @@ if (
                         );
 
 
-                    searchIndex =
-                        0;
-
+                    searchIndex = 0;
 
                     lastSearchText =
                         text;
 
                 }
 
-
-                // لا توجد نتائج
 
                 if (
                     searchResults.length === 0
@@ -1060,8 +918,6 @@ if (
 
                 }
 
-
-                // النتيجة الحالية
 
                 const result =
                     searchResults[
@@ -1091,8 +947,7 @@ if (
                     searchResults.length
                 ) {
 
-                    searchIndex =
-                        0;
+                    searchIndex = 0;
 
                 }
 
@@ -1152,9 +1007,7 @@ if (registerButton) {
                     : "";
 
 
-            // ------------------------------------------
-            // VALIDATION
-            // ------------------------------------------
+            // Validation
 
             if (!word) {
 
@@ -1191,24 +1044,25 @@ if (registerButton) {
 
             try {
 
-                // --------------------------------------
-                // CHECK DUPLICATE
-                // --------------------------------------
+                // منع التكرار
 
                 const rows =
                     await getAllWords();
 
 
                 const duplicate =
-                    rows.find(
-                        item =>
+                    rows.find(item => {
+
+                        return (
                             normalize(
                                 item.word
                             ) ===
                             normalize(
                                 word
                             )
-                    );
+                        );
+
+                    });
 
 
                 if (duplicate) {
@@ -1229,17 +1083,13 @@ if (registerButton) {
                 }
 
 
-                // --------------------------------------
-                // GET SMART ID
-                // --------------------------------------
+                // Smart ID
 
                 const newId =
                     await getNextId();
 
 
-                // --------------------------------------
-                // ADD DOCUMENT
-                // --------------------------------------
+                // إضافة البيانات
 
                 await addDoc(
                     wordsCollection,
@@ -1512,7 +1362,7 @@ if (deleteButton) {
 
 
 // ======================================================
-// CLEAR FORM
+// CLEAR FORM BUTTON
 // ======================================================
 
 if (clearButton) {
@@ -1522,7 +1372,6 @@ if (clearButton) {
         async function (event) {
 
             event.preventDefault();
-
 
             await clearForm();
 
@@ -1542,6 +1391,8 @@ if (downloadPdfButton) {
         "click",
         async function () {
 
+            // التأكد من وجود html2pdf
+
             if (
                 typeof html2pdf ===
                 "undefined"
@@ -1559,25 +1410,15 @@ if (downloadPdfButton) {
             try {
 
                 // --------------------------------------
-                // LOAD DATA
+                // البيانات التي سيتم تحميلها
                 // --------------------------------------
 
                 if (
                     allTableData.length === 0
                 ) {
 
-                    allTableData =
-                        await getAllWords();
-
-                }
-
-
-                if (
-                    allTableData.length === 0
-                ) {
-
                     alert(
-                        "لا توجد بيانات."
+                        "اعرض البيانات أولاً."
                     );
 
                     return;
@@ -1586,44 +1427,67 @@ if (downloadPdfButton) {
 
 
                 // --------------------------------------
-                // CURRENT FILTER
+                // معرفة اللغة
                 // --------------------------------------
 
-                let rows =
-                    allTableData;
+                let selectedLanguage =
+                    "جميع اللغات";
 
 
                 if (languageFilter) {
 
-                    const selectedLanguage =
-                        languageFilter.value.trim();
-
-
                     if (
-                        selectedLanguage &&
-                        selectedLanguage !== "all"
+                        languageFilter.value &&
+                        languageFilter.value !==
+                        "all"
                     ) {
 
-                        rows =
-                            allTableData.filter(
-                                item =>
-                                    normalize(
-                                        item.language
-                                    ) ===
-                                    normalize(
-                                        selectedLanguage
-                                    )
-                            );
+                        selectedLanguage =
+                            languageFilter.value;
 
                     }
 
                 }
 
 
-                if (rows.length === 0) {
+                // --------------------------------------
+                // تحديد البيانات
+                // --------------------------------------
+
+                let rows =
+                    allTableData;
+
+
+                if (
+                    selectedLanguage !==
+                    "جميع اللغات"
+                ) {
+
+                    rows =
+                        allTableData.filter(
+                            item => {
+
+                                return (
+                                    normalize(
+                                        item.language
+                                    ) ===
+                                    normalize(
+                                        selectedLanguage
+                                    )
+                                );
+
+                            }
+                        );
+
+                }
+
+
+                if (
+                    rows.length === 0
+                ) {
 
                     alert(
-                        "لا توجد بيانات لهذه اللغة."
+                        "لا توجد بيانات لتحميلها."
                     );
 
                     return;
@@ -1632,7 +1496,7 @@ if (downloadPdfButton) {
 
 
                 // --------------------------------------
-                // CREATE PDF CONTAINER
+                // PDF CONTAINER
                 // --------------------------------------
 
                 const container =
@@ -1641,28 +1505,44 @@ if (downloadPdfButton) {
                     );
 
 
-                container.style.padding =
-                    "20px";
+                container.style.width =
+                    "100%";
 
+                container.style.padding =
+                    "25px";
 
                 container.style.background =
                     "#ffffff";
 
-
                 container.style.color =
                     "#000000";
 
-
                 container.style.direction =
                     "rtl";
-
 
                 container.style.fontFamily =
                     "Cairo, Arial, sans-serif";
 
 
                 // --------------------------------------
-                // TITLE
+                // HEADER
+                // --------------------------------------
+
+                const header =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                header.style.textAlign =
+                    "center";
+
+                header.style.marginBottom =
+                    "25px";
+
+
+                // --------------------------------------
+                // LANGDEX DATA
                 // --------------------------------------
 
                 const title =
@@ -1671,28 +1551,50 @@ if (downloadPdfButton) {
                     );
 
 
-                if (
-                    languageFilter &&
-                    languageFilter.value !== "all"
-                ) {
-
-                    title.textContent =
-                        `Langdex - ${languageFilter.value}`;
-
-                } else {
-
-                    title.textContent =
-                        "Langdex - جميع البيانات";
-
-                }
+                title.textContent =
+                    "Langdex Data";
 
 
-                title.style.textAlign =
-                    "center";
+                title.style.margin =
+                    "0";
+
+                title.style.fontSize =
+                    "28px";
+
+
+                // --------------------------------------
+                // LANGUAGE TITLE
+                // --------------------------------------
+
+                const languageTitle =
+                    document.createElement(
+                        "h2"
+                    );
+
+
+                languageTitle.textContent =
+                    selectedLanguage;
+
+
+                languageTitle.style.margin =
+                    "8px 0 0";
+
+                languageTitle.style.fontSize =
+                    "22px";
+
+
+                header.appendChild(
+                    title
+                );
+
+
+                header.appendChild(
+                    languageTitle
+                );
 
 
                 container.appendChild(
-                    title
+                    header
                 );
 
 
@@ -1709,25 +1611,16 @@ if (downloadPdfButton) {
                 table.style.width =
                     "100%";
 
-
                 table.style.borderCollapse =
                     "collapse";
 
+                table.style.direction =
+                    "rtl";
+
 
                 // --------------------------------------
-                // TABLE HEADER
+                // HEADER ROW
                 // --------------------------------------
-
-                const headers = [
-
-                    "ID",
-                    "الكلمة",
-                    "المعنى",
-                    "المرادف",
-                    "اللغة"
-
-                ];
-
 
                 const thead =
                     document.createElement(
@@ -1741,8 +1634,22 @@ if (downloadPdfButton) {
                     );
 
 
+                // ترتيب الأعمدة من اليمين
+
+                const headers = [
+
+                    "الترتيب",
+                    "الكلمة",
+                    "المعنى",
+                    "المرادف",
+                    "اللغة",
+                    "ID"
+
+                ];
+
+
                 headers.forEach(
-                    header => {
+                    headerText => {
 
                         const th =
                             document.createElement(
@@ -1751,23 +1658,23 @@ if (downloadPdfButton) {
 
 
                         th.textContent =
-                            header;
+                            headerText;
 
 
                         th.style.border =
                             "1px solid #000";
 
-
                         th.style.padding =
-                            "8px";
-
-
-                        th.style.background =
-                            "#eeeeee";
-
+                            "10px";
 
                         th.style.textAlign =
                             "center";
+
+                        th.style.fontWeight =
+                            "bold";
+
+                        th.style.background =
+                            "#eeeeee";
 
 
                         headerRow.appendChild(
@@ -1799,7 +1706,7 @@ if (downloadPdfButton) {
 
 
                 rows.forEach(
-                    data => {
+                    (data, index) => {
 
                         const row =
                             document.createElement(
@@ -1807,48 +1714,177 @@ if (downloadPdfButton) {
                             );
 
 
-                        [
+                        // ----------------------------------
+                        // الترتيب
+                        // ----------------------------------
 
-                            data.id,
-                            data.word,
-                            data.meaning,
-                            data.synonyms,
-                            data.language
-
-                        ].forEach(
-                            value => {
-
-                                const td =
-                                    document.createElement(
-                                        "td"
-                                    );
+                        const orderCell =
+                            document.createElement(
+                                "td"
+                            );
 
 
-                                td.textContent =
-                                    value || "-";
+                        orderCell.textContent =
+                            index + 1;
 
 
-                                td.style.border =
-                                    "1px solid #000";
+                        orderCell.style.border =
+                            "1px solid #000";
+
+                        orderCell.style.padding =
+                            "8px";
+
+                        orderCell.style.textAlign =
+                            "center";
 
 
-                                td.style.padding =
-                                    "8px";
+                        row.appendChild(
+                            orderCell
+                        );
 
 
-                                td.style.textAlign =
-                                    "right";
+                        // ----------------------------------
+                        // WORD
+                        // ----------------------------------
+
+                        const wordCell =
+                            document.createElement(
+                                "td"
+                            );
 
 
-                                td.style.verticalAlign =
-                                    "top";
+                        wordCell.textContent =
+                            data.word || "-";
 
 
-                                row.appendChild(
-                                    td
-                                );
+                        wordCell.style.border =
+                            "1px solid #000";
 
-                            }
+                        wordCell.style.padding =
+                            "8px";
+
+                        wordCell.style.textAlign =
+                            "right";
+
+
+                        row.appendChild(
+                            wordCell
+                        );
+
+
+                        // ----------------------------------
+                        // MEANING
+                        // ----------------------------------
+
+                        const meaningCell =
+                            document.createElement(
+                                "td"
+                            );
+
+
+                        meaningCell.textContent =
+                            data.meaning || "-";
+
+
+                        meaningCell.style.border =
+                            "1px solid #000";
+
+                        meaningCell.style.padding =
+                            "8px";
+
+                        meaningCell.style.textAlign =
+                            "right";
+
+
+                        row.appendChild(
+                            meaningCell
+                        );
+
+
+                        // ----------------------------------
+                        // SYNONYMS
+                        // ----------------------------------
+
+                        const synonymsCell =
+                            document.createElement(
+                                "td"
+                            );
+
+
+                        synonymsCell.textContent =
+                            data.synonyms || "-";
+
+
+                        synonymsCell.style.border =
+                            "1px solid #000";
+
+                        synonymsCell.style.padding =
+                            "8px";
+
+                        synonymsCell.style.textAlign =
+                            "right";
+
+
+                        row.appendChild(
+                            synonymsCell
+                        );
+
+
+                        // ----------------------------------
+                        // LANGUAGE
+                        // ----------------------------------
+
+                        const languageCell =
+                            document.createElement(
+                                "td"
+                            );
+
+
+                        languageCell.textContent =
+                            data.language || "-";
+
+
+                        languageCell.style.border =
+                            "1px solid #000";
+
+                        languageCell.style.padding =
+                            "8px";
+
+                        languageCell.style.textAlign =
+                            "right";
+
+
+                        row.appendChild(
+                            languageCell
+                        );
+
+
+                        // ----------------------------------
+                        // FIREBASE ID
+                        // ----------------------------------
+
+                        const idCell =
+                            document.createElement(
+                                "td"
+                            );
+
+
+                        idCell.textContent =
+                            data.id || "-";
+
+
+                        idCell.style.border =
+                            "1px solid #000";
+
+                        idCell.style.padding =
+                            "8px";
+
+                        idCell.style.textAlign =
+                            "center";
+
+
+                        row.appendChild(
+                            idCell
                         );
 
 
@@ -1871,7 +1907,36 @@ if (downloadPdfButton) {
 
 
                 // --------------------------------------
-                // ADD TO PAGE
+                // NUMBER OF WORDS
+                // --------------------------------------
+
+                const footer =
+                    document.createElement(
+                        "p"
+                    );
+
+
+                footer.textContent =
+                    `عدد الكلمات: ${rows.length}`;
+
+
+                footer.style.textAlign =
+                    "center";
+
+                footer.style.marginTop =
+                    "15px";
+
+                footer.style.fontWeight =
+                    "bold";
+
+
+                container.appendChild(
+                    footer
+                );
+
+
+                // --------------------------------------
+                // TEMPORARY CONTAINER
                 // --------------------------------------
 
                 document.body.appendChild(
@@ -1880,30 +1945,18 @@ if (downloadPdfButton) {
 
 
                 // --------------------------------------
-                // FILE NAME
+                // PDF FILE NAME
                 // --------------------------------------
 
-                let fileName =
-                    "Langdex-All-Data.pdf";
+                const safeLanguage =
+                    selectedLanguage.replace(
+                        /[\\/:*?"<>|]/g,
+                        "-"
+                    );
 
 
-                if (
-                    languageFilter &&
-                    languageFilter.value !== "all"
-                ) {
-
-                    const safeName =
-                        languageFilter.value
-                            .replace(
-                                /[\\/:*?"<>|]/g,
-                                "-"
-                            );
-
-
-                    fileName =
-                        `Langdex-${safeName}.pdf`;
-
-                }
+                const fileName =
+                    `Langdex-Data-${safeLanguage}.pdf`;
 
 
                 // --------------------------------------
@@ -1914,8 +1967,7 @@ if (downloadPdfButton) {
 
                     .set({
 
-                        margin:
-                            10,
+                        margin: 10,
 
                         filename:
                             fileName,
@@ -1961,7 +2013,7 @@ if (downloadPdfButton) {
 
 
                 // --------------------------------------
-                // REMOVE TEMP CONTAINER
+                // REMOVE CONTAINER
                 // --------------------------------------
 
                 container.remove();
