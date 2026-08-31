@@ -1,3 +1,8 @@
+// ======================================================
+// LANGDEX - auth-guard.js
+// Protect index.html + data.html
+// ======================================================
+
 import {
     initializeApp,
     getApps,
@@ -9,6 +14,11 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+
+// ======================================================
+// FIREBASE CONFIG
+// ======================================================
+
 const firebaseConfig = {
     apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
@@ -19,6 +29,11 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
+
+// ======================================================
+// FIREBASE
+// ======================================================
+
 const app =
     getApps().length > 0
         ? getApp()
@@ -26,10 +41,34 @@ const app =
 
 const auth = getAuth(app);
 
+
+// ======================================================
+// HIDE PAGE IMMEDIATELY
+// ======================================================
+
+document.documentElement.style.visibility = "hidden";
+
+
+// ======================================================
+// CHECK LOGIN
+// ======================================================
+
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) {
+    if (user) {
+
+        // المستخدم مسجل دخول
+        // أظهر الموقع
+
+        document.documentElement.style.visibility = "visible";
+
+    } else {
+
+        // المستخدم غير مسجل دخول
+        // لا يظهر الموقع
+
         window.location.replace("login.html");
+
     }
 
 });
