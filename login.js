@@ -1,11 +1,12 @@
-
-
 // ======================================================
-// LANGDEX - LOGIN
+// LANGDEX - login.js
+// Firebase Authentication - Login
 // ======================================================
 
 import {
-    initializeApp
+    initializeApp,
+    getApps,
+    getApp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
@@ -19,7 +20,7 @@ import {
 // ======================================================
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCKshc43O6DYwfPheHH9CsraX3VpU2fjc",
+    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
     projectId: "langdex",
     storageBucket: "langdex.firebasestorage.app",
@@ -30,10 +31,14 @@ const firebaseConfig = {
 
 
 // ======================================================
-// FIREBASE
+// INITIALIZE FIREBASE SAFELY
 // ======================================================
 
-const app = initializeApp(firebaseConfig);
+const app =
+    getApps().length > 0
+        ? getApp()
+        : initializeApp(firebaseConfig);
+
 
 const auth = getAuth(app);
 
@@ -56,21 +61,6 @@ const message =
 
 
 // ======================================================
-// MESSAGE
-// ======================================================
-
-function showMessage(text) {
-
-    if (!message) return;
-
-    message.textContent = text;
-
-    message.style.color = "#FFFFFF";
-
-}
-
-
-// ======================================================
 // LOGIN
 // ======================================================
 
@@ -78,18 +68,22 @@ if (loginButton) {
 
     loginButton.addEventListener(
         "click",
-        async () => {
+        async function () {
 
             const email =
-                emailInput.value.trim();
+                emailInput
+                    ? emailInput.value.trim()
+                    : "";
 
             const password =
-                passwordInput.value;
+                passwordInput
+                    ? passwordInput.value
+                    : "";
 
 
-            // ------------------------------
+            // --------------------------------------
             // VALIDATION
-            // ------------------------------
+            // --------------------------------------
 
             if (!email) {
 
@@ -113,34 +107,16 @@ if (loginButton) {
             }
 
 
-            // ------------------------------
+            // --------------------------------------
             // LOGIN
-            // ------------------------------
+            // --------------------------------------
 
             try {
 
-                loginButton.disabled =
-                    true;
-
-                loginButton.textContent =
-                    "جاري تسجيل الدخول...";
-
-
-                const userCredential =
-                    await signInWithEmailAndPassword(
-                        auth,
-                        email,
-                        password
-                    );
-
-
-                const user =
-                    userCredential.user;
-
-
-                console.log(
-                    "Logged in UID:",
-                    user.uid
+                await signInWithEmailAndPassword(
+                    auth,
+                    email,
+                    password
                 );
 
 
@@ -149,37 +125,39 @@ if (loginButton) {
                 );
 
 
-                // ------------------------------
-                // GO TO HOME
-                // ------------------------------
+                // --------------------------------------
+                // GO TO INDEX
+                // --------------------------------------
 
                 setTimeout(() => {
 
-                    window.location.href =
-                        "index.html";
+                    window.location.replace(
+                        "index.html"
+                    );
 
-                }, 800);
+                }, 500);
 
 
             } catch (error) {
 
                 console.error(
-                    "Login Error:",
+                    "Firebase Login Error:",
                     error
                 );
 
 
-                let errorMessage =
-                    "حدث خطأ أثناء تسجيل الدخول.";
-
+                // --------------------------------------
+                // FIREBASE ERRORS
+                // --------------------------------------
 
                 if (
                     error.code ===
                     "auth/invalid-credential"
                 ) {
 
-                    errorMessage =
-                        "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+                    showMessage(
+                        "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+                    );
 
                 }
 
@@ -188,8 +166,9 @@ if (loginButton) {
                     "auth/user-not-found"
                 ) {
 
-                    errorMessage =
-                        "هذا الحساب غير موجود.";
+                    showMessage(
+                        "هذا الحساب غير موجود."
+                    );
 
                 }
 
@@ -198,8 +177,9 @@ if (loginButton) {
                     "auth/wrong-password"
                 ) {
 
-                    errorMessage =
-                        "كلمة المرور غير صحيحة.";
+                    showMessage(
+                        "كلمة المرور غير صحيحة."
+                    );
 
                 }
 
@@ -208,36 +188,51 @@ if (loginButton) {
                     "auth/invalid-email"
                 ) {
 
-                    errorMessage =
-                        "البريد الإلكتروني غير صحيح.";
+                    showMessage(
+                        "البريد الإلكتروني غير صحيح."
+                    );
 
                 }
 
                 else if (
                     error.code ===
-                    "auth/network-request-failed"
+                    "auth/too-many-requests"
                 ) {
 
-                    errorMessage =
-                        "تأكد من اتصال الإنترنت.";
+                    showMessage(
+                        "تمت محاولات كثيرة، حاول مرة أخرى لاحقًا."
+                    );
 
                 }
 
+                else {
 
-                showMessage(
-                    errorMessage
-                );
+                    showMessage(
+                        "حدث خطأ في تسجيل الدخول."
+                    );
 
-
-                loginButton.disabled =
-                    false;
-
-                loginButton.textContent =
-                    "تسجيل الدخول";
+                }
 
             }
 
         }
     );
+
+}
+
+
+// ======================================================
+// MESSAGE
+// ======================================================
+
+function showMessage(text) {
+
+    if (!message) return;
+
+    message.textContent =
+        text;
+
+    message.style.color =
+        "#FFFFFF";
 
 }
