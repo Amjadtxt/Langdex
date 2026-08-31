@@ -31,7 +31,7 @@ const firebaseConfig = {
 
 
 // ======================================================
-// FIREBASE
+// INITIALIZE FIREBASE
 // ======================================================
 
 const app =
@@ -50,25 +50,27 @@ document.documentElement.style.visibility = "hidden";
 
 
 // ======================================================
-// CHECK LOGIN
+// AUTH CHECK
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
 
-    if (user) {
+    // --------------------------------------
+    // NOT LOGGED IN
+    // --------------------------------------
 
-        // المستخدم مسجل دخول
-        // أظهر الموقع
-
-        document.documentElement.style.visibility = "visible";
-
-    } else {
-
-        // المستخدم غير مسجل دخول
-        // لا يظهر الموقع
+    if (!user) {
 
         window.location.replace("login.html");
 
+        return;
     }
+
+
+    // --------------------------------------
+    // LOGGED IN
+    // --------------------------------------
+
+    document.documentElement.style.visibility = "visible";
 
 });
