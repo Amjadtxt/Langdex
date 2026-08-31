@@ -1,50 +1,231 @@
 <!DOCTYPE html>
 
 <html lang="ar" dir="rtl">
+
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-		<title>Langdex Data</title>
-		<link rel="stylesheet" href="/Langdex/style.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <meta http-equiv="CONTENT-TYPE"
+        content="text/html; charset=UTF-8">
+
+  <title>Langdex Data</title>
+
+  <link rel="stylesheet"
+        href="/Langdex/style.css">
+
+  <!-- Cairo Font -->
+  <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
 </head>
 
+
 <body>
-		<header>
+
+
+  <!-- ==================================================
+       HEADER
+  ================================================== -->
+
+  <header>
+
     <nav class="bar">
+
       <ul>
-        <a href="/Langdex/index.html"><li>الرئيسية</li></a> 
-        <a href="/Langdex/data.html"><li>البيانات</li></a> 
-        <a href="#"><li>حول</li></a>
-        <a href="#"><li>استكشاف</li></a>
-        <a href="#"><li>التواصل</li></a>
+
+        <a href="/Langdex/index.html">
+          <li>الرئيسية</li>
+        </a>
+
+        <a href="/Langdex/data.html">
+          <li>البيانات</li>
+        </a>
+
+        <a href="#">
+          <li>حول</li>
+        </a>
+
+        <a href="#">
+          <li>استكشاف</li>
+        </a>
+
+        <a href="#">
+          <li>التواصل</li>
+        </a>
+
       </ul>
-    </nav> 
+
+    </nav>
+
   </header>
-		<div class="content">
-				<section class="data-section">
-  <h1>جميع البيانات</h1>
-  <button type="button" class="show-data">
-    عرض
-  </button>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>الكلمة</th>
-          <th>المعنى</th>
-          <th>المرادف</th>
-          <th>اللغة</th>
-        </tr>
-      </thead>
-      <tbody id="data-table">
-      </tbody>
-    </table></div>
-</section>
-		</div>
-		<script type="module" src="/Langdex/script.js"></script>
+
+
+
+  <!-- ==================================================
+       CONTENT
+  ================================================== -->
+
+  <div class="content">
+
+
+    <section class="data-section">
+
+
+      <!-- TITLE -->
+
+      <h1>
+        جميع البيانات
+      </h1>
+
+
+
+      <!-- ==================================================
+           MAIN BUTTON
+      ================================================== -->
+
+      <button
+        type="button"
+        class="show-data">
+
+        عرض
+
+      </button>
+
+
+
+      <!-- ==================================================
+           DATA CONTROLS
+      ================================================== -->
+
+      <div class="data-controls">
+
+
+        <!-- LANGUAGE FILTER -->
+
+        <select
+          id="language-filter">
+
+          <option value="all">
+            جميع اللغات
+          </option>
+
+          <option value="English">
+            English
+          </option>
+
+          <option value="Urdu">
+            Urdu
+          </option>
+
+          <option value="Hindi">
+            Hindi
+          </option>
+
+        </select>
+
+
+
+        <!-- DOWNLOAD PDF -->
+
+        <button
+          type="button"
+          id="download-pdf">
+
+          تحميل PDF
+
+        </button>
+
+
+      </div>
+
+
+
+      <!-- ==================================================
+           TABLE
+      ================================================== -->
+
+      <div class="table-container">
+
+
+        <table id="words-table">
+
+
+          <thead>
+
+            <tr>
+
+              <th>
+                ID
+              </th>
+
+              <th>
+                الكلمة
+              </th>
+
+              <th>
+                المعنى
+              </th>
+
+              <th>
+                المرادف
+              </th>
+
+              <th>
+                اللغة
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody id="data-table">
+
+          </tbody>
+
+
+        </table>
+
+
+      </div>
+
+
+    </section>
+
+
+  </div>
+
+
+
+  <!-- ==================================================
+       PDF LIBRARY
+  ================================================== -->
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+  </script>
+
+
+
+  <!-- ==================================================
+       MAIN JAVASCRIPT
+  ================================================== -->
+
+  <script
+    type="module"
+    src="/Langdex/script.js">
+  </script>
+
+
 </body>
+
 </html>
