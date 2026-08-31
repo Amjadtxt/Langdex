@@ -31,7 +31,7 @@ const firebaseConfig = {
 
 
 // ======================================================
-// INITIALIZE FIREBASE SAFELY
+// FIREBASE
 // ======================================================
 
 const app =
@@ -39,26 +39,30 @@ const app =
         ? getApp()
         : initializeApp(firebaseConfig);
 
-
-const auth =
-    getAuth(app);
+const auth = getAuth(app);
 
 
 // ======================================================
 // AUTH GUARD
 // ======================================================
 
-onAuthStateChanged(
-    auth,
-    (user) => {
+onAuthStateChanged(auth, (user) => {
 
-        if (!user) {
+    if (user) {
 
-            window.location.replace(
-                "login.html"
-            );
+        // المستخدم مسجل دخول
+        // أظهر الصفحة
 
-        }
+        document.documentElement.style.visibility =
+            "visible";
+
+    } else {
+
+        // المستخدم غير مسجل
+        // لا تظهر الصفحة نهائيًا
+
+        window.location.replace("login.html");
 
     }
-);
+
+});
