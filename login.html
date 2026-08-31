@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Login</title>
+
+  <link rel="stylesheet" href="Langdex/style.css">
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header>
+
+    <nav class="bar">
+
+      <ul>
+
+        <a href="/Langdex/index.html">
+          <li>الرئيسية</li>
+        </a>
+
+        <a href="/Langdex/data.html">
+          <li>البيانات</li>
+        </a>
+
+        <a href="#">
+          <li>حول</li>
+        </a>
+
+        <a href="#">
+          <li>استكشاف</li>
+        </a>
+
+        <a href="#">
+          <li>التواصل</li>
+        </a>
+
+      </ul>
+
+    </nav>
+
+  </header>
+
+
+  <!-- LOGIN -->
+
+  <div class="content">
+
+    <div class="login-form">
+
+      <h1>تسجيل الدخول</h1>
+
+      <input class="loginput"
+        type="email"
+        id="login-email"
+        placeholder="البريد الإلكتروني"
+        autocomplete="email">
+
+      <input class="loginput"
+        type="password"
+        id="login-password"
+        placeholder="كلمة المرور"
+        autocomplete="current-password">
+
+      <button class="loginbut"
+        type="button"
+        id="login-btn">
+        تسجيل الدخول
+      </button>
+
+      <p id="login-message"></p>
+
+      <div class="login-links">
+
+        <p>
+          ليس لديك حساب؟
+          <a href="/Langdex/register.html">
+            إنشاء حساب
+          </a>
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- Firebase Login -->
+
+  <script
+    type="module"
+    src="/Langdex/login.js">
+  </script>
+
+</body>
+
+</html>
