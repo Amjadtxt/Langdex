@@ -373,6 +373,7 @@ function renderTable(rows) {
     rows.forEach(data => {
         const row = document.createElement("tr");
 
+        // ترتيب الأعمدة الأساسية
         const values = [
             data.id,
             data.word,
@@ -381,6 +382,7 @@ function renderTable(rows) {
             data.language
         ];
 
+        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة عشان يظهر في الصف الأخير (الجهة اليمنى)
         if (isAdmin) {
             values.push(data.userEmail || data.username || "غير معروف");
         }
@@ -675,7 +677,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Fixed with autoTable for Multi-page & Proper Styles)
+// DOWNLOAD PDF (Fixed Column Order for Admin)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -702,65 +704,79 @@ if (downloadPdfButton) {
                 return;
             }
 
-            showNotification("جاري تجهيز ملف PDF بالتنسيق السليم...");
+            showNotification("جاري تجهيز ملف PDF...");
 
             const isAdmin = isCurrentUserAdmin();
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF("p", "mm", "a4");
+
+            const printArea = document.createElement("div");
+            printArea.style.cssText = `
+                position: fixed;
+                top: -9999px;
+                left: -9999px;
+                width: 800px;
+                background: #ffffff;
+                color: #000000;
+                padding: 20px;
+                font-family: Cairo, Arial, sans-serif;
+                direction: rtl;
+            `;
 
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
                 ? languageFilter.options[languageFilter.selectedIndex].textContent
                 : "جميع اللغات";
 
-            // إعداد رؤوس الجدول
-            const headers = ["#", "الكلمة", "المعنى", "المرادف", "اللغة"];
-            if (isAdmin) {
-                headers.push("المستخدم");
-            }
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
+                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
+                    <thead>
+                        <tr style="background-color: #b5b5b5;">
+                            <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
+                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((item, idx) => `
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
 
-            // تجهيز الصفوف
-            const tableBody = rows.map((item, idx) => {
-                const row = [
-                    idx + 1,
-                    item.word || "-",
-                    item.meaning || "-",
-                    item.synonyms || "-",
-                    item.language || "-"
-                ];
-                if (isAdmin) {
-                    row.push(item.userEmail || item.username || "-");
-                }
-                return row;
+            document.body.appendChild(printArea);
+
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            const canvas = await html2canvas(printArea, {
+                scale: 2,
+                backgroundColor: "#ffffff",
+                useCORS: true
             });
 
-            // استخدام مكتبة autoTable المخصصة للجداول لضمان التنسيق وتقسيم الصفحات تلقائياً دون تعليق
-            pdf.autoTable({
-                head: [headers],
-                body: tableBody,
-                startY: 25,
-                theme: 'grid',
-                styles: {
-                    font: 'helvetica', // أو الخط المدعوم
-                    fontSize: 10,
-                    cellPadding: 5,
-                    halign: 'center',
-                    textColor: [0, 0, 0]
-                },
-                headStyles: {
-                    fillColor: [181, 181, 181],
-                    textColor: [0, 0, 0],
-                    fontStyle: 'bold'
-                },
-                didDrawPage: function (data) {
-                    // رسم العنوان في كل صفحة تظهر
-                    pdf.setFontSize(16);
-                    pdf.text(`Langdex Report ${isAdmin ? '(Admin All Data)' : ''}`, pdf.internal.pageSize.getWidth() / 2, 12, { align: "center" });
-                    
-                    pdf.setFontSize(11);
-                    pdf.text(`اللغة: ${selectedLanguageText}`, pdf.internal.pageSize.getWidth() / 2, 19, { align: "center" });
-                }
-            });
+            printArea.remove();
 
+            const imgData = canvas.toDataURL("image/jpeg", 1.0);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "mm", "a4");
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+            
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
