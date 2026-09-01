@@ -11,12 +11,19 @@ import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+// استيراد خدمات Firestore
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
 
 // ======================================================
 // FIREBASE CONFIG
 // ======================================================
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
   authDomain: "langdex.firebaseapp.com",
@@ -29,12 +36,12 @@ const firebaseConfig = {
 
 
 // ======================================================
-// FIREBASE
+// FIREBASE INITIALIZATION
 // ======================================================
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
+const db = getFirestore(app); // تهيئة قاعدة بيانات Firestore
 
 
 // ======================================================
@@ -97,54 +104,28 @@ if (registerButton) {
             // ------------------------------
 
             if (!email) {
-
-                showMessage(
-                    "اكتب البريد الإلكتروني."
-                );
-
+                showMessage("اكتب البريد الإلكتروني.");
                 return;
-
             }
-
 
             if (!password) {
-
-                showMessage(
-                    "اكتب كلمة المرور."
-                );
-
+                showMessage("اكتب كلمة المرور.");
                 return;
-
             }
-
 
             if (password.length < 6) {
-
-                showMessage(
-                    "كلمة المرور يجب أن تكون 6 أحرف على الأقل."
-                );
-
+                showMessage("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
                 return;
-
             }
 
-
-            if (
-                password !==
-                confirmPassword
-            ) {
-
-                showMessage(
-                    "كلمتا المرور غير متطابقتين."
-                );
-
+            if (password !== confirmPassword) {
+                showMessage("كلمتا المرور غير متطابقتين.");
                 return;
-
             }
 
 
             // ------------------------------
-            // CREATE ACCOUNT
+            // CREATE ACCOUNT & SAVE ROLE
             // ------------------------------
 
             try {
@@ -155,6 +136,7 @@ if (registerButton) {
                     "جاري إنشاء الحساب...";
 
 
+                // 1. إنشاء الحساب في Authentication
                 const userCredential =
                     await createUserWithEmailAndPassword(
                         auth,
@@ -162,13 +144,20 @@ if (registerButton) {
                         password
                     );
 
+                const user = userCredential.user;
 
-                const user =
-                    userCredential.user;
+
+                // 2. إنشاء مستند المستخدم في Firestore وإضافة الـ Role
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    role: "user",
+                    createdAt: serverTimestamp()
+                });
 
 
                 console.log(
-                    "User created:",
+                    "User registered & saved to Firestore:",
                     user.uid
                 );
 
@@ -260,4 +249,3 @@ if (registerButton) {
     );
 
 }
-
