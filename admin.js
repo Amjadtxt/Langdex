@@ -1,11 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js
-// Firebase + Admin Management + All Users Data
-// Global Search + Full CRUD + Advanced PDF Export
-// ======================================================
-
-// ======================================================
-// FIREBASE IMPORTS
+// LANGDEX - admin.js (Updated with Email Username & Toast Notifications)
 // ======================================================
 
 import {
@@ -30,7 +24,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 // ======================================================
-// FIREBASE CONFIG
+// FIREBASE CONFIG & INIT
 // ======================================================
 
 const firebaseConfig = {
@@ -43,17 +37,13 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-// ======================================================
-// INITIALIZE FIREBASE
-// ======================================================
-
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
 
 // ======================================================
-// CURRENT ADMIN STATE
+// STATE VARIABLES
 // ======================================================
 
 let currentAdmin = null;
@@ -78,42 +68,22 @@ let languageSelect = null;
 
 if (form) {
     const inputs = form.querySelectorAll("input");
-    
-    // ترتيب المدخلات في صفحة الأدمن:
-    // 0: ID الكلمة (تلقائي)
-    // 1: User ID (معرف المستخدم صاحب الكلمة)
-    // 2: الكلمة
-    // 3: المعنى
-    // 4: المرادفات
     idInput = inputs[0] || null;
-    userIdInput = inputs[1] || null;
+    userIdInput = inputs[1] || null; // يظهر فيه اسم المستخدم قبل الـ @
     wordInput = inputs[2] || null;
     meaningInput = inputs[3] || null;
     synonymsInput = inputs[4] || null;
-
     languageSelect = form.querySelector("select") || null;
 }
-
-// ======================================================
-// BUTTON ELEMENTS
-// ======================================================
 
 const registerButton = document.querySelector(".reg");
 const updateButton = document.querySelector(".upa");
 const deleteButton = document.querySelector(".del");
 const clearButton = document.querySelector(".cel");
 
-// ======================================================
-// SEARCH ELEMENTS
-// ======================================================
-
 const searchInput = document.querySelector(".search-txt");
 const searchButton = document.querySelector(".search-btn");
 const searchResult = document.querySelector(".search-result");
-
-// ======================================================
-// DATA PAGE ELEMENTS
-// ======================================================
 
 const showDataButton = document.querySelector(".show-data");
 const dataTable = document.querySelector("#data-table");
@@ -127,6 +97,16 @@ const downloadPdfButton = document.querySelector("#download-pdf");
 
 function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
+}
+
+// استخراج الاسم قبل علامة @ من الإيميل
+function extractUsername(emailOrUser) {
+    if (!emailOrUser) return "-";
+    const str = String(emailOrUser).trim();
+    if (str.includes("@")) {
+        return str.split("@")[0];
+    }
+    return str;
 }
 
 function showNotification(message) {
@@ -155,9 +135,9 @@ function showNotification(message) {
         max-width: 90%;
         box-sizing: border-box;
         direction: rtl;
-        background: #111111;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        background: #222222;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         opacity: 1;
     `;
 
@@ -170,11 +150,11 @@ function showNotification(message) {
 }
 
 // ======================================================
-// GET ALL WORDS ACROSS ALL USERS
+// DATA FETCHING
 // ======================================================
 
 async function getAllWordsAdmin() {
-    if (!currentAdmin) throw new Error("لم يتم تسجيل دخول الأدمن.");
+    if (!currentAdmin) throw new Error("لم يتم تسجيل الدخول.");
 
     const snapshot = await getDocs(wordsCollection);
     const rows = [];
@@ -190,10 +170,6 @@ async function getAllWordsAdmin() {
     rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
     return rows;
 }
-
-// ======================================================
-// SMART ID (GLOBAL)
-// ======================================================
 
 async function getNextIdAdmin() {
     try {
@@ -213,23 +189,18 @@ async function getNextIdAdmin() {
         }
         return nextId;
     } catch (error) {
-        console.error("Get Next ID Admin Error:", error);
         return 1;
     }
 }
 
 async function setNextIdAdmin() {
     if (!idInput) return;
-    try {
-        const nextId = await getNextIdAdmin();
-        idInput.value = nextId;
-    } catch (error) {
-        console.error("Set Next ID Error:", error);
-    }
+    const nextId = await getNextIdAdmin();
+    idInput.value = nextId;
 }
 
 // ======================================================
-// CLEAR FORM
+// FORM CONTROL
 // ======================================================
 
 async function clearFormAdmin() {
@@ -250,15 +221,15 @@ async function clearFormAdmin() {
     await setNextIdAdmin();
 }
 
-// ======================================================
-// FILL FORM
-// ======================================================
-
 function fillFormAdmin(data, documentId) {
     selectedDocumentId = documentId;
 
     if (idInput) idInput.value = data.id ?? "";
-    if (userIdInput) userIdInput.value = data.userId ?? "";
+    
+    // عرض اسم المستخدم فقط الخالي من @ والتكميل
+    const rawUser = data.userEmail || data.userId || "";
+    if (userIdInput) userIdInput.value = extractUsername(rawUser);
+    
     if (wordInput) wordInput.value = data.word ?? "";
     if (meaningInput) meaningInput.value = data.meaning ?? "";
     if (synonymsInput) synonymsInput.value = data.synonyms ?? "";
@@ -266,7 +237,7 @@ function fillFormAdmin(data, documentId) {
 }
 
 // ======================================================
-// POPULATE LANGUAGE FILTER
+// RENDER & FILTER
 // ======================================================
 
 function populateLanguageFilter(rows) {
@@ -281,14 +252,11 @@ function populateLanguageFilter(rows) {
     languageFilter.appendChild(allOption);
 
     const languages = new Map();
-
     rows.forEach(item => {
         const language = String(item.language ?? "").trim();
         if (!language) return;
         const key = normalize(language);
-        if (!languages.has(key)) {
-            languages.set(key, language);
-        }
+        if (!languages.has(key)) languages.set(key, language);
     });
 
     [...languages.values()]
@@ -304,22 +272,19 @@ function populateLanguageFilter(rows) {
     languageFilter.value = (currentValue && exists) ? currentValue : "all";
 }
 
-// ======================================================
-// RENDER TABLE (ADMIN VIEW INCLUDES USER ID)
-// ======================================================
-
 function renderTableAdmin(rows) {
     if (!dataTable) return;
-
     dataTable.innerHTML = "";
 
     rows.forEach(data => {
         const row = document.createElement("tr");
 
-        // الخانات المعروضة للأدمن: [ID, المستخدم, الكلمة, المعنى, المرادف, اللغة]
+        // استخراج اسم المستخدم بدلاً من الأيميل الكامل أو المعرف
+        const username = extractUsername(data.userEmail || data.userId);
+
         const values = [
             data.id,
-            data.userId,
+            username,
             data.word,
             data.meaning,
             data.synonyms,
@@ -332,11 +297,10 @@ function renderTableAdmin(rows) {
             row.appendChild(cell);
         });
 
-        // النقر على السطر يملأ استمارة التعديل تلقائياً
         row.style.cursor = "pointer";
         row.addEventListener("click", () => {
             fillFormAdmin(data, data._documentId);
-            showNotification(`تم تحديد الكلمة: ${data.word}`);
+            showNotification(`تم تحديد: ${data.word} (${username})`);
         });
 
         dataTable.appendChild(row);
@@ -345,7 +309,6 @@ function renderTableAdmin(rows) {
 
 function applyLanguageFilterAdmin() {
     if (!dataTable) return;
-
     const selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
 
     if (selectedLanguage === "" || selectedLanguage === "all") {
@@ -358,49 +321,7 @@ function applyLanguageFilterAdmin() {
 }
 
 // ======================================================
-// SHOW DATA BUTTON
-// ======================================================
-
-if (showDataButton) {
-    showDataButton.addEventListener("click", async function () {
-        try {
-            allTableData = await getAllWordsAdmin();
-            populateLanguageFilter(allTableData);
-            applyLanguageFilterAdmin();
-            showNotification(`تم إحضار ${allTableData.length} كلمة من جميع المستخدمين.`);
-        } catch (error) {
-            console.error("Show Data Admin Error:", error);
-            showNotification("حدث خطأ أثناء جلب البيانات.");
-        }
-    });
-}
-
-if (languageFilter) {
-    languageFilter.addEventListener("change", async function () {
-        try {
-            if (allTableData.length === 0) {
-                allTableData = await getAllWordsAdmin();
-                populateLanguageFilter(allTableData);
-            }
-            applyLanguageFilterAdmin();
-        } catch (error) {
-            console.error("Filter Error:", error);
-            showNotification("حدث خطأ أثناء الفلترة.");
-        }
-    });
-}
-
-if (clearFilterButton) {
-    clearFilterButton.addEventListener("click", function () {
-        if (languageFilter) languageFilter.value = "all";
-        if (dataTable) dataTable.innerHTML = "";
-        allTableData = [];
-        showNotification("تم إلغاء عرض البيانات.");
-    });
-}
-
-// ======================================================
-// GLOBAL SEARCH (BY ID, USER ID, WORD, MEANING, LANGUAGE)
+// SEARCH WITH TOAST NOTIFICATION
 // ======================================================
 
 async function searchFirebaseAdmin(text) {
@@ -408,9 +329,10 @@ async function searchFirebaseAdmin(text) {
     const target = normalize(text);
 
     return rows.filter(item => {
+        const username = normalize(extractUsername(item.userEmail || item.userId));
         return (
             normalize(item.id).includes(target) ||
-            normalize(item.userId).includes(target) ||
+            username.includes(target) ||
             normalize(item.word).includes(target) ||
             normalize(item.meaning).includes(target) ||
             normalize(item.synonyms).includes(target) ||
@@ -424,7 +346,7 @@ if (searchButton && searchInput) {
         const text = searchInput.value.trim();
 
         if (!text) {
-            showNotification("اكتب شيئاً للبحث (كلمة، معرف مستخدم، ID...).");
+            showNotification("اكتب شيئاً للبحث.");
             return;
         }
 
@@ -443,6 +365,10 @@ if (searchButton && searchInput) {
             const result = searchResults[searchIndex];
             fillFormAdmin(result, result._documentId);
 
+            // إظهار التنبيه اللطيف أعلى الصفحة برقم النتيجة والكلمة
+            const username = extractUsername(result.userEmail || result.userId);
+            showNotification(`تم العثور على ${searchIndex + 1} من ${searchResults.length} - [${result.word} : ${username}]`);
+
             if (searchResult) {
                 searchResult.textContent = `نتيجة ${searchIndex + 1} من ${searchResults.length}`;
             }
@@ -452,49 +378,59 @@ if (searchButton && searchInput) {
                 searchIndex = 0;
             }
         } catch (error) {
-            console.error("Search Error:", error);
+            console.error(error);
             showNotification("حدث خطأ أثناء البحث.");
         }
     });
 }
 
 // ======================================================
-// REGISTER / ADD WORD (ADMIN CAN ASSIGN USER ID)
+// ACTIONS WITH NOTIFICATIONS
 // ======================================================
+
+if (showDataButton) {
+    showDataButton.addEventListener("click", async function () {
+        try {
+            allTableData = await getAllWordsAdmin();
+            populateLanguageFilter(allTableData);
+            applyLanguageFilterAdmin();
+            showNotification(`تم عرض ${allTableData.length} سجل بنجاح.`);
+        } catch (error) {
+            showNotification("حدث خطأ أثناء عرض البيانات.");
+        }
+    });
+}
 
 if (registerButton) {
     registerButton.addEventListener("click", async function () {
         if (!currentAdmin) {
-            showNotification("يجب تسجيل الدخول كأدمن أولاً.");
+            showNotification("يجب تسجيل الدخول أولاً.");
             return;
         }
 
-        const targetUserId = userIdInput ? userIdInput.value.trim() : currentAdmin.uid;
+        const userInputVal = userIdInput ? userIdInput.value.trim() : "";
         const word = wordInput ? wordInput.value.trim() : "";
         const meaning = meaningInput ? meaningInput.value.trim() : "";
         const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
         const language = languageSelect ? languageSelect.value.trim() : "";
 
-        if (!targetUserId) {
-            showNotification("حدد معرف المستخدم (User ID).");
-            return;
-        }
         if (!word || !meaning || !language) {
-            showNotification("يرجى ملء كافة البيانات الأساسية.");
+            showNotification("يرجى ملء الكلمة والمعنى واللغة.");
             return;
         }
 
         try {
             const rows = await getAllWordsAdmin();
-            const duplicate = rows.find(item => normalize(item.word) === normalize(word) && item.userId === targetUserId);
+            const duplicate = rows.find(item => normalize(item.word) === normalize(word));
 
             if (duplicate) {
-                showNotification(`الكلمة موجودة بالفعل لهذا المستخدم - ID: ${duplicate.id}`);
+                showNotification(`الكلمة موجودة بالفعل - ID: ${duplicate.id}`);
                 fillFormAdmin(duplicate, duplicate._documentId);
                 return;
             }
 
             const newId = await getNextIdAdmin();
+            const userEmail = currentAdmin.email || "";
 
             await addDoc(wordsCollection, {
                 id: newId,
@@ -502,230 +438,88 @@ if (registerButton) {
                 meaning: meaning,
                 synonyms: synonyms,
                 language: language,
-                userId: targetUserId
+                userId: currentAdmin.uid,
+                userEmail: userEmail,
+                username: userInputVal || extractUsername(userEmail)
             });
 
-            showNotification(`تم تسجيل الكلمة بنجاح - ID: ${newId}`);
+            showNotification(`تم حفظ البيانات بنجاح - ID: ${newId}`);
             await clearFormAdmin();
         } catch (error) {
-            console.error("Register Error:", error);
-            showNotification("حدث خطأ أثناء حفظ البيانات.");
+            showNotification("حدث خطأ أثناء الحفظ.");
         }
     });
 }
 
-// ======================================================
-// UPDATE WORD (ADMIN)
-// ======================================================
-
 if (updateButton) {
     updateButton.addEventListener("click", async function () {
-        if (!currentAdmin) {
-            showNotification("يجب تسجيل الدخول أولاً.");
+        if (!currentAdmin || !selectedDocumentId) {
+            showNotification("اختر كلمة أولاً لتعديلها.");
             return;
         }
 
-        if (!selectedDocumentId) {
-            showNotification("اختر كلمة أولاً للقيام بالتعديل.");
-            return;
-        }
-
-        const targetUserId = userIdInput ? userIdInput.value.trim() : currentAdmin.uid;
         const word = wordInput ? wordInput.value.trim() : "";
         const meaning = meaningInput ? meaningInput.value.trim() : "";
         const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
         const language = languageSelect ? languageSelect.value.trim() : "";
 
         if (!word || !meaning || !language) {
-            showNotification("يرجى اختيار البيانات المطلوبة كاملة.");
+            showNotification("يرجى إكمال البيانات.");
             return;
         }
 
         try {
             const wordRef = doc(db, "words", selectedDocumentId);
-
             await updateDoc(wordRef, {
                 word: word,
                 meaning: meaning,
                 synonyms: synonyms,
-                language: language,
-                userId: targetUserId
+                language: language
             });
 
-            showNotification("تم تحديث الكلمة بنجاح بواسطة الأدمن.");
+            showNotification("تم تحديث الكلمة بنجاح.");
             await clearFormAdmin();
         } catch (error) {
-            console.error("Update Error:", error);
             showNotification("حدث خطأ أثناء التحديث.");
         }
     });
 }
 
-// ======================================================
-// DELETE WORD (ADMIN)
-// ======================================================
-
 if (deleteButton) {
-    deleteButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-
-        if (!currentAdmin) {
-            showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
+    deleteButton.addEventListener("click", async function (e) {
+        e.preventDefault();
         if (!selectedDocumentId) {
             showNotification("حدد الكلمة المراد حذفها أولاً.");
             return;
         }
 
-        const confirmed = confirm("هل أنت متأكد من حذف هذه الكلمة نهائياً من النظام؟");
-        if (!confirmed) return;
+        if (!confirm("هل أنت متأكد من الحذف؟")) return;
 
         try {
             const wordRef = doc(db, "words", selectedDocumentId);
             await deleteDoc(wordRef);
-
             showNotification("تم حذف الكلمة بنجاح.");
             await clearFormAdmin();
         } catch (error) {
-            console.error("Delete Error:", error);
-            showNotification("حدث خطأ أثناء عملية الحذف.");
+            showNotification("حدث خطأ أثناء الحذف.");
         }
     });
 }
-
-// ======================================================
-// CLEAR BUTTON
-// ======================================================
 
 if (clearButton) {
-    clearButton.addEventListener("click", async function (event) {
-        event.preventDefault();
+    clearButton.addEventListener("click", async function (e) {
+        e.preventDefault();
         await clearFormAdmin();
-        showNotification("تم تفريغ الاستمارة.");
+        showNotification("تم مسح البيانات من الاستمارة.");
     });
 }
 
-// ======================================================
-// DOWNLOAD PDF (ADMIN INCLUDES USER ID COLUMN)
-// ======================================================
-
-if (downloadPdfButton) {
-    downloadPdfButton.addEventListener("click", async function () {
-        if (!currentAdmin) {
-            showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
-        if (typeof html2pdf === "undefined") {
-            showNotification("مكتبة html2pdf غير متوفرة.");
-            return;
-        }
-
-        try {
-            if (allTableData.length === 0) {
-                allTableData = await getAllWordsAdmin();
-            }
-
-            if (allTableData.length === 0) {
-                showNotification("لا توجد بيانات للطباعة.");
-                return;
-            }
-
-            let selectedLanguage = "جميع اللغات";
-            if (languageFilter && languageFilter.value && languageFilter.value !== "all") {
-                selectedLanguage = languageFilter.value;
-            }
-
-            let rows = allTableData;
-            if (selectedLanguage !== "جميع اللغات") {
-                rows = allTableData.filter(item => normalize(item.language) === normalize(selectedLanguage));
-            }
-
-            const container = document.createElement("div");
-            container.style.cssText = `
-                position: fixed; left: -10000px; top: 0; width: 1000px;
-                background: #ffffff; color: #000000; padding: 25px;
-                box-sizing: border-box; direction: rtl; font-family: Cairo, Arial, sans-serif;
-            `;
-
-            const header = document.createElement("div");
-            header.style.textAlign = "center";
-            header.style.marginBottom = "20px";
-            header.innerHTML = `
-                <h1 style="margin:0; font-size:26px; color:#000;">Langdex Admin Report</h1>
-                <h3 style="margin:5px 0 0; font-size:16px; color:#444;">اللغة: ${selectedLanguage}</h3>
-            `;
-            container.appendChild(header);
-
-            const table = document.createElement("table");
-            table.style.cssText = "width: 100%; border-collapse: collapse; table-layout: fixed; direction: rtl; font-size: 10px;";
-
-            const colgroup = document.createElement("colgroup");
-            const widths = ["6%", "20%", "20%", "24%", "18%", "12%"];
-            widths.forEach(w => {
-                const col = document.createElement("col");
-                col.style.width = w;
-                colgroup.appendChild(col);
-            });
-            table.appendChild(colgroup);
-
-            const thead = document.createElement("thead");
-            const headerRow = document.createElement("tr");
-            const headers = ["الترتيب", "User ID", "الكلمة", "المعنى", "المرادف", "اللغة"];
-
-            headers.forEach(text => {
-                const th = document.createElement("th");
-                th.textContent = text;
-                th.style.cssText = "border: 1px solid #000; padding: 6px; text-align: center; background: #e0e0e0; font-weight: bold;";
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            const tbody = document.createElement("tbody");
-            rows.forEach((data, index) => {
-                const row = document.createElement("tr");
-                const values = [index + 1, data.userId || "-", data.word || "-", data.meaning || "-", data.synonyms || "-", data.language || "-"];
-
-                values.forEach((val, i) => {
-                    const td = document.createElement("td");
-                    td.textContent = String(val);
-                    td.style.cssText = "border: 1px solid #000; padding: 5px; word-break: break-word; overflow-wrap: break-word;";
-                    td.style.textAlign = (i === 0) ? "center" : "right";
-                    row.appendChild(td);
-                });
-                tbody.appendChild(row);
-            });
-            table.appendChild(tbody);
-            container.appendChild(table);
-
-            const footer = document.createElement("p");
-            footer.textContent = `إجمالي عدد المسجلات: ${rows.length}`;
-            footer.style.cssText = "text-align: center; margin-top: 15px; font-weight: bold;";
-            container.appendChild(footer);
-
-            document.body.appendChild(container);
-
-            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-            const safeLang = selectedLanguage.replace(/[\\/:*?"<>|]/g, "-");
-            await html2pdf().set({
-                margin: [8, 8, 8, 8],
-                filename: `Langdex-Admin-Report-${safeLang}.pdf`,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 1000 },
-                pagebreak: { mode: ["css", "legacy"] },
-                jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
-            }).from(container).save();
-
-            container.remove();
-            showNotification("تم إنشاء وتقديم تقرير PDF بنجاح.");
-        } catch (error) {
-            console.error("PDF Export Error:", error);
-            showNotification("حدث خطأ أثناء طباعة PDF.");
-        }
+if (clearFilterButton) {
+    clearFilterButton.addEventListener("click", function () {
+        if (languageFilter) languageFilter.value = "all";
+        if (dataTable) dataTable.innerHTML = "";
+        allTableData = [];
+        showNotification("تم إلغاء عرض الجدول.");
     });
 }
 
@@ -736,16 +530,11 @@ if (downloadPdfButton) {
 onAuthStateChanged(auth, async user => {
     if (!user) {
         currentAdmin = null;
-        console.log("No authenticated admin user.");
         return;
     }
 
     currentAdmin = user;
-    console.log("Logged in as Admin UID:", currentAdmin.uid);
-
-    if (idInput) {
-        await setNextIdAdmin();
-    }
+    await setNextIdAdmin();
 
     if (languageFilter) {
         allTableData = await getAllWordsAdmin();
