@@ -815,6 +815,11 @@ onAuthStateChanged(auth, async user => {
         return;
     }
 
+    if (!isAdmin && currentPage === "admin.html") {
+        window.location.href = "index.html";
+        return;
+    }
+
     if (idInput) {
         await setNextId();
     }
