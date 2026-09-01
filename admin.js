@@ -1,6 +1,7 @@
+//
 // ======================================================
 // LANGDEX - admin.js
-// Admin Panel Protection
+// Admin Page Protection
 // ======================================================
 
 import {
@@ -37,7 +38,7 @@ const firebaseConfig = {
 
 
 // ======================================================
-// FIREBASE
+// INITIALIZE FIREBASE
 // ======================================================
 
 const app =
@@ -50,14 +51,14 @@ const db = getFirestore(app);
 
 
 // ======================================================
-// HIDE PAGE
+// HIDE PAGE UNTIL CHECK IS COMPLETE
 // ======================================================
 
 document.documentElement.style.visibility = "hidden";
 
 
 // ======================================================
-// CHECK ADMIN
+// CHECK USER
 // ======================================================
 
 onAuthStateChanged(auth, async (user) => {
@@ -75,7 +76,7 @@ onAuthStateChanged(auth, async (user) => {
 
 
     // --------------------------------------------------
-    // GET USER DATA
+    // GET USER DOCUMENT
     // --------------------------------------------------
 
     try {
@@ -88,26 +89,38 @@ onAuthStateChanged(auth, async (user) => {
 
 
         // ------------------------------------------------
-        // USER DOCUMENT DOESN'T EXIST
+        // USER DOCUMENT NOT FOUND
         // ------------------------------------------------
 
         if (!userSnap.exists()) {
 
+            console.log("User document not found.");
+
             window.location.replace("index.html");
 
             return;
         }
 
+
+        // ------------------------------------------------
+        // GET USER DATA
+        // ------------------------------------------------
 
         const userData =
             userSnap.data();
 
+        console.log("Logged user UID:", user.uid);
+        console.log("User data:", userData);
+        console.log("User role:", userData.role);
+
 
         // ------------------------------------------------
-        // NOT ADMIN
+        // CHECK ADMIN
         // ------------------------------------------------
 
         if (userData.role !== "admin") {
+
+            console.log("Access denied. User is not admin.");
 
             window.location.replace("index.html");
 
@@ -116,23 +129,19 @@ onAuthStateChanged(auth, async (user) => {
 
 
         // ------------------------------------------------
-        // ADMIN
+        // ADMIN ACCESS GRANTED
         // ------------------------------------------------
+
+        console.log("Admin access granted.");
 
         document.documentElement.style.visibility =
             "visible";
 
 
-        console.log(
-            "Admin access granted:",
-            user.email
-        );
-
-
     } catch (error) {
 
         console.error(
-            "Admin Check Error:",
+            "Admin authentication error:",
             error
         );
 
