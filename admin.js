@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (Updated with Email Username & Toast Notifications)
+// LANGDEX - admin.js (Updated with Excel Upload & Toast Notifications)
 // ======================================================
 
 import {
@@ -90,6 +90,10 @@ const dataTable = document.querySelector("#data-table");
 const languageFilter = document.querySelector("#language-filter");
 const clearFilterButton = document.querySelector("#clear-filter");
 const downloadPdfButton = document.querySelector("#download-pdf");
+
+// عناصر رفع الإكسيل
+const uploadExcelButton = document.getElementById('uploadExcelButton');
+const excelFileInput = document.getElementById('excelFileInput');
 
 // ======================================================
 // HELPER FUNCTIONS
@@ -226,7 +230,6 @@ function fillFormAdmin(data, documentId) {
 
     if (idInput) idInput.value = data.id ?? "";
     
-    // عرض اسم المستخدم فقط الخالي من @ والتكميل
     const rawUser = data.userEmail || data.userId || "";
     if (userIdInput) userIdInput.value = extractUsername(rawUser);
     
@@ -278,8 +281,6 @@ function renderTableAdmin(rows) {
 
     rows.forEach(data => {
         const row = document.createElement("tr");
-
-        // استخراج اسم المستخدم بدلاً من الأيميل الكامل أو المعرف
         const username = extractUsername(data.userEmail || data.userId);
 
         const values = [
@@ -365,7 +366,6 @@ if (searchButton && searchInput) {
             const result = searchResults[searchIndex];
             fillFormAdmin(result, result._documentId);
 
-            // إظهار التنبيه اللطيف أعلى الصفحة برقم النتيجة والكلمة
             const username = extractUsername(result.userEmail || result.userId);
             showNotification(`تم العثور على ${searchIndex + 1} من ${searchResults.length} - [${result.word} : ${username}]`);
 
@@ -380,6 +380,112 @@ if (searchButton && searchInput) {
         } catch (error) {
             console.error(error);
             showNotification("حدث خطأ أثناء البحث.");
+        }
+    });
+}
+
+// ======================================================
+// EXCEL UPLOAD FEATURE (NEW)
+// ======================================================
+
+if (uploadExcelButton && excelFileInput) {
+    uploadExcelButton.addEventListener('click', async function () {
+        if (!currentAdmin) {
+            showNotification("يجب تسجيل الدخول أولاً لرفع البيانات!");
+            return;
+        }
+
+        const file = excelFileInput.files[0];
+        if (!file) {
+            showNotification("من فضلك اختر ملف إكسيل الأول!");
+            return;
+        }
+
+        if (typeof XLSX === 'undefined') {
+            showNotification("مكتبة الإكسيل XLSX مش محملة في الصفحة!");
+            return;
+        }
+
+        const userEmail = currentAdmin.email || "";
+        const usernameInputVal = userIdInput ? userIdInput.value.trim() : "";
+        const finalUsername = usernameInputVal || extractUsername(userEmail);
+
+        uploadExcelButton.disabled = true;
+        uploadExcelButton.innerText = "جاري حساب الأرقام والرفع... ⏳";
+
+        try {
+            // جلب أحدث ID مستخص خصيصاً لهذا المستخدم
+            const rows = await getAllWordsAdmin();
+            let maxUserSpecificId = 0;
+
+            rows.forEach(item => {
+                // فلترة الكلمات الخاصة بهذا المستخدم فقط لحساب تتابع الـ ID الخاص به
+                const itemUser = item.userEmail || item.userId || "";
+                if (normalize(itemUser) === normalize(userEmail) || item.userId === currentAdmin.uid) {
+                    const idNum = Number(item.id);
+                    if (!isNaN(idNum) && idNum > maxUserSpecificId) {
+                        maxUserSpecificId = idNum;
+                    }
+                }
+            });
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const excelRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    let successCount = 0;
+                    let nextId = maxUserSpecificId + 1; // البدء تتابعياً بعد آخر ID للمستخدم
+
+                    for (let i = 1; i < excelRows.length; i++) {
+                        const row = excelRows[i];
+                        if (!row || row.length === 0) continue;
+
+                        const word = row[0] ? String(row[0]).trim() : '';
+                        const meaning = row[1] ? String(row[1]).trim() : '';
+                        const synonyms = row[2] ? String(row[2]).trim() : '';
+                        const language = row[3] ? String(row[3]).trim() : 'عامة';
+
+                        if (!word || !meaning) continue;
+
+                        await addDoc(wordsCollection, {
+                            id: nextId,
+                            word: word,
+                            meaning: meaning,
+                            synonyms: synonyms,
+                            language: language,
+                            userId: currentAdmin.uid,
+                            userEmail: userEmail,
+                            username: finalUsername,
+                            createdAt: new Date()
+                        });
+
+                        nextId++;
+                        successCount++;
+                    }
+
+                    showNotification(`تم رفع ${successCount} كلمة بنجاح بدءاً من ID: ${maxUserSpecificId + 1} 🚀`);
+                    setTimeout(() => location.reload(), 1500);
+
+                } catch (readError) {
+                    console.error(readError);
+                    showNotification("حدث خطأ أثناء قراءة ملف الإكسيل.");
+                    uploadExcelButton.disabled = false;
+                    uploadExcelButton.innerText = "رفع ملف";
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+
+        } catch (error) {
+            console.error(error);
+            showNotification("حدث خطأ أثناء الاتصال بقاعدة البيانات.");
+            uploadExcelButton.disabled = false;
+            uploadExcelButton.innerText = "رفع ملف";
         }
     });
 }
@@ -440,7 +546,8 @@ if (registerButton) {
                 language: language,
                 userId: currentAdmin.uid,
                 userEmail: userEmail,
-                username: userInputVal || extractUsername(userEmail)
+                username: userInputVal || extractUsername(userEmail),
+                createdAt: new Date()
             });
 
             showNotification(`تم حفظ البيانات بنجاح - ID: ${newId}`);
