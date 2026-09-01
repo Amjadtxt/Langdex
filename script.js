@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - script.js (Final Edition for Amjad)
+// LANGDEX - script.js (Final Complete Edition for Amjad)
 // ======================================================
 
 import {
@@ -475,7 +475,7 @@ if (clearFilterButton) {
 
 
 // ======================================================
-// SEARCH FIREBASE (UPDATED TO USE NOTIFICATION ONLY)
+// SEARCH FIREBASE
 // ======================================================
 
 async function searchFirebase(text) {
@@ -519,7 +519,6 @@ if (searchButton && searchInput) {
             const result = searchResults[searchIndex];
             fillForm(result, result._documentId);
 
-            // تم إزالة الظهور داخل الفورم واستبدالها بإشعار علوي فقط بناءً على طلبك
             showNotification(`تم العثور على النتيجة رقم ${searchIndex + 1} من ${searchResults.length}`);
             if (searchResult) searchResult.textContent = "";
 
@@ -676,7 +675,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (DARKER BACKGROUND #e0e0e0)
+// DOWNLOAD PDF (Darker Header & Fixed Admin Header Row)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -713,7 +712,7 @@ if (downloadPdfButton) {
                 top: -9999px;
                 left: -9999px;
                 width: 800px;
-                background: #e0e0e0;
+                background: #ffffff;
                 color: #000000;
                 padding: 20px;
                 font-family: Cairo, Arial, sans-serif;
@@ -727,17 +726,17 @@ if (downloadPdfButton) {
             printArea.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
                     <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                    <p style="margin:5px 0; font-size: 14px; color: #111;">اللغة: ${selectedLanguageText}</p>
+                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #e0e0e0;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
                     <thead>
-                        <tr style="background-color: #c7c7c7;">
+                        <tr style="background-color: #b5b5b5;">
                             <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
                             <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 30%;">المعنى</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 20%;">المرادف</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 20%;">اللغة</th>
-                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px;">المستخدم</th>' : ''}
+                            <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
+                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -761,7 +760,7 @@ if (downloadPdfButton) {
 
             const canvas = await html2canvas(printArea, {
                 scale: 2,
-                backgroundColor: "#e0e0e0",
+                backgroundColor: "#ffffff",
                 useCORS: true
             });
 
