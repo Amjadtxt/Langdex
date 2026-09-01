@@ -10,7 +10,9 @@
 // ======================================================
 
 import {
-    initializeApp
+    initializeApp,
+    getApps,
+    getApp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
 import {
@@ -35,15 +37,14 @@ import {
 // FIREBASE CONFIG
 // ======================================================
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
-  authDomain: "langdex.firebaseapp.com",
-  projectId: "langdex",
-  storageBucket: "langdex.firebasestorage.app",
-  messagingSenderId: "819838317933",
-  appId: "1:819838317933:web:cae7f4531ea32f958c5664",
-  measurementId: "G-F60CC2CDCJ"
+    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    authDomain: "langdex.firebaseapp.com",
+    projectId: "langdex",
+    storageBucket: "langdex.firebasestorage.app",
+    messagingSenderId: "819838317933",
+    appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+    measurementId: "G-F60CC2CDCJ"
 };
 
 
@@ -51,10 +52,12 @@ const firebaseConfig = {
 // INITIALIZE FIREBASE
 // ======================================================
 
-const app = initializeApp(firebaseConfig);
+const app =
+    getApps().length > 0
+        ? getApp()
+        : initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
-
 const auth = getAuth(app);
 
 const wordsCollection =
@@ -87,17 +90,10 @@ if (form) {
     const inputs =
         form.querySelectorAll("input");
 
-    idInput =
-        inputs[0] || null;
-
-    wordInput =
-        inputs[1] || null;
-
-    meaningInput =
-        inputs[2] || null;
-
-    synonymsInput =
-        inputs[3] || null;
+    idInput = inputs[0] || null;
+    wordInput = inputs[1] || null;
+    meaningInput = inputs[2] || null;
+    synonymsInput = inputs[3] || null;
 
     languageSelect =
         form.querySelector("select") || null;
@@ -307,14 +303,6 @@ function showNotification(
 // ======================================================
 // GET ALL WORDS FOR CURRENT USER
 // ======================================================
-//
-// مهم جدًا:
-//
-// بدل ما نجيب كل words الموجودة في Firebase
-//
-// بنجيب فقط الكلمات الخاصة بالمستخدم الحالي.
-//
-// ======================================================
 
 async function getAllWords() {
 
@@ -366,8 +354,6 @@ async function getAllWords() {
         }
     );
 
-
-    // ترتيب حسب ID
 
     rows.sort((a, b) => {
 
@@ -456,6 +442,7 @@ async function setNextId() {
 
     if (!idInput) return;
 
+
     try {
 
         const nextId =
@@ -464,6 +451,7 @@ async function setNextId() {
 
         idInput.value =
             nextId;
+
 
     } catch (error) {
 
@@ -484,36 +472,24 @@ async function setNextId() {
 async function clearForm() {
 
     if (wordInput) {
-
         wordInput.value = "";
-
     }
-
 
     if (meaningInput) {
-
         meaningInput.value = "";
-
     }
-
 
     if (synonymsInput) {
-
         synonymsInput.value = "";
-
     }
 
-
     if (languageSelect) {
-
         languageSelect.selectedIndex = 0;
-
     }
 
 
     selectedDocumentId =
         null;
-
 
     searchResults =
         [];
@@ -526,18 +502,11 @@ async function clearForm() {
 
 
     if (searchInput) {
-
-        searchInput.value =
-            "";
-
+        searchInput.value = "";
     }
 
-
     if (searchResult) {
-
-        searchResult.textContent =
-            "";
-
+        searchResult.textContent = "";
     }
 
 
@@ -560,42 +529,28 @@ function fillForm(
 
 
     if (idInput) {
-
         idInput.value =
             data.id ?? "";
-
     }
-
 
     if (wordInput) {
-
         wordInput.value =
             data.word ?? "";
-
     }
-
 
     if (meaningInput) {
-
         meaningInput.value =
             data.meaning ?? "";
-
     }
-
 
     if (synonymsInput) {
-
         synonymsInput.value =
             data.synonyms ?? "";
-
     }
 
-
     if (languageSelect) {
-
         languageSelect.value =
             data.language ?? "";
-
     }
 
 }
@@ -605,9 +560,7 @@ function fillForm(
 // POPULATE LANGUAGE FILTER
 // ======================================================
 
-function populateLanguageFilter(
-    rows
-) {
+function populateLanguageFilter(rows) {
 
     if (!languageFilter) return;
 
@@ -620,17 +573,12 @@ function populateLanguageFilter(
         "";
 
 
-    // ALL LANGUAGES
-
     const allOption =
-        document.createElement(
-            "option"
-        );
+        document.createElement("option");
 
 
     allOption.value =
         "all";
-
 
     allOption.textContent =
         "جميع اللغات";
@@ -640,8 +588,6 @@ function populateLanguageFilter(
         allOption
     );
 
-
-    // UNIQUE LANGUAGES
 
     const languages =
         new Map();
@@ -674,8 +620,6 @@ function populateLanguageFilter(
     });
 
 
-    // ADD LANGUAGES
-
     [...languages.values()]
         .sort((a, b) =>
             a.localeCompare(
@@ -686,14 +630,11 @@ function populateLanguageFilter(
         .forEach(language => {
 
             const option =
-                document.createElement(
-                    "option"
-                );
+                document.createElement("option");
 
 
             option.value =
                 language;
-
 
             option.textContent =
                 language;
@@ -706,19 +647,13 @@ function populateLanguageFilter(
         });
 
 
-    // RESTORE VALUE
-
     const exists =
         [...languageFilter.options]
             .some(option => {
 
                 return (
-                    normalize(
-                        option.value
-                    ) ===
-                    normalize(
-                        currentValue
-                    )
+                    normalize(option.value) ===
+                    normalize(currentValue)
                 );
 
             });
@@ -758,9 +693,7 @@ function renderTable(rows) {
     rows.forEach(data => {
 
         const row =
-            document.createElement(
-                "tr"
-            );
+            document.createElement("tr");
 
 
         const values = [
@@ -777,9 +710,7 @@ function renderTable(rows) {
         values.forEach(value => {
 
             const cell =
-                document.createElement(
-                    "td"
-                );
+                document.createElement("td");
 
 
             cell.textContent =
@@ -836,20 +767,14 @@ function applyLanguageFilter() {
 
 
     const filteredData =
-        allTableData.filter(
-            item => {
+        allTableData.filter(item => {
 
-                return (
-                    normalize(
-                        item.language
-                    ) ===
-                    normalize(
-                        selectedLanguage
-                    )
-                );
+            return (
+                normalize(item.language) ===
+                normalize(selectedLanguage)
+            );
 
-            }
-        );
+        });
 
 
     renderTable(
@@ -884,10 +809,7 @@ async function initializeDataPage() {
 
 
         if (dataTable) {
-
-            dataTable.innerHTML =
-                "";
-
+            dataTable.innerHTML = "";
         }
 
 
@@ -1253,8 +1175,6 @@ if (registerButton) {
                     : "";
 
 
-            // VALIDATION
-
             if (!word) {
 
                 showNotification(
@@ -1290,10 +1210,6 @@ if (registerButton) {
 
             try {
 
-                // --------------------------------------
-                // DUPLICATE CHECK
-                // --------------------------------------
-
                 const rows =
                     await getAllWords();
 
@@ -1302,12 +1218,8 @@ if (registerButton) {
                     rows.find(item => {
 
                         return (
-                            normalize(
-                                item.word
-                            ) ===
-                            normalize(
-                                word
-                            )
+                            normalize(item.word) ===
+                            normalize(word)
                         );
 
                     });
@@ -1331,21 +1243,9 @@ if (registerButton) {
                 }
 
 
-                // --------------------------------------
-                // SMART ID
-                // --------------------------------------
-
                 const newId =
                     await getNextId();
 
-
-                // --------------------------------------
-                // ADD
-                // --------------------------------------
-                //
-                // هنا بنحفظ userId مع الكلمة
-                //
-                // --------------------------------------
 
                 await addDoc(
                     wordsCollection,
@@ -1590,9 +1490,7 @@ if (deleteButton) {
 
 
             if (!confirmed) {
-
                 return;
-
             }
 
 
@@ -1715,6 +1613,10 @@ if (downloadPdfButton) {
                 }
 
 
+                // ==================================================
+                // SELECTED LANGUAGE
+                // ==================================================
+
                 let selectedLanguage =
                     "جميع اللغات";
 
@@ -1782,8 +1684,26 @@ if (downloadPdfButton) {
                     );
 
 
+                container.style.position =
+                    "fixed";
+
+                container.style.left =
+                    "0";
+
+                container.style.top =
+                    "0";
+
                 container.style.width =
-                    "100%";
+                    "1000px";
+
+                container.style.zIndex =
+                    "-1";
+
+                container.style.opacity =
+                    "1";
+
+                container.style.pointerEvents =
+                    "none";
 
                 container.style.boxSizing =
                     "border-box";
@@ -2198,21 +2118,26 @@ if (downloadPdfButton) {
 
 
                 // ==================================================
-                // TEMP CONTAINER
+                // ADD TO PAGE
                 // ==================================================
-
-                container.style.position =
-                    "absolute";
-
-                container.style.left =
-                    "-10000px";
-
-                container.style.top =
-                    "0";
-
 
                 document.body.appendChild(
                     container
+                );
+
+
+                // ==================================================
+                // WAIT FOR BROWSER RENDER
+                // ==================================================
+
+                await new Promise(
+                    resolve =>
+                        requestAnimationFrame(
+                            () =>
+                                requestAnimationFrame(
+                                    resolve
+                                )
+                        )
                 );
 
 
@@ -2271,7 +2196,19 @@ if (downloadPdfButton) {
                                 "#ffffff",
 
                             letterRendering:
-                                true
+                                true,
+
+                            scrollX:
+                                0,
+
+                            scrollY:
+                                0,
+
+                            windowWidth:
+                                1000,
+
+                            windowHeight:
+                                container.scrollHeight
 
                         },
 
@@ -2307,6 +2244,10 @@ if (downloadPdfButton) {
                     .save();
 
 
+                // ==================================================
+                // REMOVE TEMP CONTAINER
+                // ==================================================
+
                 container.remove();
 
 
@@ -2320,6 +2261,34 @@ if (downloadPdfButton) {
                 console.error(
                     "PDF Error:",
                     error
+                );
+
+
+                // إزالة الـ container حتى لو حصل خطأ
+
+                const pdfContainers =
+                    document.querySelectorAll(
+                        "body > div"
+                    );
+
+
+                pdfContainers.forEach(
+                    element => {
+
+                        if (
+                            element.style.position ===
+                                "fixed" &&
+                            element.style.zIndex ===
+                                "-1" &&
+                            element.style.background ===
+                                "rgb(255, 255, 255)"
+                        ) {
+
+                            element.remove();
+
+                        }
+
+                    }
                 );
 
 
@@ -2338,14 +2307,6 @@ if (downloadPdfButton) {
 // ======================================================
 // AUTH STATE
 // ======================================================
-//
-// هنا Firebase بيتأكد مين المستخدم الحالي.
-//
-// الـ auth-guard.js مسؤول عن منع الشخص غير المسجل
-// لكن script.js برضه محتاج يعرف المستخدم الحالي
-// عشان يربط البيانات بالـ UID.
-//
-// ======================================================
 
 onAuthStateChanged(
     auth,
@@ -2356,18 +2317,16 @@ onAuthStateChanged(
             currentUser =
                 null;
 
+
             console.log(
                 "No authenticated user."
             );
+
 
             return;
 
         }
 
-
-        // ------------------------------------------
-        // SAVE CURRENT USER
-        // ------------------------------------------
 
         currentUser =
             user;
@@ -2385,20 +2344,12 @@ onAuthStateChanged(
         );
 
 
-        // ------------------------------------------
-        // INITIAL ID
-        // ------------------------------------------
-
         if (idInput) {
 
             await setNextId();
 
         }
 
-
-        // ------------------------------------------
-        // DATA PAGE
-        // ------------------------------------------
 
         if (languageFilter) {
 
