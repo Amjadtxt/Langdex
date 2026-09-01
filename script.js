@@ -47,7 +47,7 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-const ADMIN_EMAILS = ["admin@gmail.com"]; // أضف إيميل الأدمن هنا
+const ADMIN_EMAILS = ["admin@gmail.com"]; // قائمة إيميلات الأدمن
 
 
 // ======================================================
@@ -66,10 +66,15 @@ const wordsCollection = collection(db, "words");
 
 
 // ======================================================
-// CURRENT USER
+// CURRENT USER & VARIABLES
 // ======================================================
 
 let currentUser = null;
+let selectedDocumentId = null;
+let allTableData = [];
+let searchResults = [];
+let searchIndex = 0;
+let lastSearchText = "";
 
 
 // ======================================================
@@ -127,18 +132,7 @@ const downloadPdfButton = document.querySelector("#download-pdf");
 
 
 // ======================================================
-// VARIABLES
-// ======================================================
-
-let selectedDocumentId = null;
-let allTableData = [];
-let searchResults = [];
-let searchIndex = 0;
-let lastSearchText = "";
-
-
-// ======================================================
-// NORMALIZE
+// HELPER FUNCTIONS
 // ======================================================
 
 function normalize(value) {
@@ -147,12 +141,7 @@ function normalize(value) {
         .toLowerCase();
 }
 
-
-// ======================================================
-// PAGE NOTIFICATION
-// ======================================================
-
-function showNotification(message, type = "normal") {
+function showNotification(message) {
     let notification = document.querySelector(".langdex-notification");
 
     if (!notification) {
@@ -162,25 +151,27 @@ function showNotification(message, type = "normal") {
     }
 
     notification.textContent = message;
-    notification.style.color = "#FFFFFF";
-    notification.style.position = "fixed";
-    notification.style.top = "25px";
-    notification.style.left = "50%";
-    notification.style.transform = "translateX(-50%)";
-    notification.style.zIndex = "999999";
-    notification.style.padding = "12px 22px";
-    notification.style.borderRadius = "10px";
-    notification.style.fontFamily = "Cairo, Arial, sans-serif";
-    notification.style.fontSize = "15px";
-    notification.style.fontWeight = "600";
-    notification.style.textAlign = "center";
-    notification.style.maxWidth = "90%";
-    notification.style.boxSizing = "border-box";
-    notification.style.direction = "rtl";
-    notification.style.background = "#222";
-    notification.style.border = "1px solid rgba(255,255,255,0.25)";
-    notification.style.boxShadow = "0 5px 20px rgba(0,0,0,0.3)";
-    notification.style.opacity = "1";
+    notification.style.cssText = `
+        color: #FFFFFF;
+        position: fixed;
+        top: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999999;
+        padding: 12px 22px;
+        border-radius: 10px;
+        font-family: Cairo, Arial, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        text-align: center;
+        max-width: 90%;
+        box-sizing: border-box;
+        direction: rtl;
+        background: #222;
+        border: 1px solid rgba(255,255,255,0.25);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        opacity: 1;
+    `;
 
     clearTimeout(notification._timer);
 
@@ -255,11 +246,6 @@ async function getNextId() {
     }
 }
 
-
-// ======================================================
-// SET NEXT ID
-// ======================================================
-
 async function setNextId() {
     if (!idInput) return;
 
@@ -273,7 +259,7 @@ async function setNextId() {
 
 
 // ======================================================
-// CLEAR FORM
+// CLEAR & FILL FORM
 // ======================================================
 
 async function clearForm() {
@@ -293,11 +279,6 @@ async function clearForm() {
     await setNextId();
 }
 
-
-// ======================================================
-// FILL FORM
-// ======================================================
-
 function fillForm(data, documentId) {
     selectedDocumentId = documentId;
 
@@ -310,7 +291,7 @@ function fillForm(data, documentId) {
 
 
 // ======================================================
-// POPULATE LANGUAGE FILTER
+// POPULATE LANGUAGE FILTER (بدون عرض الجدول)
 // ======================================================
 
 function populateLanguageFilter(rows) {
@@ -366,6 +347,17 @@ function renderTable(rows) {
 
     dataTable.innerHTML = "";
 
+    if (rows.length === 0) {
+        const emptyRow = document.createElement("tr");
+        const emptyCell = document.createElement("td");
+        emptyCell.colSpan = 5;
+        emptyCell.textContent = "لا توجد بيانات للعرض.";
+        emptyCell.style.textAlign = "center";
+        emptyRow.appendChild(emptyCell);
+        dataTable.appendChild(emptyRow);
+        return;
+    }
+
     rows.forEach(data => {
         const row = document.createElement("tr");
 
@@ -384,6 +376,12 @@ function renderTable(rows) {
                     ? value
                     : "-";
             row.appendChild(cell);
+        });
+
+        row.style.cursor = "pointer";
+        row.addEventListener("click", () => {
+            fillForm(data, data._documentId);
+            showNotification(`تم اختيار الكلمة: ${data.word}`);
         });
 
         dataTable.appendChild(row);
@@ -414,30 +412,7 @@ function applyLanguageFilter() {
 
 
 // ======================================================
-// INITIALIZE DATA PAGE
-// ======================================================
-
-async function initializeDataPage() {
-    if (!languageFilter) return;
-
-    try {
-        const rows = await getAllWords();
-        allTableData = rows;
-
-        populateLanguageFilter(allTableData);
-
-        if (dataTable) {
-            dataTable.innerHTML = "";
-        }
-    } catch (error) {
-        console.error("Initial Data Load Error:", error);
-        showNotification("حدث خطأ أثناء تحميل اللغات.");
-    }
-}
-
-
-// ======================================================
-// SHOW DATA
+// SHOW DATA & FILTER LISTENERS
 // ======================================================
 
 if (showDataButton) {
@@ -446,6 +421,7 @@ if (showDataButton) {
             allTableData = await getAllWords();
             populateLanguageFilter(allTableData);
             applyLanguageFilter();
+            showNotification(`تم عرض ${dataTable.children.length} سجل.`);
         } catch (error) {
             console.error("Show Data Error:", error);
             showNotification("حدث خطأ أثناء عرض البيانات.");
@@ -453,17 +429,11 @@ if (showDataButton) {
     });
 }
 
-
-// ======================================================
-// FILTER CHANGE
-// ======================================================
-
 if (languageFilter) {
     languageFilter.addEventListener("change", async function () {
         try {
             if (allTableData.length === 0) {
                 allTableData = await getAllWords();
-                populateLanguageFilter(allTableData);
             }
             applyLanguageFilter();
         } catch (error) {
@@ -472,11 +442,6 @@ if (languageFilter) {
         }
     });
 }
-
-
-// ======================================================
-// CLEAR FILTER
-// ======================================================
 
 if (clearFilterButton) {
     clearFilterButton.addEventListener("click", function () {
@@ -488,8 +453,7 @@ if (clearFilterButton) {
             dataTable.innerHTML = "";
         }
 
-        allTableData = [];
-        showNotification("تم إلغاء عرض البيانات.");
+        showNotification("تم إخفاء عرض البيانات.");
     });
 }
 
@@ -512,11 +476,6 @@ async function searchFirebase(text) {
         );
     });
 }
-
-
-// ======================================================
-// SEARCH BUTTON
-// ======================================================
 
 if (searchButton && searchInput) {
     searchButton.addEventListener("click", async function () {
@@ -559,7 +518,7 @@ if (searchButton && searchInput) {
 
 
 // ======================================================
-// REGISTER
+// REGISTER / UPDATE / DELETE
 // ======================================================
 
 if (registerButton) {
@@ -574,27 +533,15 @@ if (registerButton) {
         const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
         const language = languageSelect ? languageSelect.value.trim() : "";
 
-        if (!word) {
-            showNotification("اكتب الكلمة.");
-            return;
-        }
-
-        if (!meaning) {
-            showNotification("اكتب المعنى.");
-            return;
-        }
-
-        if (!language) {
-            showNotification("اختر اللغة.");
+        if (!word || !meaning || !language) {
+            showNotification("يرجى إكمال البيانات الأساسية.");
             return;
         }
 
         try {
             const rows = await getAllWords();
 
-            const duplicate = rows.find(item => {
-                return normalize(item.word) === normalize(word);
-            });
+            const duplicate = rows.find(item => normalize(item.word) === normalize(word));
 
             if (duplicate) {
                 showNotification(`الكلمة موجودة بالفعل - ID: ${duplicate.id}`);
@@ -617,7 +564,11 @@ if (registerButton) {
                 username: username
             });
 
-            showNotification(`تم تسجيل البيانات بنجاح - ID: ${newId}`);
+            showNotification(`تم تسجيل الكلمة بنجاح - ID: ${newId}`);
+            
+            allTableData = await getAllWords();
+            populateLanguageFilter(allTableData);
+
             await clearForm();
         } catch (error) {
             console.error("Register Error:", error);
@@ -626,20 +577,10 @@ if (registerButton) {
     });
 }
 
-
-// ======================================================
-// UPDATE
-// ======================================================
-
 if (updateButton) {
     updateButton.addEventListener("click", async function () {
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
-        if (!selectedDocumentId) {
-            showNotification("ابحث عن الكلمة أولاً.");
+        if (!currentUser || !selectedDocumentId) {
+            showNotification("اختر الكلمة أولاً لتعديلها.");
             return;
         }
 
@@ -648,18 +589,8 @@ if (updateButton) {
         const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
         const language = languageSelect ? languageSelect.value.trim() : "";
 
-        if (!word) {
-            showNotification("اكتب الكلمة.");
-            return;
-        }
-
-        if (!meaning) {
-            showNotification("اكتب المعنى.");
-            return;
-        }
-
-        if (!language) {
-            showNotification("اختر اللغة.");
+        if (!word || !meaning || !language) {
+            showNotification("يرجى إكمال البيانات الأساسية.");
             return;
         }
 
@@ -674,6 +605,11 @@ if (updateButton) {
             });
 
             showNotification("تم تحديث البيانات بنجاح.");
+            
+            allTableData = await getAllWords();
+            populateLanguageFilter(allTableData);
+            if (dataTable && dataTable.children.length > 0) applyLanguageFilter();
+
             await clearForm();
         } catch (error) {
             console.error("Update Error:", error);
@@ -682,33 +618,27 @@ if (updateButton) {
     });
 }
 
-
-// ======================================================
-// DELETE
-// ======================================================
-
 if (deleteButton) {
     deleteButton.addEventListener("click", async function (event) {
         event.preventDefault();
 
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً.");
+        if (!currentUser || !selectedDocumentId) {
+            showNotification("اختر الكلمة أولاً لحذفها.");
             return;
         }
 
-        if (!selectedDocumentId) {
-            showNotification("ابحث عن الكلمة أولاً.");
-            return;
-        }
-
-        const confirmed = confirm("هل أنت متأكد من حذف هذه الكلمة؟");
-        if (!confirmed) return;
+        if (!confirm("هل أنت متأكد من حذف هذه الكلمة؟")) return;
 
         try {
             const wordRef = doc(db, "words", selectedDocumentId);
             await deleteDoc(wordRef);
 
             showNotification("تم حذف البيانات بنجاح.");
+            
+            allTableData = await getAllWords();
+            populateLanguageFilter(allTableData);
+            if (dataTable && dataTable.children.length > 0) applyLanguageFilter();
+
             await clearForm();
         } catch (error) {
             console.error("Delete Error:", error);
@@ -716,11 +646,6 @@ if (deleteButton) {
         }
     });
 }
-
-
-// ======================================================
-// CLEAR FORM BUTTON
-// ======================================================
 
 if (clearButton) {
     clearButton.addEventListener("click", async function (event) {
@@ -732,7 +657,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (FIXED BLANK PDF ISSUE)
+// DOWNLOAD PDF
 // ======================================================
 
 if (downloadPdfButton) {
@@ -752,27 +677,11 @@ if (downloadPdfButton) {
                 allTableData = await getAllWords();
             }
 
-            if (allTableData.length === 0) {
-                showNotification("لا توجد بيانات لتحميلها.");
-                return;
-            }
-
-            let selectedLanguage = "جميع اللغات";
-
-            if (
-                languageFilter &&
-                languageFilter.value &&
-                languageFilter.value !== "all"
-            ) {
-                selectedLanguage = languageFilter.value;
-            }
-
+            let selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
             let rows = allTableData;
 
-            if (selectedLanguage !== "جميع اللغات") {
-                rows = allTableData.filter(item => {
-                    return normalize(item.language) === normalize(selectedLanguage);
-                });
+            if (selectedLanguage !== "all" && selectedLanguage !== "") {
+                rows = allTableData.filter(item => normalize(item.language) === normalize(selectedLanguage));
             }
 
             if (rows.length === 0) {
@@ -780,169 +689,91 @@ if (downloadPdfButton) {
                 return;
             }
 
-            // إنشاء الحاوية بوضعية تمنع ظهور صفحة بيضاء في html2canvas
+            showNotification("جاري تجهيز ملف PDF...");
+
             const container = document.createElement("div");
-            container.style.position = "fixed";
-            container.style.left = "0";
-            container.style.top = "0";
-            container.style.zIndex = "-9999"; // إخفاؤه خلف العناصر مع بقائه قابل لالتقاط html2canvas
-            container.style.width = "1000px";
-            container.style.background = "#ffffff";
-            container.style.color = "#000000";
-            container.style.padding = "30px";
-            container.style.boxSizing = "border-box";
-            container.style.direction = "rtl";
-            container.style.fontFamily = "Cairo, Arial, sans-serif";
+            container.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 900px;
+                background: #ffffff;
+                color: #000000;
+                padding: 25px;
+                box-sizing: border-box;
+                direction: rtl;
+                font-family: Cairo, Arial, sans-serif;
+                z-index: 999999;
+            `;
 
-            // Header
-            const header = document.createElement("div");
-            header.style.textAlign = "center";
-            header.style.marginBottom = "20px";
+            const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
+                ? languageFilter.options[languageFilter.selectedIndex].textContent
+                : "جميع اللغات";
 
-            const title = document.createElement("h1");
-            title.textContent = "Langdex Data";
-            title.style.margin = "0";
-            title.style.fontSize = "28px";
-            title.style.color = "#000000";
-
-            const languageTitle = document.createElement("h2");
-            languageTitle.textContent = selectedLanguage;
-            languageTitle.style.margin = "5px 0 0";
-            languageTitle.style.fontSize = "18px";
-            languageTitle.style.color = "#000000";
-
-            header.appendChild(title);
-            header.appendChild(languageTitle);
-            container.appendChild(header);
-
-            // Table
-            const table = document.createElement("table");
-            table.style.width = "100%";
-            table.style.borderCollapse = "collapse";
-            table.style.tableLayout = "fixed";
-            table.style.direction = "rtl";
-            table.style.fontSize = "11px";
-
-            const colgroup = document.createElement("colgroup");
-            const widths = ["7%", "20%", "29%", "22%", "14%", "8%"];
-
-            widths.forEach(width => {
-                const col = document.createElement("col");
-                col.style.width = width;
-                colgroup.appendChild(col);
-            });
-
-            table.appendChild(colgroup);
-
-            // Table Header
-            const thead = document.createElement("thead");
-            const headerRow = document.createElement("tr");
-            const headers = ["الترتيب", "الكلمة", "المعنى", "المرادف", "اللغة", "ID"];
-
-            headers.forEach(headerText => {
-                const th = document.createElement("th");
-                th.textContent = headerText;
-                th.style.border = "1px solid #000";
-                th.style.padding = "7px 4px";
-                th.style.textAlign = "center";
-                th.style.verticalAlign = "middle";
-                th.style.fontWeight = "bold";
-                th.style.fontSize = "10px";
-                th.style.background = "#eeeeee";
-                th.style.color = "#000000";
-                th.style.wordBreak = "break-word";
-                th.style.overflowWrap = "break-word";
-
-                headerRow.appendChild(th);
-            });
-
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            // Table Body
-            const tbody = document.createElement("tbody");
-
-            rows.forEach((data, index) => {
-                const row = document.createElement("tr");
-
-                const values = [
-                    index + 1,
-                    data.word || "-",
-                    data.meaning || "-",
-                    data.synonyms || "-",
-                    data.language || "-",
-                    data.id || "-"
-                ];
-
-                values.forEach((value, valueIndex) => {
-                    const cell = document.createElement("td");
-                    cell.textContent = String(value);
-                    cell.style.border = "1px solid #000";
-                    cell.style.padding = "6px 4px";
-                    cell.style.textAlign = (valueIndex === 0 || valueIndex === 5) ? "center" : "right";
-                    cell.style.verticalAlign = "middle";
-                    cell.style.fontSize = "10px";
-                    cell.style.lineHeight = "1.5";
-                    cell.style.color = "#000000";
-                    cell.style.wordBreak = "break-word";
-                    cell.style.overflowWrap = "break-word";
-                    cell.style.whiteSpace = "normal";
-
-                    row.appendChild(cell);
-                });
-
-                tbody.appendChild(row);
-            });
-
-            table.appendChild(tbody);
-            container.appendChild(table);
-
-            // Footer
-            const footer = document.createElement("p");
-            footer.textContent = `عدد الكلمات: ${rows.length}`;
-            footer.style.textAlign = "center";
-            footer.style.margin = "15px 0 0";
-            footer.style.fontSize = "11px";
-            footer.style.fontWeight = "bold";
-            footer.style.color = "#000000";
-
-            container.appendChild(footer);
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="margin: 0; font-size: 26px; color: #000;">Langdex Data</h1>
+                    <h3 style="margin: 5px 0 0; font-size: 16px; color: #333;">اللغة: ${selectedLanguageText}</h3>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; direction: rtl; font-size: 11px; table-layout: fixed;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #000; padding: 6px; width: 8%;">#</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 22%;">الكلمة</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 35%;">المعنى</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">المرادف</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 15%;">اللغة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((item, idx) => `
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.word || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.meaning || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.synonyms || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <p style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 12px; color: #000;">
+                    إجمالي الكلمات: ${rows.length}
+                </p>
+            `;
 
             document.body.appendChild(container);
 
-            // انتظر إتمام الرندر في المتصفح
-            await new Promise(resolve => setTimeout(resolve, 300));
+            const originalScrollY = window.scrollY;
+            window.scrollTo(0, 0);
 
-            const safeLanguage = selectedLanguage.replace(/[\\/:*?"<>|]/g, "-");
-            const fileName = `Langdex-Data-${safeLanguage}.pdf`;
+            const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
+            const fileName = `Langdex-${safeLanguage}.pdf`;
 
-            await html2pdf()
-                .set({
-                    margin: [8, 8, 8, 8],
-                    filename: fileName,
-                    image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: "#ffffff",
-                        logging: false,
-                        scrollX: 0,
-                        scrollY: 0
-                    },
-                    pagebreak: { mode: ["css", "legacy"] },
-                    jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
-                })
-                .from(container)
-                .save();
+            const opt = {
+                margin: [8, 8, 8, 8],
+                filename: fileName,
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    scrollY: 0,
+                    scrollX: 0
+                },
+                pagebreak: { mode: ["css", "legacy"] },
+                jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
+            };
+
+            await html2pdf().set(opt).from(container).save();
 
             container.remove();
+            window.scrollTo(0, originalScrollY);
+
             showNotification("تم تحميل ملف PDF بنجاح.");
         } catch (error) {
             console.error("PDF Error:", error);
-
-            const pdfContainers = document.querySelectorAll('body > div[style*="-9999"]');
-            pdfContainers.forEach(element => element.remove());
-
             showNotification("حدث خطأ أثناء إنشاء PDF.");
         }
     });
@@ -950,32 +781,38 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// AUTH STATE & ROUTE GUARD
+// AUTH STATE & ROUTE GUARD (طرد الأدمن من index.html)
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
+    // 1. إذا لم يكن مسجلاً للدخول، توجيهه لصفحة التسجيل
     if (!user) {
         currentUser = null;
         window.location.href = "login.html";
         return;
     }
 
-    // إذا كان الحساب يتبع للأدمن، توجيهه إلى admin.html
-    if (ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
-        showNotification("مرحباً بك يا أدمن، جاري توجيهك للوحة التحكم...");
-        setTimeout(() => {
-            window.location.href = "admin.html";
-        }, 1000);
-        return;
+    const userEmail = (user.email || "").toLowerCase();
+    const isAdmin = ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+
+    // 2. طرد الأدمن مباشرة عند دخوا أي صفحة مستخدم عادية (مثل index.html) إلى admin.html
+    if (isAdmin) {
+        window.location.href = "admin.html";
+        return; // إيقاف التنفيذ لمنع جلب البيانات أو التعامل مع واجهة المستخدم
     }
 
+    // 3. مستخدم عادي
     currentUser = user;
 
     if (idInput) {
         await setNextId();
     }
 
-    if (languageFilter) {
-        await initializeDataPage();
+    // جلب البيانات فوراً وتجهيز قائمة اللغات
+    try {
+        allTableData = await getAllWords();
+        populateLanguageFilter(allTableData);
+    } catch (err) {
+        console.error("Initial load error:", err);
     }
 });
