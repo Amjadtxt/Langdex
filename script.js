@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - script.js (Final Complete Edition for Amjad)
+// LANGDEX - script.js (Full & Complete Edition for Amjad)
 // ======================================================
 
 import {
@@ -350,7 +350,7 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE (DISPLAY USER LOGS FOR ADMIN)
+// RENDER TABLE
 // ======================================================
 
 function renderTable(rows) {
@@ -675,7 +675,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Darker Header & Fixed Admin Header Row)
+// DOWNLOAD PDF (Darker Header & White Body)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -788,7 +788,7 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// UPLOAD EXCEL FILE (.xlsx) TO FIREBASE FEATURE
+// UPLOAD EXCEL FILE (.xlsx) TO FIREBASE
 // ======================================================
 
 const uploadExcelButton = document.querySelector("#uploadExcelButton");
@@ -804,6 +804,12 @@ if (uploadExcelButton && excelFileInput) {
 
         if (!currentUser) {
             showNotification("يجب تسجيل الدخول أولاً!");
+            return;
+        }
+
+        if (typeof XLSX === "undefined") {
+            showNotification("خطأ: مكتبة قراءة الإكسيل غير مُحمّلة في الصفحة!");
+            console.error("XLSX library is missing. Please add SheetJS CDN in HTML.");
             return;
         }
 
@@ -825,13 +831,14 @@ if (uploadExcelButton && excelFileInput) {
 
                 showNotification("جاري رفع كلمات الإكسيل للفايربيز...");
                 let successCount = 0;
+                let baseId = await getNextId();
 
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || row.length === 0) continue;
 
                     const wordData = {
-                        id: await getNextId() + successCount,
+                        id: baseId + successCount,
                         word: String(row[0] || "").trim(),
                         meaning: String(row[1] || "").trim(),
                         synonyms: String(row[2] || "").trim(),
