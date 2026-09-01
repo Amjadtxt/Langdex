@@ -1562,7 +1562,6 @@ if (clearButton) {
 
 }
 
-
 // ======================================================
 // DOWNLOAD PDF
 // ======================================================
@@ -1580,46 +1579,43 @@ if (downloadPdfButton) {
                 );
 
                 return;
-
             }
 
-
-            if (
-                typeof html2pdf ===
-                "undefined"
-            ) {
+            if (typeof html2pdf === "undefined") {
 
                 showNotification(
                     "مكتبة PDF غير محملة."
                 );
 
                 return;
-
             }
-
 
             try {
 
-                if (
-                    allTableData.length === 0
-                ) {
+                // ==================================================
+                // GET DATA
+                // ==================================================
 
-                    showNotification(
-                        "اعرض البيانات أولاً."
-                    );
+                if (allTableData.length === 0) {
 
-                    return;
+                    allTableData = await getAllWords();
 
                 }
 
+                if (allTableData.length === 0) {
+
+                    showNotification(
+                        "لا توجد بيانات لتحميلها."
+                    );
+
+                    return;
+                }
 
                 // ==================================================
                 // SELECTED LANGUAGE
                 // ==================================================
 
-                let selectedLanguage =
-                    "جميع اللغات";
-
+                let selectedLanguage = "جميع اللغات";
 
                 if (
                     languageFilter &&
@@ -1632,212 +1628,112 @@ if (downloadPdfButton) {
 
                 }
 
-
-                let rows =
-                    allTableData;
-
+                let rows = allTableData;
 
                 if (
                     selectedLanguage !==
                     "جميع اللغات"
                 ) {
 
-                    rows =
-                        allTableData.filter(
-                            item => {
+                    rows = allTableData.filter(
+                        item => {
 
-                                return (
-                                    normalize(
-                                        item.language
-                                    ) ===
-                                    normalize(
-                                        selectedLanguage
-                                    )
-                                );
+                            return (
+                                normalize(item.language) ===
+                                normalize(selectedLanguage)
+                            );
 
-                            }
-                        );
+                        }
+                    );
 
                 }
 
-
-                if (
-                    rows.length === 0
-                ) {
+                if (rows.length === 0) {
 
                     showNotification(
                         "لا توجد بيانات لتحميلها."
                     );
 
                     return;
-
                 }
 
-
                 // ==================================================
-                // PDF CONTAINER
+                // CREATE PDF CONTAINER
                 // ==================================================
 
                 const container =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
-
-                container.style.position =
-                    "fixed";
-
-                container.style.left =
-                    "0";
-
-                container.style.top =
-                    "0";
-
-                container.style.width =
-                    "1000px";
-
-                container.style.zIndex =
-                    "-1";
-
-                container.style.opacity =
-                    "1";
-
-                container.style.pointerEvents =
-                    "none";
-
-                container.style.boxSizing =
-                    "border-box";
-
-                container.style.padding =
-                    "12mm";
-
-                container.style.background =
-                    "#ffffff";
-
-                container.style.color =
-                    "#000000";
-
-                container.style.direction =
-                    "rtl";
-
+                container.style.position = "fixed";
+                container.style.left = "-10000px";
+                container.style.top = "0";
+                container.style.width = "1000px";
+                container.style.background = "#ffffff";
+                container.style.color = "#000000";
+                container.style.padding = "30px";
+                container.style.boxSizing = "border-box";
+                container.style.direction = "rtl";
                 container.style.fontFamily =
                     "Cairo, Arial, sans-serif";
 
-                container.style.fontSize =
-                    "9px";
-
-
                 // ==================================================
-                // PDF HEADER
+                // HEADER
                 // ==================================================
 
                 const header =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
-
-                header.style.textAlign =
-                    "center";
-
-                header.style.marginBottom =
-                    "12px";
-
-                header.style.direction =
-                    "rtl";
-
+                header.style.textAlign = "center";
+                header.style.marginBottom = "20px";
 
                 const title =
-                    document.createElement(
-                        "h1"
-                    );
+                    document.createElement("h1");
 
+                title.textContent = "Langdex Data";
 
-                title.textContent =
-                    "Langdex Data";
-
-
-                title.style.margin =
-                    "0";
-
-                title.style.fontSize =
-                    "22px";
-
-                title.style.lineHeight =
-                    "1.3";
-
+                title.style.margin = "0";
+                title.style.fontSize = "28px";
+                title.style.color = "#000000";
 
                 const languageTitle =
-                    document.createElement(
-                        "h2"
-                    );
-
+                    document.createElement("h2");
 
                 languageTitle.textContent =
                     selectedLanguage;
 
-
                 languageTitle.style.margin =
-                    "4px 0 0";
+                    "5px 0 0";
 
                 languageTitle.style.fontSize =
-                    "17px";
+                    "18px";
 
-                languageTitle.style.lineHeight =
-                    "1.3";
+                languageTitle.style.color =
+                    "#000000";
 
+                header.appendChild(title);
+                header.appendChild(languageTitle);
 
-                header.appendChild(
-                    title
-                );
-
-                header.appendChild(
-                    languageTitle
-                );
-
-                container.appendChild(
-                    header
-                );
-
+                container.appendChild(header);
 
                 // ==================================================
                 // TABLE
                 // ==================================================
 
                 const table =
-                    document.createElement(
-                        "table"
-                    );
+                    document.createElement("table");
 
-
-                table.style.width =
-                    "100%";
-
-                table.style.maxWidth =
-                    "100%";
-
-                table.style.borderCollapse =
-                    "collapse";
-
-                table.style.tableLayout =
-                    "fixed";
-
-                table.style.direction =
-                    "rtl";
-
-                table.style.fontSize =
-                    "8px";
-
+                table.style.width = "100%";
+                table.style.borderCollapse = "collapse";
+                table.style.tableLayout = "fixed";
+                table.style.direction = "rtl";
+                table.style.fontSize = "11px";
 
                 // ==================================================
                 // COLUMN WIDTHS
                 // ==================================================
 
                 const colgroup =
-                    document.createElement(
-                        "colgroup"
-                    );
-
+                    document.createElement("colgroup");
 
                 const widths = [
                     "7%",
@@ -1848,46 +1744,28 @@ if (downloadPdfButton) {
                     "8%"
                 ];
 
-
                 widths.forEach(width => {
 
                     const col =
-                        document.createElement(
-                            "col"
-                        );
+                        document.createElement("col");
 
+                    col.style.width = width;
 
-                    col.style.width =
-                        width;
-
-
-                    colgroup.appendChild(
-                        col
-                    );
+                    colgroup.appendChild(col);
 
                 });
 
-
-                table.appendChild(
-                    colgroup
-                );
-
+                table.appendChild(colgroup);
 
                 // ==================================================
                 // TABLE HEADER
                 // ==================================================
 
                 const thead =
-                    document.createElement(
-                        "thead"
-                    );
-
+                    document.createElement("thead");
 
                 const headerRow =
-                    document.createElement(
-                        "tr"
-                    );
-
+                    document.createElement("tr");
 
                 const headers = [
 
@@ -1900,210 +1778,150 @@ if (downloadPdfButton) {
 
                 ];
 
+                headers.forEach(headerText => {
 
-                headers.forEach(
-                    headerText => {
+                    const th =
+                        document.createElement("th");
 
-                        const th =
-                            document.createElement(
-                                "th"
-                            );
+                    th.textContent =
+                        headerText;
 
+                    th.style.border =
+                        "1px solid #000";
 
-                        th.textContent =
-                            headerText;
+                    th.style.padding =
+                        "7px 4px";
 
+                    th.style.textAlign =
+                        "center";
 
-                        th.style.border =
-                            "1px solid #000";
+                    th.style.verticalAlign =
+                        "middle";
 
-                        th.style.padding =
-                            "5px 3px";
+                    th.style.fontWeight =
+                        "bold";
 
-                        th.style.textAlign =
-                            "center";
+                    th.style.fontSize =
+                        "10px";
 
-                        th.style.verticalAlign =
-                            "middle";
+                    th.style.background =
+                        "#eeeeee";
 
-                        th.style.fontWeight =
-                            "bold";
+                    th.style.color =
+                        "#000000";
 
-                        th.style.fontSize =
-                            "8px";
+                    th.style.wordBreak =
+                        "break-word";
 
-                        th.style.background =
-                            "#eeeeee";
+                    th.style.overflowWrap =
+                        "break-word";
 
-                        th.style.color =
-                            "#000000";
+                    headerRow.appendChild(th);
 
-                        th.style.whiteSpace =
-                            "normal";
+                });
 
-                        th.style.wordBreak =
-                            "break-word";
+                thead.appendChild(headerRow);
 
-                        th.style.overflowWrap =
-                            "break-word";
-
-
-                        headerRow.appendChild(
-                            th
-                        );
-
-                    }
-                );
-
-
-                thead.appendChild(
-                    headerRow
-                );
-
-
-                table.appendChild(
-                    thead
-                );
-
+                table.appendChild(thead);
 
                 // ==================================================
                 // TABLE BODY
                 // ==================================================
 
                 const tbody =
-                    document.createElement(
-                        "tbody"
-                    );
+                    document.createElement("tbody");
 
+                rows.forEach((data, index) => {
 
-                rows.forEach(
-                    (data, index) => {
+                    const row =
+                        document.createElement("tr");
 
-                        const row =
-                            document.createElement(
-                                "tr"
-                            );
+                    const values = [
 
+                        index + 1,
+                        data.word || "-",
+                        data.meaning || "-",
+                        data.synonyms || "-",
+                        data.language || "-",
+                        data.id || "-"
 
-                        row.style.pageBreakInside =
-                            "avoid";
+                    ];
 
+                    values.forEach(
+                        (value, valueIndex) => {
 
-                        const values = [
+                            const cell =
+                                document.createElement("td");
 
-                            index + 1,
+                            cell.textContent =
+                                String(value);
 
-                            data.word || "-",
+                            cell.style.border =
+                                "1px solid #000";
 
-                            data.meaning || "-",
+                            cell.style.padding =
+                                "6px 4px";
 
-                            data.synonyms || "-",
-
-                            data.language || "-",
-
-                            data.id || "-"
-
-                        ];
-
-
-                        values.forEach(
-                            (
-                                value,
-                                valueIndex
-                            ) => {
-
-                                const cell =
-                                    document.createElement(
-                                        "td"
-                                    );
-
-
-                                cell.textContent =
-                                    value;
-
-
-                                cell.style.border =
-                                    "1px solid #000";
-
-                                cell.style.padding =
-                                    "4px 3px";
-
-                                cell.style.textAlign =
+                            cell.style.textAlign =
+                                (
                                     valueIndex === 0 ||
                                     valueIndex === 5
-                                        ? "center"
-                                        : "right";
+                                )
+                                    ? "center"
+                                    : "right";
 
-                                cell.style.verticalAlign =
-                                    "middle";
+                            cell.style.verticalAlign =
+                                "middle";
 
-                                cell.style.fontSize =
-                                    "8px";
+                            cell.style.fontSize =
+                                "10px";
 
-                                cell.style.lineHeight =
-                                    "1.4";
+                            cell.style.lineHeight =
+                                "1.5";
 
-                                cell.style.color =
-                                    "#000000";
+                            cell.style.color =
+                                "#000000";
 
-                                cell.style.whiteSpace =
-                                    "normal";
+                            cell.style.wordBreak =
+                                "break-word";
 
-                                cell.style.wordBreak =
-                                    "break-word";
+                            cell.style.overflowWrap =
+                                "break-word";
 
-                                cell.style.overflowWrap =
-                                    "break-word";
+                            cell.style.whiteSpace =
+                                "normal";
 
+                            row.appendChild(cell);
 
-                                row.appendChild(
-                                    cell
-                                );
+                        }
+                    );
 
-                            }
-                        );
+                    tbody.appendChild(row);
 
+                });
 
-                        tbody.appendChild(
-                            row
-                        );
+                table.appendChild(tbody);
 
-                    }
-                );
-
-
-                table.appendChild(
-                    tbody
-                );
-
-
-                container.appendChild(
-                    table
-                );
-
+                container.appendChild(table);
 
                 // ==================================================
-                // PDF FOOTER
+                // FOOTER
                 // ==================================================
 
                 const footer =
-                    document.createElement(
-                        "p"
-                    );
-
+                    document.createElement("p");
 
                 footer.textContent =
                     `عدد الكلمات: ${rows.length}`;
-
 
                 footer.style.textAlign =
                     "center";
 
                 footer.style.margin =
-                    "10px 0 0";
+                    "15px 0 0";
 
                 footer.style.fontSize =
-                    "9px";
+                    "11px";
 
                 footer.style.fontWeight =
                     "bold";
@@ -2111,38 +1929,30 @@ if (downloadPdfButton) {
                 footer.style.color =
                     "#000000";
 
-
-                container.appendChild(
-                    footer
-                );
-
+                container.appendChild(footer);
 
                 // ==================================================
-                // ADD TO PAGE
+                // ADD TO DOCUMENT
                 // ==================================================
 
-                document.body.appendChild(
-                    container
-                );
-
+                document.body.appendChild(container);
 
                 // ==================================================
-                // WAIT FOR BROWSER RENDER
+                // WAIT FOR RENDER
                 // ==================================================
 
-                await new Promise(
-                    resolve =>
-                        requestAnimationFrame(
-                            () =>
-                                requestAnimationFrame(
-                                    resolve
-                                )
-                        )
-                );
+                await new Promise(resolve => {
 
+                    requestAnimationFrame(() => {
+
+                        requestAnimationFrame(resolve);
+
+                    });
+
+                });
 
                 // ==================================================
-                // FILE NAME
+                // PDF FILE NAME
                 // ==================================================
 
                 const safeLanguage =
@@ -2151,17 +1961,14 @@ if (downloadPdfButton) {
                         "-"
                     );
 
-
                 const fileName =
                     `Langdex-Data-${safeLanguage}.pdf`;
-
 
                 // ==================================================
                 // GENERATE PDF
                 // ==================================================
 
                 await html2pdf()
-
                     .set({
 
                         margin: [
@@ -2176,39 +1983,28 @@ if (downloadPdfButton) {
 
                         image: {
 
-                            type:
-                                "jpeg",
+                            type: "jpeg",
 
-                            quality:
-                                0.95
+                            quality: 0.98
 
                         },
 
                         html2canvas: {
 
-                            scale:
-                                2,
+                            scale: 2,
 
-                            useCORS:
-                                true,
+                            useCORS: true,
 
                             backgroundColor:
                                 "#ffffff",
 
-                            letterRendering:
-                                true,
+                            logging: false,
 
-                            scrollX:
-                                0,
+                            scrollX: 0,
 
-                            scrollY:
-                                0,
+                            scrollY: 0,
 
-                            windowWidth:
-                                1000,
-
-                            windowHeight:
-                                container.scrollHeight
+                            windowWidth: 1000
 
                         },
 
@@ -2223,74 +2019,49 @@ if (downloadPdfButton) {
 
                         jsPDF: {
 
-                            unit:
-                                "mm",
+                            unit: "mm",
 
-                            format:
-                                "a4",
+                            format: "a4",
 
                             orientation:
                                 "landscape",
 
-                            compress:
-                                true
+                            compress: true
 
                         }
 
                     })
-
                     .from(container)
-
                     .save();
 
-
                 // ==================================================
-                // REMOVE TEMP CONTAINER
+                // REMOVE CONTAINER
                 // ==================================================
 
                 container.remove();
-
 
                 showNotification(
                     "تم تحميل ملف PDF بنجاح."
                 );
 
+            }
 
-            } catch (error) {
+            catch (error) {
 
                 console.error(
                     "PDF Error:",
                     error
                 );
 
-
-                // إزالة الـ container حتى لو حصل خطأ
-
+                // إزالة أي container خاص بالـ PDF
                 const pdfContainers =
                     document.querySelectorAll(
-                        "body > div"
+                        'body > div[style*="-10000px"]'
                     );
 
-
                 pdfContainers.forEach(
-                    element => {
-
-                        if (
-                            element.style.position ===
-                                "fixed" &&
-                            element.style.zIndex ===
-                                "-1" &&
-                            element.style.background ===
-                                "rgb(255, 255, 255)"
-                        ) {
-
-                            element.remove();
-
-                        }
-
-                    }
+                    element => element.remove()
                 );
-
 
                 showNotification(
                     "حدث خطأ أثناء إنشاء PDF."
@@ -2302,6 +2073,7 @@ if (downloadPdfButton) {
     );
 
 }
+
 
 
 // ======================================================
