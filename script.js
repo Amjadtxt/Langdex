@@ -350,7 +350,7 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE
+// RENDER TABLE (Fixed Columns Order: User at the End)
 // ======================================================
 
 function renderTable(rows) {
@@ -373,6 +373,7 @@ function renderTable(rows) {
     rows.forEach(data => {
         const row = document.createElement("tr");
 
+        // ترتيب الأعمدة الأساسية
         const values = [
             data.id,
             data.word,
@@ -381,6 +382,7 @@ function renderTable(rows) {
             data.language
         ];
 
+        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة عشان يظهر في الصف الأخير (الجهة اليمنى)
         if (isAdmin) {
             values.push(data.userEmail || data.username || "غير معروف");
         }
@@ -675,7 +677,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Darker Header & White Body)
+// DOWNLOAD PDF (Fixed Column Order for Admin)
 // ======================================================
 
 if (downloadPdfButton) {
