@@ -1,3 +1,4 @@
+
 // ======================================================
 // LANGDEX - script.js (Full & Complete Edition for Amjad)
 // ======================================================
@@ -916,3 +917,4 @@ onAuthStateChanged(auth, async user => {
         console.error("Initial load error:", err);
     }
 });
+
