@@ -222,6 +222,79 @@
 <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
 <button id="uploadExcelButton">رفع ملف</button>
 
+
+<script>
+    document.getElementById('uploadExcelButton').addEventListener('click', async function() {
+        console.log("زرار الإكسيل اشتغل واتضغط عليه بنجاح!");
+        
+        const fileInput = document.getElementById('excelFileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("من فضلك اختر ملف إكسيل الأول!");
+            return;
+        }
+
+        if (typeof XLSX === 'undefined') {
+            alert("مكتبة الإكسيل XLSX مش محملة في الصفحة!");
+            return;
+        }
+
+        // تفعيل مؤشر التحميل أو تعطيل الزرار لو حابب
+        this.disabled = true;
+        this.innerText = "جاري الرفع...";
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                
+                console.log("تم قراءة الملف، عدد الصفوف:", rows.length);
+                
+                let successCount = 0;
+
+                // نبدأ من 1 عشان نتخطى صف العناوين (Headers)
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+
+                    const word = row[0] ? String(row[0]).trim() : '';
+                    const meaning = row[1] ? String(row[1]).trim() : '';
+                    const synonyms = row[2] ? String(row[2]).trim() : '';
+                    const language = row[3] ? String(row[3]).trim() : 'عامة';
+
+                    if (!word || !meaning) continue; // لو الكلمة أو المعنى فاضيين نتخطى
+
+                    // رفع الكلمة لفايربيز (تأكد أن db معرفة عندك في المشروع)
+                    await addDoc(collection(db, "words"), {
+                        word: word,
+                        meaning: meaning,
+                        synonyms: synonyms,
+                        language: language,
+                        createdAt: new Date()
+                    });
+
+                    successCount++;
+                }
+
+                alert(`تم رفع ${successCount} كلمة بنجاح إلى قاعدة البيانات! 🚀`);
+                location.reload(); // إعادة تحميل الصفحة لتحديث الجدول تلقائياً
+
+            } catch (error) {
+                console.error("خطأ أثناء رفع البيانات:", error);
+                alert("حدث خطأ أثناء رفع البيانات لفايربيز.");
+                document.getElementById('uploadExcelButton').disabled = false;
+                document.getElementById('uploadExcelButton').innerText = "رفع ملف الإكسيل";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+</script>
+
       <!-- SAVE -->
 
       <div class="inter1">
