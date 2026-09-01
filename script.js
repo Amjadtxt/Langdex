@@ -141,6 +141,12 @@ function normalize(value) {
         .toLowerCase();
 }
 
+function isCurrentUserAdmin() {
+    if (!currentUser) return false;
+    const email = (currentUser.email || "").toLowerCase();
+    return ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email);
+}
+
 function showNotification(message) {
     let notification = document.querySelector(".langdex-notification");
 
@@ -189,7 +195,7 @@ function showNotification(message) {
 
 
 // ======================================================
-// GET ALL WORDS FOR CURRENT USER
+// GET WORDS (USER DATA VS ADMIN ALL LOGS)
 // ======================================================
 
 async function getAllWords() {
@@ -197,14 +203,19 @@ async function getAllWords() {
         throw new Error("No authenticated user.");
     }
 
-    const userWordsQuery = query(
-        wordsCollection,
-        where("userId", "==", currentUser.uid)
-    );
+    let snapshot;
 
-    const snapshot = await getDocs(userWordsQuery);
+    if (isCurrentUserAdmin()) {
+        snapshot = await getDocs(wordsCollection);
+    } else {
+        const userWordsQuery = query(
+            wordsCollection,
+            where("userId", "==", currentUser.uid)
+        );
+        snapshot = await getDocs(userWordsQuery);
+    }
+
     const rows = [];
-
     snapshot.forEach(firebaseDoc => {
         const data = firebaseDoc.data();
         rows.push({
@@ -291,7 +302,7 @@ function fillForm(data, documentId) {
 
 
 // ======================================================
-// POPULATE LANGUAGE FILTER (بدون عرض الجدول)
+// POPULATE LANGUAGE FILTER
 // ======================================================
 
 function populateLanguageFilter(rows) {
@@ -339,18 +350,19 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE
+// RENDER TABLE (DISPLAY USER LOGS FOR ADMIN)
 // ======================================================
 
 function renderTable(rows) {
     if (!dataTable) return;
 
     dataTable.innerHTML = "";
+    const isAdmin = isCurrentUserAdmin();
 
     if (rows.length === 0) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
-        emptyCell.colSpan = 5;
+        emptyCell.colSpan = isAdmin ? 6 : 5;
         emptyCell.textContent = "لا توجد بيانات للعرض.";
         emptyCell.style.textAlign = "center";
         emptyRow.appendChild(emptyCell);
@@ -368,6 +380,10 @@ function renderTable(rows) {
             data.synonyms,
             data.language
         ];
+
+        if (isAdmin) {
+            values.push(data.userEmail || data.username || "غير معروف");
+        }
 
         values.forEach(value => {
             const cell = document.createElement("td");
@@ -472,7 +488,8 @@ async function searchFirebase(text) {
             normalize(item.word).includes(target) ||
             normalize(item.meaning).includes(target) ||
             normalize(item.synonyms).includes(target) ||
-            normalize(item.language).includes(target)
+            normalize(item.language).includes(target) ||
+            normalize(item.userEmail).includes(target)
         );
     });
 }
@@ -657,7 +674,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF
+// DOWNLOAD PDF (FIXED EMPTY PDF ISSUE)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -691,19 +708,24 @@ if (downloadPdfButton) {
 
             showNotification("جاري تجهيز ملف PDF...");
 
+            const isAdmin = isCurrentUserAdmin();
+
+            // إنشاء عنصر معزول ومضمون العرض داخل الـ DOM
             const container = document.createElement("div");
             container.style.cssText = `
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
-                width: 900px;
-                background: #ffffff;
-                color: #000000;
-                padding: 25px;
+                width: 1000px;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 30px;
                 box-sizing: border-box;
                 direction: rtl;
                 font-family: Cairo, Arial, sans-serif;
-                z-index: 999999;
+                z-index: 9999999;
+                opacity: 1;
+                visibility: visible;
             `;
 
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
@@ -711,47 +733,49 @@ if (downloadPdfButton) {
                 : "جميع اللغات";
 
             container.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="margin: 0; font-size: 26px; color: #000;">Langdex Data</h1>
-                    <h3 style="margin: 5px 0 0; font-size: 16px; color: #333;">اللغة: ${selectedLanguageText}</h3>
+                <div style="text-align: center; margin-bottom: 20px; background: #fff;">
+                    <h1 style="margin: 0; font-size: 26px; color: #000000 !important;">Langdex Data ${isAdmin ? '(Admin Log)' : ''}</h1>
+                    <h3 style="margin: 5px 0 0; font-size: 16px; color: #333333 !important;">اللغة: ${selectedLanguageText}</h3>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; direction: rtl; font-size: 11px; table-layout: fixed;">
+                <table style="width: 100%; border-collapse: collapse; direction: rtl; font-size: 12px; table-layout: fixed; background: #fff;">
                     <thead>
-                        <tr style="background-color: #f2f2f2;">
-                            <th style="border: 1px solid #000; padding: 6px; width: 8%;">#</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 22%;">الكلمة</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 35%;">المعنى</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">المرادف</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 15%;">اللغة</th>
+                        <tr style="background-color: #e6e6e6 !important;">
+                            <th style="border: 1px solid #000; padding: 8px; width: 7%; color: #000;">#</th>
+                            <th style="border: 1px solid #000; padding: 8px; width: 20%; color: #000;">الكلمة</th>
+                            <th style="border: 1px solid #000; padding: 8px; width: 30%; color: #000;">المعنى</th>
+                            <th style="border: 1px solid #000; padding: 8px; width: 18%; color: #000;">المرادف</th>
+                            <th style="border: 1px solid #000; padding: 8px; width: 12%; color: #000;">اللغة</th>
+                            ${isAdmin ? '<th style="border: 1px solid #000; padding: 8px; width: 13%; color: #000;">المستخدم</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
                         ${rows.map((item, idx) => `
                             <tr>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.word || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.meaning || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; word-break: break-word;">${item.synonyms || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000;">${idx + 1}</td>
+                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.word || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.meaning || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.synonyms || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000;">${item.language || '-'}</td>
+                                ${isAdmin ? `<td style="border: 1px solid #000; padding: 6px; text-align: center; word-break: break-all; color: #000;">${item.userEmail || item.username || '-'}</td>` : ''}
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-                <p style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 12px; color: #000;">
+                <p style="text-align: center; margin-top: 20px; font-weight: bold; font-size: 13px; color: #000000 !important;">
                     إجمالي الكلمات: ${rows.length}
                 </p>
             `;
 
             document.body.appendChild(container);
 
-            const originalScrollY = window.scrollY;
-            window.scrollTo(0, 0);
+            // تأخير زمني مخصص لمنح المتصفح مهلة لرسم الجدول داخل الـ DOM
+            await new Promise(resolve => setTimeout(resolve, 150));
 
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             const fileName = `Langdex-${safeLanguage}.pdf`;
 
             const opt = {
-                margin: [8, 8, 8, 8],
+                margin: [10, 10, 10, 10],
                 filename: fileName,
                 image: { type: "jpeg", quality: 0.98 },
                 html2canvas: {
@@ -759,8 +783,9 @@ if (downloadPdfButton) {
                     useCORS: true,
                     backgroundColor: "#ffffff",
                     logging: false,
+                    scrollX: 0,
                     scrollY: 0,
-                    scrollX: 0
+                    windowWidth: 1000
                 },
                 pagebreak: { mode: ["css", "legacy"] },
                 jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
@@ -769,8 +794,6 @@ if (downloadPdfButton) {
             await html2pdf().set(opt).from(container).save();
 
             container.remove();
-            window.scrollTo(0, originalScrollY);
-
             showNotification("تم تحميل ملف PDF بنجاح.");
         } catch (error) {
             console.error("PDF Error:", error);
@@ -781,34 +804,30 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// AUTH STATE & ROUTE GUARD (طرد الأدمن من index.html)
+// AUTH STATE & ROUTE GUARD
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
-    // 1. إذا لم يكن مسجلاً للدخول، توجيهه لصفحة التسجيل
     if (!user) {
         currentUser = null;
         window.location.href = "login.html";
         return;
     }
 
-    const userEmail = (user.email || "").toLowerCase();
-    const isAdmin = ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-
-    // 2. طرد الأدمن مباشرة عند دخوا أي صفحة مستخدم عادية (مثل index.html) إلى admin.html
-    if (isAdmin) {
-        window.location.href = "admin.html";
-        return; // إيقاف التنفيذ لمنع جلب البيانات أو التعامل مع واجهة المستخدم
-    }
-
-    // 3. مستخدم عادي
     currentUser = user;
+    const isAdmin = isCurrentUserAdmin();
+
+    const currentPage = window.location.pathname.split("/").pop();
+
+    if (isAdmin && (currentPage === "index.html" || currentPage === "")) {
+        window.location.href = "admin.html";
+        return;
+    }
 
     if (idInput) {
         await setNextId();
     }
 
-    // جلب البيانات فوراً وتجهيز قائمة اللغات
     try {
         allTableData = await getAllWords();
         populateLanguageFilter(allTableData);
