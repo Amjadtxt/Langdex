@@ -204,28 +204,34 @@ async function getAllWords() {
     }
 
     let snapshot;
+    const isAdmin = isCurrentUserAdmin();
 
-    if (isCurrentUserAdmin()) {
-        snapshot = await getDocs(wordsCollection);
-    } else {
-        const userWordsQuery = query(
-            wordsCollection,
-            where("userId", "==", currentUser.uid)
-        );
-        snapshot = await getDocs(userWordsQuery);
-    }
+    try {
+        if (isAdmin) {
+            snapshot = await getDocs(wordsCollection);
+        } else {
+            const userWordsQuery = query(
+                wordsCollection,
+                where("userId", "==", currentUser.uid)
+            );
+            snapshot = await getDocs(userWordsQuery);
+        }
 
-    const rows = [];
-    snapshot.forEach(firebaseDoc => {
-        const data = firebaseDoc.data();
-        rows.push({
-            ...data,
-            _documentId: firebaseDoc.id
+        const rows = [];
+        snapshot.forEach(firebaseDoc => {
+            const data = firebaseDoc.data();
+            rows.push({
+                ...data,
+                _documentId: firebaseDoc.id
+            });
         });
-    });
 
-    rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
-    return rows;
+        rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+        return rows;
+    } catch (error) {
+        console.error("Error fetching words:", error);
+        throw error;
+    }
 }
 
 
@@ -674,18 +680,13 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (FIXED EMPTY PDF ISSUE)
+// DOWNLOAD PDF (FIXED & GUARANTEED)
 // ======================================================
 
 if (downloadPdfButton) {
     downloadPdfButton.addEventListener("click", async function () {
         if (!currentUser) {
             showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
-        if (typeof html2pdf === "undefined") {
-            showNotification("مكتبة PDF غير محملة.");
             return;
         }
 
@@ -710,94 +711,83 @@ if (downloadPdfButton) {
 
             const isAdmin = isCurrentUserAdmin();
 
-            // إنشاء عنصر معزول ومضمون العرض داخل الـ DOM
-            const container = document.createElement("div");
-            container.style.cssText = `
-                position: fixed;
+            const printArea = document.createElement("div");
+            printArea.id = "pdf-print-area";
+            printArea.style.cssText = `
+                position: absolute;
                 top: 0;
                 left: 0;
-                width: 1000px;
-                background-color: #ffffff !important;
+                width: 800px;
+                background: #ffffff !important;
                 color: #000000 !important;
-                padding: 30px;
-                box-sizing: border-box;
-                direction: rtl;
+                padding: 20px;
+                z-index: 999999;
                 font-family: Cairo, Arial, sans-serif;
-                z-index: 9999999;
-                opacity: 1;
-                visibility: visible;
+                direction: rtl;
             `;
 
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
                 ? languageFilter.options[languageFilter.selectedIndex].textContent
                 : "جميع اللغات";
 
-            container.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px; background: #fff;">
-                    <h1 style="margin: 0; font-size: 26px; color: #000000 !important;">Langdex Data ${isAdmin ? '(Admin Log)' : ''}</h1>
-                    <h3 style="margin: 5px 0 0; font-size: 16px; color: #333333 !important;">اللغة: ${selectedLanguageText}</h3>
+            printArea.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
+                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; direction: rtl; font-size: 12px; table-layout: fixed; background: #fff;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #fff;">
                     <thead>
-                        <tr style="background-color: #e6e6e6 !important;">
-                            <th style="border: 1px solid #000; padding: 8px; width: 7%; color: #000;">#</th>
-                            <th style="border: 1px solid #000; padding: 8px; width: 20%; color: #000;">الكلمة</th>
-                            <th style="border: 1px solid #000; padding: 8px; width: 30%; color: #000;">المعنى</th>
-                            <th style="border: 1px solid #000; padding: 8px; width: 18%; color: #000;">المرادف</th>
-                            <th style="border: 1px solid #000; padding: 8px; width: 12%; color: #000;">اللغة</th>
-                            ${isAdmin ? '<th style="border: 1px solid #000; padding: 8px; width: 13%; color: #000;">المستخدم</th>' : ''}
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #000; padding: 6px; width: 8%;">#</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 22%;">الكلمة</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 30%;">المعنى</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">المرادف</th>
+                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">اللغة</th>
+                            ${isAdmin ? '<th style="border: 1px solid #000; padding: 6px;">المستخدم</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
                         ${rows.map((item, idx) => `
                             <tr>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000;">${idx + 1}</td>
-                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.word || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.meaning || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 6px; word-break: break-word; color: #000;">${item.synonyms || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: center; color: #000;">${item.language || '-'}</td>
-                                ${isAdmin ? `<td style="border: 1px solid #000; padding: 6px; text-align: center; word-break: break-all; color: #000;">${item.userEmail || item.username || '-'}</td>` : ''}
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${item.word || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${item.meaning || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px;">${item.synonyms || '-'}</td>
+                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                ${isAdmin ? `<td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-                <p style="text-align: center; margin-top: 20px; font-weight: bold; font-size: 13px; color: #000000 !important;">
-                    إجمالي الكلمات: ${rows.length}
-                </p>
             `;
 
-            document.body.appendChild(container);
+            document.body.appendChild(printArea);
 
-            // تأخير زمني مخصص لمنح المتصفح مهلة لرسم الجدول داخل الـ DOM
-            await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise(resolve => setTimeout(resolve, 300));
 
+            const canvas = await html2canvas(printArea, {
+                scale: 2,
+                backgroundColor: "#ffffff",
+                useCORS: true
+            });
+
+            const imgData = canvas.toDataURL("image/jpeg", 1.0);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "mm", "a4");
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+            
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
-            const fileName = `Langdex-${safeLanguage}.pdf`;
+            pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: fileName,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    logging: false,
-                    scrollX: 0,
-                    scrollY: 0,
-                    windowWidth: 1000
-                },
-                pagebreak: { mode: ["css", "legacy"] },
-                jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
-            };
-
-            await html2pdf().set(opt).from(container).save();
-
-            container.remove();
+            printArea.remove();
             showNotification("تم تحميل ملف PDF بنجاح.");
         } catch (error) {
-            console.error("PDF Error:", error);
-            showNotification("حدث خطأ أثناء إنشاء PDF.");
+            console.error("PDF Export Error:", error);
+            showNotification("حدث خطأ أثناء تصدير الـ PDF.");
         }
     });
 }
