@@ -36,6 +36,8 @@
   <style>
 
   </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 
 </head>
 
@@ -217,7 +219,10 @@
 <option>الهولندية</option>
 <option>العبرية</option>
       </select>
-
+<div style="margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 8px;">
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="margin-bottom: 8px;"><br>
+    <button id="uploadExcelButton" style="padding: 8px 15px; cursor: pointer;">إرفاق ملف</button>
+</div>
 
       <!-- SAVE -->
 
