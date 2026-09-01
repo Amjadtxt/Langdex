@@ -680,7 +680,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (FIXED & GUARANTEED)
+// DOWNLOAD PDF (FIXED FLASH & EMPTY PDF ISSUE)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -711,17 +711,16 @@ if (downloadPdfButton) {
 
             const isAdmin = isCurrentUserAdmin();
 
+            // إنشاء العنصر خارج حدود الشاشة المرئية تماماً لمنع أي شادو أو وميض
             const printArea = document.createElement("div");
-            printArea.id = "pdf-print-area";
             printArea.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
+                position: fixed;
+                top: -9999px;
+                left: -9999px;
                 width: 800px;
-                background: #ffffff !important;
-                color: #000000 !important;
+                background: #ffffff;
+                color: #000000;
                 padding: 20px;
-                z-index: 999999;
                 font-family: Cairo, Arial, sans-serif;
                 direction: rtl;
             `;
@@ -763,13 +762,16 @@ if (downloadPdfButton) {
 
             document.body.appendChild(printArea);
 
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // منح المتصفح فرصة لبناء العناصر في الذاكرة دون إظهارها للمستخدم
+            await new Promise(resolve => setTimeout(resolve, 200));
 
             const canvas = await html2canvas(printArea, {
                 scale: 2,
                 backgroundColor: "#ffffff",
                 useCORS: true
             });
+
+            printArea.remove();
 
             const imgData = canvas.toDataURL("image/jpeg", 1.0);
             const { jsPDF } = window.jspdf;
@@ -783,7 +785,6 @@ if (downloadPdfButton) {
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            printArea.remove();
             showNotification("تم تحميل ملف PDF بنجاح.");
         } catch (error) {
             console.error("PDF Export Error:", error);
