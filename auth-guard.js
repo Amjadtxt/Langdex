@@ -37,8 +37,7 @@ const app =
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// نخفي الصفحة لحد ما التأكد يتم
-document.documentElement.style.visibility = "hidden";
+// تم إلغاء إخفاء الصفحة بالكامل حتى لا تختفي باقي الصفحات
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -56,7 +55,7 @@ onAuthStateChanged(auth, async (user) => {
                 }
             } 
             
-            // 2. إذا لم تكن موجودة بالـ UID، ابحث بالـ Email في الكولكشن
+            // 2. إذا لم تكن موجودة بالـ UID، ابحث بالـ Email
             if (!isAdmin && user.email) {
                 const usersRef = collection(db, "users");
                 const q = query(usersRef, where("email", "==", user.email));
@@ -71,10 +70,10 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if (isAdmin) {
-                // لو طلع أدمن فعلاً -> تظهر الصفحة
-                document.documentElement.style.visibility = "visible";
+                // لو أدمن، يبقى في الصفحة طبيعي
+                console.log("Welcome Admin");
             } else {
-                // لو يوزر عادي -> طرد فوري للرئيسية
+                // لو يوزر عادي، يتم تحويله للرئيسية فوراً
                 window.location.replace("index.html");
             }
 
