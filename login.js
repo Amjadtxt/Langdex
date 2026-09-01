@@ -14,6 +14,13 @@ import {
     signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+// استيراد وظائف Firestore
+import {
+    getFirestore,
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
 
 // ======================================================
 // FIREBASE CONFIG
@@ -41,6 +48,7 @@ const app =
         : initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
+const db = getFirestore(app); // تهيئة Firestore
 
 
 // ======================================================
@@ -163,6 +171,23 @@ if (loginButton) {
 
 
                 // ==================================================
+                // CHECK USER ROLE FROM FIRESTORE
+                // ==================================================
+
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                let role = "user"; // القيمة الافتراضية
+
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    if (userData.role) {
+                        role = userData.role;
+                    }
+                }
+
+
+                // ==================================================
                 // SUCCESS
                 // ==================================================
 
@@ -172,12 +197,14 @@ if (loginButton) {
 
 
                 // ==================================================
-                // GO DIRECTLY TO INDEX
+                // REDIRECT BASED ON ROLE
                 // ==================================================
 
-                window.location.replace(
-                    "index.html"
-                );
+                if (role === "admin") {
+                    window.location.replace("admin.html");
+                } else {
+                    window.location.replace("index.html");
+                }
 
 
             } catch (error) {
