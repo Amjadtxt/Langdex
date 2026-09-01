@@ -247,7 +247,7 @@ header {
 
 /* NAVBAR */
 
-.bar {
+.bar,.bar3{
   margin-top: 5px;
   width: 100%;
   display: flex;
