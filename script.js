@@ -1,12 +1,5 @@
 // ======================================================
-// LANGDEX - script.js
-// Firebase + Authentication + User Data + Data Table
-// Filter + Search + PDF
-// ======================================================
-
-
-// ======================================================
-// FIREBASE IMPORTS
+// LANGDEX - script.js (Final Edition for Amjad)
 // ======================================================
 
 import {
@@ -24,7 +17,8 @@ import {
     updateDoc,
     deleteDoc,
     query,
-    where
+    where,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 import {
@@ -47,7 +41,7 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-const ADMIN_EMAILS = ["admin@gmail.com"]; // قائمة إيميلات الأدمن
+const ADMIN_EMAILS = ["amjadtxt@gmail.com"]; // إيميل الأدمن المعتمد
 
 
 // ======================================================
@@ -481,7 +475,7 @@ if (clearFilterButton) {
 
 
 // ======================================================
-// SEARCH FIREBASE
+// SEARCH FIREBASE (UPDATED TO USE NOTIFICATION ONLY)
 // ======================================================
 
 async function searchFirebase(text) {
@@ -518,15 +512,16 @@ if (searchButton && searchInput) {
 
             if (searchResults.length === 0) {
                 showNotification("لم يتم العثور على نتائج.");
+                if (searchResult) searchResult.textContent = "";
                 return;
             }
 
             const result = searchResults[searchIndex];
             fillForm(result, result._documentId);
 
-            if (searchResult) {
-                searchResult.textContent = `تم العثور على ${searchIndex + 1} من ${searchResults.length}`;
-            }
+            // تم إزالة الظهور داخل الفورم واستبدالها بإشعار علوي فقط بناءً على طلبك
+            showNotification(`تم العثور على النتيجة رقم ${searchIndex + 1} من ${searchResults.length}`);
+            if (searchResult) searchResult.textContent = "";
 
             searchIndex++;
             if (searchIndex >= searchResults.length) {
@@ -584,7 +579,8 @@ if (registerButton) {
                 language: language,
                 userId: currentUser.uid,
                 userEmail: userEmail,
-                username: username
+                username: username,
+                createdAt: serverTimestamp()
             });
 
             showNotification(`تم تسجيل الكلمة بنجاح - ID: ${newId}`);
@@ -680,7 +676,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (FIXED FLASH & EMPTY PDF ISSUE)
+// DOWNLOAD PDF (DARKER BACKGROUND #e0e0e0)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -711,14 +707,13 @@ if (downloadPdfButton) {
 
             const isAdmin = isCurrentUserAdmin();
 
-            // إنشاء العنصر خارج حدود الشاشة المرئية تماماً لمنع أي شادو أو وميض
             const printArea = document.createElement("div");
             printArea.style.cssText = `
                 position: fixed;
                 top: -9999px;
                 left: -9999px;
                 width: 800px;
-                background: #ffffff;
+                background: #e0e0e0;
                 color: #000000;
                 padding: 20px;
                 font-family: Cairo, Arial, sans-serif;
@@ -732,28 +727,28 @@ if (downloadPdfButton) {
             printArea.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
                     <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
+                    <p style="margin:5px 0; font-size: 14px; color: #111;">اللغة: ${selectedLanguageText}</p>
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #fff;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #e0e0e0;">
                     <thead>
-                        <tr style="background-color: #f2f2f2;">
-                            <th style="border: 1px solid #000; padding: 6px; width: 8%;">#</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 22%;">الكلمة</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 30%;">المعنى</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">المرادف</th>
-                            <th style="border: 1px solid #000; padding: 6px; width: 20%;">اللغة</th>
-                            ${isAdmin ? '<th style="border: 1px solid #000; padding: 6px;">المستخدم</th>' : ''}
+                        <tr style="background-color: #c7c7c7;">
+                            <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 30%;">المعنى</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 20%;">المرادف</th>
+                            <th style="border: 1px solid #333; padding: 6px; width: 20%;">اللغة</th>
+                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px;">المستخدم</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
                         ${rows.map((item, idx) => `
                             <tr>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #000; padding: 5px;">${item.word || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px;">${item.meaning || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px;">${item.synonyms || '-'}</td>
-                                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.language || '-'}</td>
-                                ${isAdmin ? `<td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
+                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
                             </tr>
                         `).join('')}
                     </tbody>
@@ -762,12 +757,11 @@ if (downloadPdfButton) {
 
             document.body.appendChild(printArea);
 
-            // منح المتصفح فرصة لبناء العناصر في الذاكرة دون إظهارها للمستخدم
             await new Promise(resolve => setTimeout(resolve, 200));
 
             const canvas = await html2canvas(printArea, {
                 scale: 2,
-                backgroundColor: "#ffffff",
+                backgroundColor: "#e0e0e0",
                 useCORS: true
             });
 
@@ -790,6 +784,89 @@ if (downloadPdfButton) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
         }
+    });
+}
+
+
+// ======================================================
+// UPLOAD EXCEL FILE (.xlsx) TO FIREBASE FEATURE
+// ======================================================
+
+const uploadExcelButton = document.querySelector("#uploadExcelButton");
+const excelFileInput = document.querySelector("#excelFileInput");
+
+if (uploadExcelButton && excelFileInput) {
+    uploadExcelButton.addEventListener("click", async () => {
+        const file = excelFileInput.files[0];
+        if (!file) {
+            showNotification("من فضلك اختر ملف إكسيل أولاً!");
+            return;
+        }
+
+        if (!currentUser) {
+            showNotification("يجب تسجيل الدخول أولاً!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function (e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (rows.length === 0) {
+                    showNotification("الملف فارغ!");
+                    return;
+                }
+
+                showNotification("جاري رفع كلمات الإكسيل للفايربيز...");
+                let successCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+
+                    const wordData = {
+                        id: await getNextId() + successCount,
+                        word: String(row[0] || "").trim(),
+                        meaning: String(row[1] || "").trim(),
+                        synonyms: String(row[2] || "").trim(),
+                        language: String(row[3] || "عامة").trim(),
+                        userId: currentUser.uid,
+                        userEmail: currentUser.email || "",
+                        username: currentUser.email ? currentUser.email.split("@")[0] : "مستخدم",
+                        createdAt: serverTimestamp()
+                    };
+
+                    if (!wordData.word && !wordData.meaning) continue;
+
+                    try {
+                        await addDoc(wordsCollection, wordData);
+                        successCount++;
+                    } catch (err) {
+                        console.error("Error adding excel row:", err);
+                    }
+                }
+
+                showNotification(`تم رفع ${successCount} كلمة من الإكسيل بنجاح!`);
+                excelFileInput.value = "";
+
+                allTableData = await getAllWords();
+                populateLanguageFilter(allTableData);
+                await setNextId();
+
+            } catch (error) {
+                console.error("Excel read error:", error);
+                showNotification("حدث خطأ أثناء قراءة ملف الإكسيل.");
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
     });
 }
 
