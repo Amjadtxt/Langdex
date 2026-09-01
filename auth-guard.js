@@ -12,13 +12,11 @@ import {
 import {
     getFirestore,
     doc,
-    getDoc,
-    collection,
-    query,
-    where,
-    getDocs
+    getDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
+
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
   authDomain: "langdex.firebaseapp.com",
@@ -37,53 +35,48 @@ const app =
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تم إلغاء إخفاء الصفحة بالكامل حتى لا تختفي باقي الصفحات
+
+// نخفي الصفحة لحد ما Firebase يحدد حالة المستخدم وصلاحياته
+document.documentElement.style.visibility = "hidden";
+
 
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        try {
-            let isAdmin = false;
 
-            // 1. محاولة البحث بالـ UID أولاً
+    if (user) {
+
+        try {
+            // التحقق من قاعدة البيانات (كولكشن users) هل المستخدم أدمن فعلاً أم لا؟
             const userDocRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userDocRef);
 
+            let isAdmin = false;
+
             if (userDoc.exists()) {
                 const userData = userDoc.data();
-                if (String(userData.role).trim().toLowerCase() === "admin") {
+                // التحقق من صلاحية الأدمن (حسب الحقل عندك في الـ Database)
+                if (userData.role === "admin" || userData.isAdmin === true || userData.adminRole === true) {
                     isAdmin = true;
                 }
-            } 
-            
-            // 2. إذا لم تكن موجودة بالـ UID، ابحث بالـ Email
-            if (!isAdmin && user.email) {
-                const usersRef = collection(db, "users");
-                const q = query(usersRef, where("email", "==", user.email));
-                const querySnapshot = await getDocs(q);
-
-                querySnapshot.forEach((docSnap) => {
-                    const userData = docSnap.data();
-                    if (String(userData.role).trim().toLowerCase() === "admin") {
-                        isAdmin = true;
-                    }
-                });
             }
 
             if (isAdmin) {
-                // لو أدمن، يبقى في الصفحة طبيعي
-                console.log("Welcome Admin");
+                // لو مسجل دخول وهو أدمن فعلاً -> أظهر الصفحة
+                document.documentElement.style.visibility = "visible";
             } else {
-                // لو يوزر عادي، يتم تحويله للرئيسية فوراً
+                // لو مسجل دخول بس مش أدمن -> متظهرش الصفحة وحوله للرئيسية أو اللوجين
                 window.location.replace("index.html");
             }
 
         } catch (error) {
-            console.error("خطأ في التحقق:", error);
+            console.error("خطأ أثناء التحقق من الصلاحيات:", error);
             window.location.replace("index.html");
         }
 
     } else {
-        // غير مسجل دخول -> تحويل لصفحة تسجيل الدخول
+
+        // مش مسجل دخول تماماً -> متظهرش الصفحة وحوله للوجين
         window.location.replace("login.html");
+
     }
+
 });
