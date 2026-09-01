@@ -373,7 +373,6 @@ function renderTable(rows) {
     rows.forEach(data => {
         const row = document.createElement("tr");
 
-        // ترتيب الأعمدة الأساسية
         const values = [
             data.id,
             data.word,
@@ -382,7 +381,6 @@ function renderTable(rows) {
             data.language
         ];
 
-        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة عشان يظهر في الصف الأخير (الجهة اليمنى)
         if (isAdmin) {
             values.push(data.userEmail || data.username || "غير معروف");
         }
@@ -677,7 +675,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Fixed for Large Multi-page Data)
+// DOWNLOAD PDF (Fixed with autoTable for Multi-page & Proper Styles)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -704,74 +702,69 @@ if (downloadPdfButton) {
                 return;
             }
 
-            showNotification("جاري تجهيز ملف PDF لجميع الصفحات...");
+            showNotification("جاري تجهيز ملف PDF بالتنسيق السليم...");
 
             const isAdmin = isCurrentUserAdmin();
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 15;
-            let yPosition = 20;
-
-            // العنوان الرئيسي
-            pdf.setFont("Cairo", "bold");
-            pdf.setFontSize(18);
-            pdf.text(`Langdex Report ${isAdmin ? '(Admin All Data)' : ''}`, pageWidth / 2, yPosition, { align: "center" });
-            
-            yPosition += 10;
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
                 ? languageFilter.options[languageFilter.selectedIndex].textContent
                 : "جميع اللغات";
-            
-            pdf.setFontSize(12);
-            pdf.text(`اللغة: ${selectedLanguageText}`, pageWidth / 2, yPosition, { align: "center" });
-            yPosition += 15;
 
-            // رسم خلفية رأس الجدول
-            pdf.setFillColor(181, 181, 181);
-            pdf.rect(margin, yPosition, pageWidth - (margin * 2), 8, "F");
-            
-            pdf.setFontSize(10);
-            pdf.setTextColor(0, 0, 0);
+            // إعداد رؤوس الجدول
+            const headers = ["#", "الكلمة", "المعنى", "المرادف", "اللغة"];
+            if (isAdmin) {
+                headers.push("المستخدم");
+            }
 
-            yPosition += 6;
-            
-            // رسم البيانات سطر بسطر مع إضافة صفحات جديدة تلقائياً عند الامتلائها
-            for (let i = 0; i < rows.length; i++) {
-                const item = rows[i];
-                
-                if (yPosition > pageHeight - 20) {
-                    pdf.addPage();
-                    yPosition = 20; 
-                }
-
-                const rowData = [
-                    String(i + 1),
-                    String(item.word || '-'),
-                    String(item.meaning || '-'),
-                    String(item.synonyms || '-'),
-                    String(item.language || '-')
+            // تجهيز الصفوف
+            const tableBody = rows.map((item, idx) => {
+                const row = [
+                    idx + 1,
+                    item.word || "-",
+                    item.meaning || "-",
+                    item.synonyms || "-",
+                    item.language || "-"
                 ];
                 if (isAdmin) {
-                    rowData.push(String(item.userEmail || item.username || '-'));
+                    row.push(item.userEmail || item.username || "-");
                 }
+                return row;
+            });
 
-                let textX = margin + 2;
-                rowData.forEach((text) => {
-                    const truncatedText = text.length > 25 ? text.substring(0, 22) + "..." : text;
-                    pdf.text(truncatedText, textX, yPosition);
-                    textX += (pageWidth - (margin * 2)) / rowData.length;
-                });
-
-                yPosition += 8;
-            }
+            // استخدام مكتبة autoTable المخصصة للجداول لضمان التنسيق وتقسيم الصفحات تلقائياً دون تعليق
+            pdf.autoTable({
+                head: [headers],
+                body: tableBody,
+                startY: 25,
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica', // أو الخط المدعوم
+                    fontSize: 10,
+                    cellPadding: 5,
+                    halign: 'center',
+                    textColor: [0, 0, 0]
+                },
+                headStyles: {
+                    fillColor: [181, 181, 181],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold'
+                },
+                didDrawPage: function (data) {
+                    // رسم العنوان في كل صفحة تظهر
+                    pdf.setFontSize(16);
+                    pdf.text(`Langdex Report ${isAdmin ? '(Admin All Data)' : ''}`, pdf.internal.pageSize.getWidth() / 2, 12, { align: "center" });
+                    
+                    pdf.setFontSize(11);
+                    pdf.text(`اللغة: ${selectedLanguageText}`, pdf.internal.pageSize.getWidth() / 2, 19, { align: "center" });
+                }
+            });
 
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            showNotification("تم تحميل ملف PDF بنجاح لجميع الصفحات.");
+            showNotification("تم تحميل ملف PDF بنجاح.");
         } catch (error) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
