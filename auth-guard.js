@@ -9,12 +9,6 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
-import {
-    getFirestore,
-    doc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -33,48 +27,26 @@ const app =
         : initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 
-// نخفي الصفحة لحد ما Firebase يحدد حالة المستخدم وصلاحياته
+// نخفي الصفحة لحد ما Firebase يحدد حالة المستخدم
 document.documentElement.style.visibility = "hidden";
 
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, (user) => {
 
     if (user) {
 
-        try {
-            // التحقق من قاعدة البيانات (كولكشن users) هل المستخدم أدمن فعلاً أم لا؟
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
+        // مسجل دخول
+        // أظهر الصفحة
 
-            let isAdmin = false;
-
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                // التحقق من صلاحية الأدمن (حسب الحقل عندك في الـ Database)
-                if (userData.role === "admin" || userData.isAdmin === true || userData.adminRole === true) {
-                    isAdmin = true;
-                }
-            }
-
-            if (isAdmin) {
-                // لو مسجل دخول وهو أدمن فعلاً -> أظهر الصفحة
-                document.documentElement.style.visibility = "visible";
-            } else {
-                // لو مسجل دخول بس مش أدمن -> متظهرش الصفحة وحوله للرئيسية أو اللوجين
-                window.location.replace("index.html");
-            }
-
-        } catch (error) {
-            console.error("خطأ أثناء التحقق من الصلاحيات:", error);
-            window.location.replace("index.html");
-        }
+        document.documentElement.style.visibility = "visible";
 
     } else {
 
-        // مش مسجل دخول تماماً -> متظهرش الصفحة وحوله للوجين
+        // مش مسجل
+        // متظهرش الصفحة وحوله للوجين
+
         window.location.replace("login.html");
 
     }
