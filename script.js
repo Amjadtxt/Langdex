@@ -677,7 +677,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Fixed Column Order for Admin)
+// DOWNLOAD PDF (Fixed for Large Multi-page Data)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -704,83 +704,74 @@ if (downloadPdfButton) {
                 return;
             }
 
-            showNotification("جاري تجهيز ملف PDF...");
+            showNotification("جاري تجهيز ملف PDF لجميع الصفحات...");
 
             const isAdmin = isCurrentUserAdmin();
-
-            const printArea = document.createElement("div");
-            printArea.style.cssText = `
-                position: fixed;
-                top: -9999px;
-                left: -9999px;
-                width: 800px;
-                background: #ffffff;
-                color: #000000;
-                padding: 20px;
-                font-family: Cairo, Arial, sans-serif;
-                direction: rtl;
-            `;
-
-            const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
-                ? languageFilter.options[languageFilter.selectedIndex].textContent
-                : "جميع اللغات";
-
-            printArea.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
-                    <thead>
-                        <tr style="background-color: #b5b5b5;">
-                            <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
-                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.map((item, idx) => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
-                                ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-
-            document.body.appendChild(printArea);
-
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            const canvas = await html2canvas(printArea, {
-                scale: 2,
-                backgroundColor: "#ffffff",
-                useCORS: true
-            });
-
-            printArea.remove();
-
-            const imgData = canvas.toDataURL("image/jpeg", 1.0);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            let yPosition = 20;
 
-            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+            // العنوان الرئيسي
+            pdf.setFont("Cairo", "bold");
+            pdf.setFontSize(18);
+            pdf.text(`Langdex Report ${isAdmin ? '(Admin All Data)' : ''}`, pageWidth / 2, yPosition, { align: "center" });
             
+            yPosition += 10;
+            const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
+                ? languageFilter.options[languageFilter.selectedIndex].textContent
+                : "جميع اللغات";
+            
+            pdf.setFontSize(12);
+            pdf.text(`اللغة: ${selectedLanguageText}`, pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 15;
+
+            // رسم خلفية رأس الجدول
+            pdf.setFillColor(181, 181, 181);
+            pdf.rect(margin, yPosition, pageWidth - (margin * 2), 8, "F");
+            
+            pdf.setFontSize(10);
+            pdf.setTextColor(0, 0, 0);
+
+            yPosition += 6;
+            
+            // رسم البيانات سطر بسطر مع إضافة صفحات جديدة تلقائياً عند الامتلائها
+            for (let i = 0; i < rows.length; i++) {
+                const item = rows[i];
+                
+                if (yPosition > pageHeight - 20) {
+                    pdf.addPage();
+                    yPosition = 20; 
+                }
+
+                const rowData = [
+                    String(i + 1),
+                    String(item.word || '-'),
+                    String(item.meaning || '-'),
+                    String(item.synonyms || '-'),
+                    String(item.language || '-')
+                ];
+                if (isAdmin) {
+                    rowData.push(String(item.userEmail || item.username || '-'));
+                }
+
+                let textX = margin + 2;
+                rowData.forEach((text) => {
+                    const truncatedText = text.length > 25 ? text.substring(0, 22) + "..." : text;
+                    pdf.text(truncatedText, textX, yPosition);
+                    textX += (pageWidth - (margin * 2)) / rowData.length;
+                });
+
+                yPosition += 8;
+            }
+
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            showNotification("تم تحميل ملف PDF بنجاح.");
+            showNotification("تم تحميل ملف PDF بنجاح لجميع الصفحات.");
         } catch (error) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
