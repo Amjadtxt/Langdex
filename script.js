@@ -1,4 +1,3 @@
-
 // ======================================================
 // LANGDEX - script.js (Full & Complete Edition for Amjad)
 // ======================================================
@@ -360,6 +359,22 @@ function renderTable(rows) {
     dataTable.innerHTML = "";
     const isAdmin = isCurrentUserAdmin();
 
+    // ضبط هيدر الجدول بناءً على حالة الأدمن بحيث تكون كلمة "المستخدم" فوق الإيميلات مباشرة في الجدول
+    const thead = dataTable.closest('table')?.querySelector('thead tr');
+    if (thead) {
+        if (isAdmin) {
+            if (!thead.querySelector('.admin-user-th')) {
+                const userTh = document.createElement('th');
+                userTh.className = 'admin-user-th';
+                userTh.textContent = 'المستخدم';
+                thead.appendChild(userTh);
+            }
+        } else {
+            const userTh = thead.querySelector('.admin-user-th');
+            if (userTh) userTh.remove();
+        }
+    }
+
     if (rows.length === 0) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
@@ -383,7 +398,7 @@ function renderTable(rows) {
             data.language
         ];
 
-        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة عشان يظهر في الصف الأخير (الجهة اليمنى)
+        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة تحت هيدر "المستخدم"
         if (isAdmin) {
             values.push(data.userEmail || data.username || "غير معروف");
         }
@@ -678,7 +693,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Fixed Column Order for Admin)
+// DOWNLOAD PDF (Fixed Column Order for Admin & 30 Words Per Page)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -708,75 +723,84 @@ if (downloadPdfButton) {
             showNotification("جاري تجهيز ملف PDF...");
 
             const isAdmin = isCurrentUserAdmin();
-
-            const printArea = document.createElement("div");
-            printArea.style.cssText = `
-                position: fixed;
-                top: -9999px;
-                left: -9999px;
-                width: 800px;
-                background: #ffffff;
-                color: #000000;
-                padding: 20px;
-                font-family: Cairo, Arial, sans-serif;
-                direction: rtl;
-            `;
-
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
                 ? languageFilter.options[languageFilter.selectedIndex].textContent
                 : "جميع اللغات";
 
-            printArea.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                    <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText}</p>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
-                    <thead>
-                        <tr style="background-color: #b5b5b5;">
-                            <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
-                            <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
-                            ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.map((item, idx) => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
-                                ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-
-            document.body.appendChild(printArea);
-
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            const canvas = await html2canvas(printArea, {
-                scale: 2,
-                backgroundColor: "#ffffff",
-                useCORS: true
-            });
-
-            printArea.remove();
-
-            const imgData = canvas.toDataURL("image/jpeg", 1.0);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const chunkSize = 30; // كل 30 كلمة في صفحة جديدة
+            const totalChunks = Math.ceil(rows.length / chunkSize);
 
-            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkRows = rows.slice(i * chunkSize, (i + 1) * chunkSize);
+
+                const printArea = document.createElement("div");
+                printArea.style.cssText = `
+                    position: fixed;
+                    top: -9999px;
+                    left: -9999px;
+                    width: 800px;
+                    background: #ffffff;
+                    color: #000000;
+                    padding: 20px;
+                    font-family: Cairo, Arial, sans-serif;
+                    direction: rtl;
+                `;
+
+                printArea.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
+                        <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
+                        <thead>
+                            <tr style="background-color: #b5b5b5;">
+                                <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
+                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${chunkRows.map((item, idx) => `
+                                <tr>
+                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                document.body.appendChild(printArea);
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                const canvas = await html2canvas(printArea, {
+                    scale: 2,
+                    backgroundColor: "#ffffff",
+                    useCORS: true
+                });
+
+                printArea.remove();
+
+                const imgData = canvas.toDataURL("image/jpeg", 1.0);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                if (i > 0) {
+                    pdf.addPage();
+                }
+
+                pdf.addImage(imgData, "JPEG", 0, 10, pdfWidth, pdfHeight);
+            }
             
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
@@ -917,4 +941,3 @@ onAuthStateChanged(auth, async user => {
         console.error("Initial load error:", err);
     }
 });
-
