@@ -29,7 +29,7 @@
       box-sizing: border-box !important;
     }
 
-    /* تخفيف الـ Gaps والتحكم في النافبار للموبايل ليصبح شكلها مرتباً ومظبوطاً */
+    /* تنسيق النافبار للموبايل بعد حذف الإحصائيات لتصبح منسقة ومثالية */
     @media (max-width: 768px) {
       .content > div, header > div, header > nav {
         width: 94% !important;
@@ -40,13 +40,15 @@
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: center !important;
-        gap: 6px !important; /* خفضنا المسافات لتكون متناسقة وغير متباعدة */
-        padding: 4px 0 !important;
+        gap: 6px !important;
+        padding: 6px 2px !important;
       }
 
       nav.bar ul a {
-        font-size: 11px !important;
-        padding: 4px 8px !important;
+        font-size: 12px !important;
+        padding: 6px 10px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
         margin: 0 !important;
       }
 
@@ -135,7 +137,6 @@
         <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
         <a href="/Langdex/data.html"><li>البيانات</li></a>
         <a href="/Langdex/users.html" class="active"><li>المستخدمين</li></a>
-        <a href="#"><li>الإحصائيات</li></a>
         <a href="#"><li>الإعدادات</li></a>
       </ul>
     </nav>
