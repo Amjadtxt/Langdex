@@ -81,7 +81,7 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* تنسيق قسم الحذف بالـ ID الجديد */
+    /* تنسيق قسم الحذف بالـ ID */
     .range-delete-box {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
@@ -239,7 +239,7 @@
       <input type="text" placeholder="المعنى">
       <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
-          <option hidden>اختر اللغة</option>
+          <option hidden>English</option>
           <option hidden>Hindi</option>
           <option hidden>Urdu</option>
           <option hidden>Persian</option>
@@ -276,14 +276,14 @@
       </div>
     </div>
 
-    <!-- ديف مستقل للأزرار الإضافية (شامل زر حذف المكرر، تغيير اسم اللغة، وتصدير PDF) -->
+    <!-- ديف مستقل للأزرار الإضافية -->
     <div class="actions-top-bar" style="width: 100%;">
       <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
       <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
-    <!-- ديف جديد لحذف نطاق معين من الـ IDs -->
+    <!-- ديف حذف نطاق الـ ID -->
     <div class="range-delete-box" style="width: 100%;">
       <input type="number" id="startIdInput" placeholder="من ID رقم...">
       <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
