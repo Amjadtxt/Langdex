@@ -81,6 +81,42 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
+    /* تنسيق قسم الحذف بالـ ID الجديد */
+    .range-delete-box {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .range-delete-box input {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+    }
+    .range-delete-btn {
+      background: #852222;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+    }
+    .range-delete-btn:hover { background: #a93232; }
+
     /* تعديلات الموبايل للجدول والمحتوى */
     @media (max-width: 768px) {
       .content > div {
@@ -89,10 +125,10 @@
         padding: 12px !important;
       }
 
-      .actions-top-bar {
+      .actions-top-bar, .range-delete-box {
         flex-direction: column !important;
       }
-      .actions-top-bar button {
+      .actions-top-bar button, .range-delete-box input, .range-delete-box button {
         width: 100% !important;
       }
 
@@ -203,34 +239,34 @@
       <input type="text" placeholder="المعنى">
       <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
-          <<option hidden>English</option>
-<option hidden>Hindi</option>
-<option hidden>Urdu</option>
-<option hidden>Persian</option>
-<option hidden>Chinese</option>
-<option hidden>Bengali</option>
-<option hidden>Turkish</option>
-<option hidden>French</option>
-<option hidden>Spanish</option>
-<option hidden>German</option>
-<option hidden>Japanese</option>
-<option hidden>Korean</option>
-<option hidden>Dutch</option>
-<option hidden>Hebrew</option>
-  <option>الإنجليزية</option>
-<option>الهندية</option>
-<option>الأردية</option>
-<option>الفارسية</option>
-<option>الصينية</option>
-<option>البنغالية</option>
-<option>التركية</option>
-<option>الفرنسية</option>
-<option>الإسبانية</option>
-<option>الألمانية</option>
-<option>اليابانية</option>
-<option>الكورية</option>
-<option>الهولندية</option>
-<option>العبرية</option>
+          <option hidden>اختر اللغة</option>
+          <option hidden>Hindi</option>
+          <option hidden>Urdu</option>
+          <option hidden>Persian</option>
+          <option hidden>Chinese</option>
+          <option hidden>Bengali</option>
+          <option hidden>Turkish</option>
+          <option hidden>French</option>
+          <option hidden>Spanish</option>
+          <option hidden>German</option>
+          <option hidden>Japanese</option>
+          <option hidden>Korean</option>
+          <option hidden>Dutch</option>
+          <option hidden>Hebrew</option>
+          <option>الإنجليزية</option>
+          <option>الهندية</option>
+          <option>الأردية</option>
+          <option>الفارسية</option>
+          <option>الصينية</option>
+          <option>البنغالية</option>
+          <option>التركية</option>
+          <option>الفرنسية</option>
+          <option>الإسبانية</option>
+          <option>الألمانية</option>
+          <option>اليابانية</option>
+          <option>الكورية</option>
+          <option>الهولندية</option>
+          <option>العبرية</option>
       </select>
       
       <div class="inter1" style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
@@ -240,11 +276,18 @@
       </div>
     </div>
 
-    <!-- ديف مستقل للأزرار الإضافية (شامل زر تغيير وتوحيد اسم أي لغة جماعياً) -->
+    <!-- ديف مستقل للأزرار الإضافية (شامل زر حذف المكرر، تغيير اسم اللغة، وتصدير PDF) -->
     <div class="actions-top-bar" style="width: 100%;">
       <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
-      <button type="button" class="delete-edited-btn" id="deleteEditedWordsBtn">حذف الكلمات المكررة</button>
-<button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
+      <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
+    </div>
+
+    <!-- ديف جديد لحذف نطاق معين من الـ IDs -->
+    <div class="range-delete-box" style="width: 100%;">
+      <input type="number" id="startIdInput" placeholder="من ID رقم...">
+      <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
+      <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
     </div>
 
     <!-- جدول عرض سجل الكلمات والبيانات -->
