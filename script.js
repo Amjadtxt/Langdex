@@ -717,7 +717,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Fixed Column Order for Admin & 30 Words Per Page)
+// DOWNLOAD PDF (Optimized for Speed & Stability with Large Data)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -744,7 +744,7 @@ if (downloadPdfButton) {
                 return;
             }
 
-            showNotification("جاري تجهيز ملف PDF...");
+            showNotification("جاري تجهيز ملف PDF بسرعة فائقة...");
 
             const isAdmin = isCurrentUserAdmin();
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
@@ -754,7 +754,8 @@ if (downloadPdfButton) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const chunkSize = 30; // كل 30 كلمة في صفحة جديدة
+            // زيادة عدد الكلمات في الصفحة الواحدة إلى 45 لتقليل عدد الصفحات وصناعة ملف أسرع للبيانات الضخمة
+            const chunkSize = 45; 
             const totalChunks = Math.ceil(rows.length / chunkSize);
 
             for (let i = 0; i < totalChunks; i++) {
@@ -768,36 +769,36 @@ if (downloadPdfButton) {
                     width: 800px;
                     background: #ffffff;
                     color: #000000;
-                    padding: 20px;
+                    padding: 15px;
                     font-family: Cairo, Arial, sans-serif;
                     direction: rtl;
                 `;
 
                 printArea.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                        <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
+                        <p style="margin:4px 0; font-size: 13px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
                         <thead>
                             <tr style="background-color: #b5b5b5;">
-                                <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
-                                <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
-                                <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
-                                <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
-                                <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
-                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
+                                <th style="border: 1px solid #333; padding: 5px; width: 8%;">#</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 22%;">الكلمة</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 28%;">المعنى</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 18%;">المرادف</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 14%;">اللغة</th>
+                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
                             ${chunkRows.map((item, idx) => `
                                 <tr>
-                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
-                                    <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
-                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
+                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.word || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
+                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -805,17 +806,19 @@ if (downloadPdfButton) {
                 `;
 
                 document.body.appendChild(printArea);
-                await new Promise(resolve => setTimeout(resolve, 150));
+                
+                // تقليص وقت الانتظار (Delay) لتسريع المعالجة بشكل ملحوظ مع البيانات الكبيرة
+                await new Promise(resolve => setTimeout(resolve, 30));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 2,
+                    scale: 1.5, // تقليل مقياس الرندر قليلاً لزيادة السرعة وتقليل حجم الذاكرة مع الحفاظ على وضوح التنسيق تماماً
                     backgroundColor: "#ffffff",
                     useCORS: true
                 });
 
                 printArea.remove();
 
-                const imgData = canvas.toDataURL("image/jpeg", 1.0);
+                const imgData = canvas.toDataURL("image/jpeg", 0.9); // ضغط خفيف لزيادة سرعة التصدير للملفات الكبيرة
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
@@ -829,7 +832,7 @@ if (downloadPdfButton) {
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            showNotification("تم تحميل ملف PDF بنجاح.");
+            showNotification("تم تحميل ملف PDF بنجاح وسرعة فائقة.");
         } catch (error) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
@@ -930,9 +933,9 @@ if (uploadExcelButton && excelFileInput) {
 
 // ======================================================
 // AUTH STATE & ROUTE GUARD
-// ======================================================
+// =================================0=====================
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async user > {
     if (!user) {
         currentUser = null;
         window.location.href = "login.html";
