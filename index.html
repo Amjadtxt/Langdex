@@ -23,17 +23,42 @@
       box-sizing: border-box !important;
     }
 
-    /* تعديلات الموبايل لمنع أي لخبطة */
+    /* تنسيق حاويات الأزرار لتبدو بشكل منظم وجنب بعض */
+    .inter1, .inter {
+      display: flex !important;
+      gap: 10px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .inter button, .inter1 button {
+      flex: 1 !important;
+      margin-top: 8px !important;
+    }
+
+    /* تعديلات الموبايل لمنع أي لخبطة وتنظيم الأزرار بذكاء */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
         margin: 10px auto !important;
         padding: 12px !important;
       }
-      .inter1, .inter {
-        flex-direction: column !important;
+      
+      /* جعل أزرار التحديث والحذف والمسح تتوزع بجانب بعضها أو تأخذ أشكال متناسقة */
+      .inter {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
       }
-      .form button {
+      
+      .inter button {
+        width: 100% !important;
+        margin-top: 0 !important;
+        padding: 10px 5px !important;
+        font-size: 13px !important;
+      }
+
+      .inter1 button {
         width: 100% !important;
       }
     }
