@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (Excel Export Edition)
+// LANGDEX - admin-users.js (Pro Excel Export Edition)
 // ======================================================
 
 import {
@@ -261,40 +261,53 @@ function setupActionEvents() {
         });
     });
 
-    // 2. زر تحميل كلمات المستخدم بصيغة Excel (يدعم العربي والأسيوي تماماً)
+    // 2. زر تحميل كلمات المستخدم بصيغة Excel (منسق وفاجر وبكل التفاصيل)
     document.querySelectorAll(".btn-excel").forEach(btn => {
         btn.addEventListener("click", async function () {
             const email = this.getAttribute("data-email");
             try {
-                showNotification(`جاري تجهيز ملف Excel لكلمات المستخدم (${email})...`);
+                showNotification(`جاري تجهيز تقرير Excel المفصل للمستخدم (${email})...`);
                 const q = query(wordsCollection, where("userEmail", "==", email));
                 const snap = await getDocs(q);
-                const userWords = [];
+                const rawData = [];
                 
                 let counter = 1;
                 snap.forEach(d => {
                     const item = d.data();
-                    userWords.push({
+                    rawData.push({
                         "م": counter++,
-                        "الكلمة / المصطلح": item.word || "",
-                        "المعنى / التفاصيل": item.meaning || item.translation || "",
-                        "اللغة / التصنيف": item.language || ""
+                        "الكلمة": item.word || "",
+                        "المعنى": item.meaning || item.translation || "",
+                        "المرادف": item.synonym || item.synonyms || "-",
+                        "اللغة": item.language || "",
+                        "المستخدم": item.userEmail || email
                     });
                 });
 
-                if (userWords.length === 0) {
+                if (rawData.length === 0) {
                     showNotification("لا توجد كلمات لهذا المستخدم لتصديرها.");
                     return;
                 }
 
-                // إنشاء ملف الـ Excel باستخدام SheetJS
-                const worksheet = XLSX.utils.json_to_sheet(userWords);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "User Words");
+                // إنشاء الـ Worksheet
+                const worksheet = XLSX.utils.json_to_sheet(rawData);
 
-                // تحميل الملف
-                XLSX.writeFile(workbook, `Langdex-User-${email.split('@')[0]}.xlsx`);
-                showNotification("تم تحميل ملف الـ Excel بنجاح وبدون أي أخطاء!");
+                // اتجاه الصفحة من اليمين لليسار (RTL) لضبط اللغة العربية
+                worksheet['!cols'] = [
+                    { wch: 6 },   // م
+                    { wch: 20 },  // الكلمة
+                    { wch: 25 },  // المعنى
+                    { wch: 25 },  // المرادف
+                    { wch: 15 },  // اللغة
+                    { wch: 30 }   // المستخدم
+                ];
+
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "User Words Report");
+
+                // تحميل الملف بتنسيق احترافي
+                XLSX.writeFile(workbook, `Langdex-Report-${email.split('@')[0]}.xlsx`);
+                showNotification("تم تحميل تقرير الـ Excel المفصل بنجاح وبأعلى تنسيق!");
             } catch (err) {
                 console.error(err);
                 showNotification("حدث خطأ أثناء تصدير الـ Excel.");
