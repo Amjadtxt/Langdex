@@ -181,7 +181,14 @@ async function fetchAllData() {
         wordsSnap.forEach(d => {
             allTableData.push({ _documentId: d.id, ...d.data() });
         });
-        allTableData.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+        // ترتيب البيانات بحيث يكون الأحدث من حيث وقت الإنشاء (createdAt) أولاً
+        allTableData.sort((a, b) => {
+            let timeA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime()) : 0;
+            let timeB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime()) : 0;
+            if (timeB !== timeA) return timeB - timeA;
+            return Number(b.id || 0) - Number(a.id || 0); // في حال التساوي يتم الترتيب بالـ ID تنازلياً
+        });
 
         updateLanguageFilterDropdown(allTableData);
         renderCardsAndTable(allTableData);
@@ -338,10 +345,9 @@ if (languageFilterSearch) {
 }
 
 // ==========================================================
-// الإضافات والمميزات الجديدة (تصدير PDF دقيق لكل اللغات + توحيد اللغات + حذف المكرر)
+// الإضافات والمميزات الجديدة (تصدير PDF دقيق للبيانات المعروضة حالياً)
 // ==========================================================
 
-// 1. تصدير PDF يدعم العربي والهندي وكل اللغات (HTML to PDF Canvas)
 if (downloadPdfBtn) {
     downloadPdfBtn.addEventListener("click", async () => {
         const { jsPDF } = window.jspdf;
@@ -352,7 +358,7 @@ if (downloadPdfBtn) {
 
         const currentRows = performSearchAndFilter();
         if (currentRows.length === 0) {
-            showNotification("لا توجد بيانات لتحميلها في الـ PDF!");
+            showNotification("لا توجد بيانات معروضة لتحميلها في الـ PDF!");
             return;
         }
 
@@ -366,7 +372,7 @@ if (downloadPdfBtn) {
 
         let htmlContent = `
             <h2 style="text-align: center; color: #333; margin-bottom: 10px;">Langdex - تقرير سجل الكلمات والبيانات</h2>
-            <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 20px;">تاريخ التصدير: ${new Date().toLocaleString()} | عدد السجلات: ${currentRows.length}</p>
+            <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 20px;">تاريخ التصدير: ${new Date().toLocaleString()} | عدد السجلات المعروضة: ${currentRows.length}</p>
             <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
                 <thead>
                     <tr style="background: #f0f0f0; color: #000;">
@@ -419,8 +425,8 @@ if (downloadPdfBtn) {
                 heightLeft -= pdf.internal.pageSize.getHeight();
             }
 
-            pdf.save("Langdex_Words_Report.pdf");
-            showNotification("تم تحميل ملف الـ PDF بنجاح 🚀");
+            pdf.save("Langdex_Filtered_Words_Report.pdf");
+            showNotification("تم تحميل ملف الـ PDF للبيانات المعروضة بنجاح 🚀");
         } catch (error) {
             console.error("PDF Error:", error);
             showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
@@ -430,7 +436,7 @@ if (downloadPdfBtn) {
     });
 }
 
-// 2. زر تغيير وتوحيد اسم أي لغة جماعياً
+// زر تغيير وتوحيد اسم أي لغة جماعياً
 const renameLangBtn = document.getElementById("renameAnyLangBtn");
 if (renameLangBtn) {
     renameLangBtn.addEventListener("click", async () => {
@@ -467,7 +473,7 @@ if (renameLangBtn) {
     });
 }
 
-// 3. زر حذف الكلمات المكررة جماعياً (تم الإصلاح والتفعيل التام)
+// زر حذف الكلمات المكررة جماعياً (مُصلح بالكامل)
 const deleteDuplicatesBtn = document.getElementById("deleteDuplicatesBtn");
 if (deleteDuplicatesBtn) {
     deleteDuplicatesBtn.addEventListener("click", async () => {
@@ -477,14 +483,12 @@ if (deleteDuplicatesBtn) {
             let seenWords = new Set();
             let duplicatesIds = [];
 
-            // جلب البيانات مباشرة من الكوليكشن للتأكد من فحص كل المستندات بدقة
             const querySnapshot = await getDocs(wordsCollection);
             querySnapshot.forEach(d => {
                 const data = d.data();
                 const wordVal = String(data.word || "").trim().toLowerCase();
                 const langVal = String(data.language || "").trim().toLowerCase();
                 
-                // مفتاح فريد لكل كلمة ولغتها
                 const identifier = `${wordVal}_${langVal}`;
 
                 if (wordVal && seenWords.has(identifier)) {
@@ -499,7 +503,6 @@ if (deleteDuplicatesBtn) {
                 return;
             }
 
-            // تنفيذ الحذف لكل الوثائق المكررة
             let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
 
@@ -508,6 +511,51 @@ if (deleteDuplicatesBtn) {
         } catch (error) {
             console.error("Duplicates Error:", error);
             showNotification("حدث خطأ أثناء محاولة حذف الكلمات المكررة.");
+        }
+    });
+}
+
+// ميزة حذف الكلمات بناءً على نطاق الـ ID (من ID كذا إلى ID كذا)
+const deleteRangeBtn = document.getElementById("deleteRangeBtn");
+const startIdInput = document.getElementById("startIdInput");
+const endIdInput = document.getElementById("endIdInput");
+
+if (deleteRangeBtn) {
+    deleteRangeBtn.addEventListener("click", async () => {
+        const startId = Number(startIdInput ? startIdInput.value : 0);
+        const endId = Number(endIdInput ? endIdInput.value : 0);
+
+        if (!startId || !endId || startId > endId) {
+            showNotification("يرجى إدخال نطاق صحيح (من ID أصغر إلى ID أكبر).");
+            return;
+        }
+
+        if (!confirm(`هل أنت متأكد من حذف جميع الكلمات التي يقع رقم الـ ID الخاص بها بين ${startId} و ${endId}؟`)) return;
+
+        try {
+            let targetDocsIds = [];
+            allTableData.forEach(item => {
+                const currentIdNum = Number(item.id);
+                if (currentIdNum >= startId && currentIdNum <= endId && item._documentId) {
+                    targetDocsIds.push(item._documentId);
+                }
+            });
+
+            if (targetDocsIds.length === 0) {
+                showNotification("لا توجد كلمات مطابقة ضمن هذا النطاق للحذف!");
+                return;
+            }
+
+            let deletePromises = targetDocsIds.map(id => deleteDoc(doc(db, "words", id)));
+            await Promise.all(deletePromises);
+
+            showNotification(`تم بنجاح حذف ${targetDocsIds.length} كلمة ضمن النطاق المحدد!`);
+            if (startIdInput) startIdInput.value = "";
+            if (endIdInput) endIdInput.value = "";
+            await fetchAllData();
+        } catch (error) {
+            console.error("Range Delete Error:", error);
+            showNotification("حدث خطأ أثناء تنفيذ عملية الحذف بالنطاق.");
         }
     });
 }
