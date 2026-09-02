@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث مع حاشة التحميل وفحص الأدمن والأدوات الكاملة)
+// LANGDEX - admin.js (Updated with Excel Upload, Toast & Secure Admin Check)
 // ======================================================
 
 import {
@@ -43,10 +43,11 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
 
+// الإيميلات المصرح لها كمشرفين أساسيين (يمكنك التعديل أو الاعتماد على داتا بيز الـ users)
 const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
 
 // ======================================================
-// LOADER OVERLAY (شاشة التحميل الذكية فور بدء السكربت)
+// LOADER OVERLAY (شاشة التحميل الذكية الفورية)
 // ======================================================
 
 const loaderOverlay = document.createElement("div");
@@ -78,7 +79,7 @@ if (document.body) {
     });
 }
 
-// دالة التحقق الأمني من جدول الـ users في فايربيز
+// دالة التحقق الأمني من صلاحيات الأدمن
 async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase().trim();
@@ -773,25 +774,28 @@ if (document.readyState === 'loading') {
 }
 
 // ======================================================
-// AUTH STATE & ADMIN SECURITY CHECK
+// AUTH STATE & ADMIN SECURITY CHECK (محدث وبدون تعليق لـ index.html)
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
+    // لو اليوزر مش مسجل دخول، شيل شاشة التحميل وحوله للوigin فوراً
     if (!user) {
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
         window.location.replace("login.html");
         return;
     }
 
+    // فحص هل هو أدمن ولا لأ
     const isAdmin = await verifyAdminPermission(user);
 
     if (!isAdmin) {
+        // شيل شاشة التحميل فوراً قبل التحويل لـ index.html عشان الصفحة ما تعلّقش عند اليوزر العادي
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
         window.location.replace("index.html");
         return;
     }
 
-    // إذا تم التحقق وأصبح أدمن: إزالة شاشة التحميل واستكمال العمل
+    // لو طلع أدمن بجد: شيل شاشة التحميل وكمل شغلك طبيعي في لوحة التحكم
     if (loaderOverlay && loaderOverlay.parentNode) {
         loaderOverlay.remove();
     }
