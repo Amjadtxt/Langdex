@@ -14,7 +14,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ربط الزر بالوظيفة بدل استخدام onclick في الـ HTML
 document.addEventListener("DOMContentLoaded", () => {
     const generateBtn = document.getElementById('generateBtn');
     if (generateBtn) {
@@ -34,6 +33,17 @@ async function handleTranslation() {
         return;
     }
 
+    // نظام آمن لطلب المفتاح وحفظه محلياً في المتصفح لو مش موجود
+    let apiKey = localStorage.getItem('openai_api_key');
+    if (!apiKey) {
+        apiKey = prompt("أدخل مفتاح OpenAI API الخاص بك (سيتم حفظه على متصفحك فقط ولن يُرفع لأي مكان):");
+        if (!apiKey || !apiKey.trim()) {
+            alert("مفتاح الـ API مطلوب لتتم الترجمة!");
+            return;
+        }
+        localStorage.setItem('openai_api_key', apiKey.trim());
+    }
+
     btn.disabled = true;
     btn.textContent = "جاري سحب القاموس والمعالجة الذكية...";
     resultContainer.style.display = 'none';
@@ -45,23 +55,25 @@ async function handleTranslation() {
             wordsList.push(doc.data());
         });
 
-        const translatedSentence = await callAiModel(userRequest, direction, wordsList);
+        const translatedSentence = await callAiModel(userRequest, direction, wordsList, apiKey);
 
         resultOutput.textContent = translatedSentence;
         resultContainer.style.display = 'block';
 
     } catch (error) {
         console.error("خطأ:", error);
-        alert("حدث خطأ أثناء الاتصال بقاعدة البيانات أو معالجة الطلب.");
+        // لو المفتاح طلع غلط أو انتهى، نمسحه عشان يطلبه تاني
+        if (error.message.includes("API")) {
+            localStorage.removeItem('openai_api_key');
+        }
+        alert("حدث خطأ أثناء الاتصال بقاعدة البيانات أو أن مفتاح الـ API غير صالح.");
     } finally {
         btn.disabled = false;
         btn.textContent = "ترجمة وتصريف الجملة";
     }
 }
 
-async function callAiModel(requestText, direction, words) {
-    const apiKey = "YOUR_AI_API_KEY"; // حط مفتاح الـ OpenAI هنا
-
+async function callAiModel(requestText, direction, words, apiKey) {
     let directionDescription = "";
     switch(direction) {
         case 'ar-to-hi': directionDescription = "من اللغة العربية إلى اللغة الهندية"; break;
@@ -95,5 +107,8 @@ async function callAiModel(requestText, direction, words) {
     });
 
     const data = await response.json();
+    if (data.error) {
+        throw new Error(data.error.message);
+    }
     return data.choices[0].message.content;
 }
