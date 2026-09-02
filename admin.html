@@ -14,22 +14,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- SheetJS للإكسيل إن لزم -->
+  <!-- SheetJS للإكسيل -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- مكتبة jsPDF لتصدير الـ PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة (متوافقة مع ستايل الدفات) */
+    /* الإعدادات الأساسية المطابقة لصفحة المستخدمين 100% */
     .content > div {
       width: 85% !important;
-      max-width: 950px !important;
+      max-width: 850px !important;
       margin: 15px auto !important;
       box-sizing: border-box !important;
     }
 
-    /* تنسيق كاردز الإحصائيات لتتوافق مع الستايل العام */
+    /* تنسيق الكاردز بنفس الستايل */
     .cards-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -57,12 +57,43 @@
       margin: 0;
     }
 
-    /* تعديلات الموبايل لمنع أي لخبطة في الجدول والمحتوى */
+    /* ديف الأزرار العلوية المستقل */
+    .actions-top-bar {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    .pdf-btn { background: #e67e22; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .pdf-btn:hover { background: #d35400; }
+
+    .delete-edited-btn { background: #c0392b; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .delete-edited-btn:hover { background: #962d22; }
+
+    .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .fix-lang-btn:hover { background: #732d91; }
+
+    /* تعديلات الموبايل للجدول والمحتوى */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
         margin: 10px auto !important;
         padding: 12px !important;
+      }
+
+      .actions-top-bar {
+        flex-direction: column !important;
+      }
+      .actions-top-bar button {
+        width: 100% !important;
       }
 
       /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
@@ -120,7 +151,7 @@
 <body>
 
   <!-- ==================================================
-       HEADER (الناف بار واليوزر بار الأصلي)
+       HEADER
   ================================================== -->
   <header>
     <div class="user-bar">
@@ -144,30 +175,26 @@
   ================================================== -->
   <div class="content">
 
-    <!-- قسم إحصائيات الكاردز -->
+    <!-- قسم الإحصائيات -->
     <div style="width: 100%;">
       <div class="cards-container" id="cardsContainer">
           <div class="card">
               <h3>إجمالي المستخدمين</h3>
               <p id="totalUsersCount">0</p>
           </div>
-          <!-- سيتم حقن إحصائيات اللغات هنا برمجياً -->
       </div>
     </div>
 
     <!-- قسم البحث والفلترة -->
     <div class="search-section" style="width: 100%;">
       <h1>بحث وسجل الكلمات</h1>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-        <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
-        <select class="filter-select" id="languageFilterSearch" style="padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; font-size: 15px; font-family: 'Cairo', sans-serif;">
-            <option value="all">كل اللغات (للبحث أو العرض)</option>
-        </select>
-        <button class="search-btn" style="padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #00bcd4; color: #121212;">بحث</button>
-      </div>
+      <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
+      <select class="filter-select" id="languageFilterSearch" style="margin-top: 10px; width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; font-family: 'Cairo', sans-serif;">
+          <option value="all">كل اللغات (للبحث أو العرض)</option>
+      </select>
     </div>
 
-    <!-- قسم إدارة الكلمات (فورم الإضافة والتعديل) -->
+    <!-- فورم إدارة الكلمات (الإضافة والتعديل بدون أزرار خارجية) -->
     <div class="form" style="width: 100%;">
       <h1>إدارة الكلمات</h1>
       <input type="number" placeholder="ID الكلمة" readonly>
@@ -182,17 +209,23 @@
           <option value="الفرنسية">الفرنسية</option>
           <option value="الألمانية">الألمانية</option>
           <option value="الهندية">الهندية</option>
-          <option value="الأوردو">الأوردو</option>
+          <option value="اردو">اردو</option>
           <option value="الفارسية">الفارسية</option>
           <option value="عامة">عامة</option>
       </select>
       
-      <div class="inter1" style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+      <div class="inter1" style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
         <button type="button" class="reg">إضافة كلمة جديدة</button>
         <button type="button" class="upa">تعديل الكلمة المحددة</button>
         <button type="button" class="cel">مسح الاستمارة</button>
-        <button type="button" class="pdf-btn" id="downloadPdfBtn" style="background: #e67e22; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">تحميل PDF للبيانات</button>
       </div>
+    </div>
+
+    <!-- ديف مستقل للأزرار الإضافية (شامل زر تغيير وتوحيد اسم أي لغة جماعياً) -->
+    <div class="actions-top-bar" style="width: 100%;">
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
+      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم لغة جماعياً</button>
+      <button type="button" class="delete-edited-btn" id="deleteEditedWordsBtn">حذف الكلمات المحررة</button>
     </div>
 
     <!-- جدول عرض سجل الكلمات والبيانات -->
