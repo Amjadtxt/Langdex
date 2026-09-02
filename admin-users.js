@@ -45,6 +45,31 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// إنشاء شاشة التحميل بنفس لون خلفية الموقع وخط أبيض
+const loaderOverlay = document.createElement("div");
+loaderOverlay.id = "auth-loader-overlay";
+loaderOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color, #1a1a1a);
+    color: #ffffff;
+    z-index: 999999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cairo', Arial, sans-serif;
+    font-size: 18px;
+    direction: rtl;
+`;
+loaderOverlay.textContent = "جاري التحميل...";
+
+// إخفاء الصفحة تماماً وإظهار شاشة التحميل لحين انتهاء التحقق
+document.documentElement.style.visibility = "hidden";
+document.body.appendChild(loaderOverlay);
+
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
 
@@ -469,18 +494,26 @@ if (searchInput) {
     });
 }
 
-// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً بدون تنبيه
+// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً مع إزالة شاشة التحميل
 onAuthStateChanged(auth, async user => {
     if (!user) {
-        window.location.href = "login.html";
+        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
+        window.location.replace("login.html");
         return;
     }
     currentUser = user;
 
     const isAdmin = await verifyAdminPermission(user);
     if (!isAdmin) {
-        window.location.href = "index.html"; // تحويل فوري وصامت
+        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
+        window.location.replace("index.html"); // تحويل فوري وصامت
         return;
+    }
+
+    // لو أدمن حقيقي: إظهار الصفحة وإزالة شاشة التحميل وتحميل البيانات
+    document.documentElement.style.visibility = "visible";
+    if (loaderOverlay && loaderOverlay.parentNode) {
+        loaderOverlay.remove();
     }
 
     await loadUsersData();
