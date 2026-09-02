@@ -21,35 +21,40 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* توحيد العرض والأبعاد لكل الأقسام لتكون متساوية وفي المنتصف بدقة */
+    /* توحيد العرض للأقسام الرئيسية */
     .content > div, header > div, header > nav {
-      width: 85% !important;
+      width: 88% !important;
       max-width: 850px !important;
       margin: 12px auto !important;
       box-sizing: border-box !important;
     }
 
-    /* إصلاح مشاكل الموبايل للنافبار وزر تسجيل الخروج لعدم الخروج عن الحدود */
+    /* تنسيق النافبار وزر تسجيل الخروج للموبايل */
     @media (max-width: 768px) {
       .content > div, header > div, header > nav {
-        width: 92% !important;
-        padding: 8px !important;
+        width: 94% !important;
+        padding: 10px !important;
       }
 
       nav.bar ul {
-        gap: 8px !important;
+        display: flex !important;
         flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 5px !important;
         padding: 5px 0 !important;
       }
 
       nav.bar ul a {
-        font-size: 12px !important;
-        padding: 2px 4px !important;
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+        margin: 0 !important;
       }
 
       .user-bar {
-        flex-direction: row-reverse !important;
+        display: flex !important;
+        flex-direction: row !important;
         justify-content: space-between !important;
+        align-items: center !important;
         padding: 8px 12px !important;
       }
 
@@ -58,8 +63,58 @@
       }
 
       #logout-btn {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+      }
+
+      /* تحويل الجدول العادي في الموبايل إلى تصميم بطاقات احترافي */
+      .table-container table, 
+      .table-container thead, 
+      .table-container tbody, 
+      .table-container th, 
+      .table-container td, 
+      .table-container tr {
+        display: block !important;
+        width: 100% !important;
+      }
+
+      .table-container thead {
+        display: none !important; /* إخفاء رأس الجدول التقليدي في الموبايل */
+      }
+
+      .table-container tr {
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 15px;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-sizing: border-box;
+      }
+
+      .table-container td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .table-container td:last-child {
+        border-bottom: none !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding-top: 10px !important;
+      }
+
+      /* جعل أزرار الإجراءات تأخذ عرض الكارت كاملاً ومرتبة أفقياً أو عمودياً بشكل مريح */
+      .table-container td button,
+      .table-container td select {
+        width: 100% !important;
         font-size: 12px !important;
-        padding: 6px 12px !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
       }
     }
   </style>
