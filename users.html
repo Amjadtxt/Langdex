@@ -29,7 +29,7 @@
       box-sizing: border-box !important;
     }
 
-    /* تنسيق النافبار للموبايل بعد حذف الإحصائيات لتصبح منسقة ومثالية */
+    /* جعل النافبار في سطر واحد وبحجم متناسق مثل الصندوق العلوي تماماً للموبايل */
     @media (max-width: 768px) {
       .content > div, header > div, header > nav {
         width: 94% !important;
@@ -38,17 +38,20 @@
 
       nav.bar ul {
         display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 6px !important;
-        padding: 6px 2px !important;
+        flex-wrap: nowrap !important; /* منع النزول لسطر جديد وتثبيتها في سطر واحد */
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 2px !important;
+        padding: 4px 0 !important;
+        overflow-x: auto !important; /* السماح بالتمرير البسيط لو الشاشة صغيرة جداً */
       }
 
       nav.bar ul a {
-        font-size: 12px !important;
-        padding: 6px 10px !important;
+        font-size: 11px !important;
+        padding: 4px 6px !important;
+        white-space: nowrap !important;
         text-align: center !important;
-        box-sizing: border-box !important;
+        flex: 1;
         margin: 0 !important;
       }
 
@@ -137,7 +140,6 @@
         <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
         <a href="/Langdex/data.html"><li>البيانات</li></a>
         <a href="/Langdex/users.html" class="active"><li>المستخدمين</li></a>
-        <a href="#"><li>الإعدادات</li></a>
       </ul>
     </nav>
   </header>
@@ -180,7 +182,7 @@
               <th>البريد الإلكتروني</th>
               <th>الرول</th>
               <th>عدد الكلمات</th>
-              <th>اللغات المستخدمة</th>
+              <th>إحصائيات اللغات</th>
               <th>الإجراءات والتحكم</th>
             </tr>
           </thead>
