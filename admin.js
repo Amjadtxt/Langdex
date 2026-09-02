@@ -648,3 +648,65 @@ onAuthStateChanged(auth, async user => {
         populateLanguageFilter(allTableData);
     }
 });
+
+// ======================================================
+// CLEAN DUPLICATE WORDS BUTTON ACTION
+// ======================================================
+
+const cleanDuplicatesBtn = document.querySelector("#cleanDuplicatesBtn");
+
+if (cleanDuplicatesBtn) {
+    cleanDuplicatesBtn.addEventListener("click", async function () {
+        if (!currentUser) {
+            showNotification("يجب تسجيل الدخول أولاً.");
+            return;
+        }
+
+        if (!confirm("هل أنت متأكد من رغبتك في فحص وحذف الكلمات المتكررة تماماً من قاعدة البيانات؟")) {
+            return;
+        }
+
+        try {
+            showNotification("جاري فحص الكلمات وتصفية التكرارات...");
+
+            // جلب كل الكلمات من فايربيز
+            const snapshot = await getDocs(wordsCollection);
+            
+            const seenWords = new Set();
+            let deletedCount = 0;
+
+            for (const firebaseDoc of snapshot.docs) {
+                const data = firebaseDoc.data();
+                // توحيد شكل الكلمة (حذف المسافات وتحويلها لأحرف صغيرة للمقارنة بدقة)
+                const wordKey = String(data.word || "").trim().toLowerCase();
+
+                if (!wordKey) continue;
+
+                if (seenWords.has(wordKey)) {
+                    // الكلمة متكررة، يتم حذفها فوراً
+                    const wordRef = doc(db, "words", firebaseDoc.id);
+                    await deleteDoc(wordRef);
+                    deletedCount++;
+                } else {
+                    // أول مرة نرى الكلمة، نحفظها في القائمة
+                    seenWords.add(wordKey);
+                }
+            }
+
+            showNotification(`تم بنجاح حذف ${deletedCount} كلمة متكررة!`);
+            alert(`تم الانتهاء بنجاح! تم حذف ${deletedCount} كلمة متكررة من قاعدة البيانات.`);
+
+            // تحديث الجدول والبيانات بعد الحذف
+            allTableData = await getAllWords();
+            populateLanguageFilter(allTableData);
+            if (typeof applyLanguageFilter === "function") {
+                applyLanguageFilter();
+            }
+
+        } catch (error) {
+            console.error("Clean Duplicates Error:", error);
+            showNotification("حدث خطأ أثناء عملية التنظيف.");
+        }
+    });
+}
+
