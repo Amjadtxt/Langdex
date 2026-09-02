@@ -187,10 +187,10 @@
 
     <!-- قسم البحث والفلترة -->
     <div class="search-section" style="width: 100%;">
-      <h1>بحث وسجل الكلمات</h1>
+      <h1>البحث</h1>
       <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
       <select class="filter-select" id="languageFilterSearch" style="margin-top: 10px; width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; font-family: 'Cairo', sans-serif;">
-          <option value="all">كل اللغات (للبحث أو العرض)</option>
+          <option value="all">إختر اللغة</option>
       </select>
     </div>
 
@@ -201,7 +201,7 @@
       <input type="text" placeholder="اسم اليوزر (قبل @)">
       <input type="text" placeholder="الكلمة">
       <input type="text" placeholder="المعنى">
-      <input type="text" placeholder="المرادفات / التفاصيل">
+      <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
           <option value="">اختر اللغة</option>
           <option value="العربية">العربية</option>
@@ -217,20 +217,19 @@
       <div class="inter1" style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
         <button type="button" class="reg">إضافة كلمة جديدة</button>
         <button type="button" class="upa">تعديل الكلمة المحددة</button>
-        <button type="button" class="cel">مسح الاستمارة</button>
+        <button type="button" class="cel">مسح البيانات</button>
       </div>
     </div>
 
     <!-- ديف مستقل للأزرار الإضافية (شامل زر تغيير وتوحيد اسم أي لغة جماعياً) -->
     <div class="actions-top-bar" style="width: 100%;">
-      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
-      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم لغة جماعياً</button>
-      <button type="button" class="delete-edited-btn" id="deleteEditedWordsBtn">حذف الكلمات المحررة</button>
+      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
+      <button type="button" class="delete-edited-btn" id="deleteEditedWordsBtn">حذف الكلمات المكررة</button>
     </div>
-
+<button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
     <!-- جدول عرض سجل الكلمات والبيانات -->
     <div class="data-section" style="width: 100%;">
-      <h1>سجل الكلمات والبيانات</h1>
+      <h1>سجل البيانات</h1>
       <div class="table-container" style="width: 95%; margin: 15px auto;">
         <table>
           <thead>
