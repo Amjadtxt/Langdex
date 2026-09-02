@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث مع دعم تحميل الـ PDF وفلترة اللغات)
+// LANGDEX - admin.js (محدث وحل مشكلة دخول الآدمن)
 // ======================================================
 
 import {
@@ -41,6 +41,7 @@ const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
 
+// الإيميلات المصرح لها كأدمن بشكل مباشر ودائم
 const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
 
 const loaderOverlay = document.createElement("div");
@@ -58,29 +59,26 @@ async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase().trim();
 
+    // 1. التحقق الفوري من القائمة الثابتة للإيميلات
     if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
         return true;
     }
 
+    // 2. التحقق الاحتياطي من قاعدة البيانات Firestore
     try {
         let userDocRef = doc(db, "users", email);
         let userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists() && String(userDocSnap.data().role || "").toLowerCase().trim() === "admin") {
-            return true;
-        }
-
-        const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-        userDocRef = doc(db, "users", customDocId);
-        userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists() && String(userDocSnap.data().role || "").toLowerCase().trim() === "admin") {
-            return true;
+        if (userDocSnap.exists()) {
+            const role = String(userDocSnap.data().role || "").toLowerCase().trim();
+            if (role === "admin") return true;
         }
 
         const usersSnapshot = await getDocs(usersCollection);
         for (const userDoc of usersSnapshot.docs) {
             const data = userDoc.data();
-            if (String(data.email || "").toLowerCase().trim() === email && String(data.role || "").toLowerCase().trim() === "admin") {
-                return true;
+            if (String(data.email || "").toLowerCase().trim() === email) {
+                const role = String(data.role || "").toLowerCase().trim();
+                if (role === "admin") return true;
             }
         }
     } catch (err) {
@@ -105,9 +103,7 @@ const languageSelect = document.querySelector("#formLanguageSelect");
 
 const registerButton = document.querySelector(".reg");
 const updateButton = document.querySelector(".upa");
-const deleteButton = document.querySelector(".del");
 const clearButton = document.querySelector(".cel");
-const logoutBtn = document.querySelector("#logoutBtn");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
 
 const searchInput = document.querySelector(".search-txt");
@@ -147,7 +143,6 @@ function showNotification(message) {
     notification._timer = setTimeout(() => notification.remove(), 3000);
 }
 
-// تحديث قائمة اللغات في فلتر البحث العلوي
 function updateLanguageFilterDropdown(rows) {
     if (!languageFilterSearch) return;
     const currentVal = languageFilterSearch.value;
@@ -285,7 +280,7 @@ function renderTableLog(rows) {
     });
 }
 
-async function getNextIdAdmin() {
+async function setNextIdAdmin() {
     try {
         const usedIds = new Set();
         allTableData.forEach(item => {
@@ -300,7 +295,6 @@ async function getNextIdAdmin() {
     }
 }
 
-// دالة البحث المدمجة مع فلتر اللغات
 function performSearchAndFilter() {
     const query = normalize(searchInput ? searchInput.value : "");
     const selectedLang = languageFilterSearch ? languageFilterSearch.value : "all";
@@ -337,7 +331,6 @@ if (languageFilterSearch) {
     languageFilterSearch.addEventListener("change", performSearchAndFilter);
 }
 
-// زر تصدير وتحميل الـ PDF
 if (downloadPdfBtn) {
     downloadPdfBtn.addEventListener("click", () => {
         const { jsPDF } = window.jspdf;
@@ -346,7 +339,6 @@ if (downloadPdfBtn) {
             return;
         }
 
-        // جلب البيانات الحالية المعروضة (سواء بالبحث أو بكل اللغات أو بلغة محددة)
         const currentRows = performSearchAndFilter();
         if (currentRows.length === 0) {
             showNotification("لا توجد بيانات لتحميلها في الـ PDF!");
@@ -355,7 +347,6 @@ if (downloadPdfBtn) {
 
         const docPDF = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         
-        // استخدام خط قياسي آمن
         docPDF.setFont("helvetica", "normal");
         docPDF.setFontSize(16);
         docPDF.text("Langdex - Words Report", 105, 15, { align: "center" });
@@ -404,7 +395,6 @@ if (downloadPdfBtn) {
     });
 }
 
-// زر الإضافة
 if (registerButton) {
     registerButton.addEventListener("click", async () => {
         const usernameVal = userIdInput ? userIdInput.value.trim() : "";
@@ -445,7 +435,6 @@ if (registerButton) {
     });
 }
 
-// زر التعديل
 if (updateButton) {
     updateButton.addEventListener("click", async () => {
         if (!selectedDocumentId) {
@@ -488,7 +477,7 @@ function clearForm() {
     if (synonymsInput) synonymsInput.value = "";
     if (languageSelect) languageSelect.selectedIndex = 0;
     selectedDocumentId = null;
-    getNextIdAdmin();
+    setNextIdAdmin();
 }
 
 if (clearButton) {
@@ -496,13 +485,6 @@ if (clearButton) {
         e.preventDefault();
         clearForm();
         showNotification("تم مسح الاستمارة.");
-    });
-}
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.replace("login.html");
     });
 }
 
@@ -514,7 +496,10 @@ onAuthStateChanged(auth, async user => {
 
     const isAdmin = await verifyAdminPermission(user);
     if (!isAdmin) {
-        window.location.replace("index.html");
+        showNotification("ليس لديك صلاحيات الأدمن للوصول هنا!");
+        setTimeout(() => {
+            window.location.replace("index.html");
+        }, 1500);
         return;
     }
 
