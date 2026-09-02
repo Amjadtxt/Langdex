@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث وحل مشكلة دخول الآدمن)
+// LANGDEX - admin.js (محدث وحل مشكلة الطرد لصفحة الدخول)
 // ======================================================
 
 import {
@@ -21,6 +21,8 @@ import {
 
 import {
     getAuth,
+    setPersistence,
+    browserLocalPersistence,
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
@@ -38,6 +40,12 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// ضبط حفظ الجلسة عشان المستخدم ميخرجش لوحده
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.error("Persistence error:", err);
+});
+
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
 
@@ -488,7 +496,19 @@ if (clearButton) {
     });
 }
 
+// مؤقت انتظار للتحقق من حالة المستخدم بدون طرد متسرع
+let authCheckCompleted = false;
+
+setTimeout(() => {
+    if (!authCheckCompleted && (!auth.currentUser)) {
+        // لو فات سنتين ومفيش يوزر مسجل فعلياً طرد مباشر
+        window.location.replace("login.html");
+    }
+}, 3000);
+
 onAuthStateChanged(auth, async user => {
+    authCheckCompleted = true;
+
     if (!user) {
         window.location.replace("login.html");
         return;
