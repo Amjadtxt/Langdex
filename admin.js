@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث وشامل كافة المميزات الجديدة)
+// LANGDEX - admin.js (محدث ومنظم بالكامل)
 // ======================================================
 
 import {
@@ -41,7 +41,6 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ضبط حفظ الجلسة عشان المستخدم ميخرجش لوحده
 setPersistence(auth, browserLocalPersistence).catch((err) => {
     console.error("Persistence error:", err);
 });
@@ -49,7 +48,6 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
 
-// الإيميلات المصرح لها كأدمن بشكل مباشر ودائم
 const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
 
 const loaderOverlay = document.createElement("div");
@@ -182,12 +180,22 @@ async function fetchAllData() {
             allTableData.push({ _documentId: d.id, ...d.data() });
         });
 
-        // ترتيب البيانات بحيث يكون الأحدث من حيث وقت الإنشاء (createdAt) أولاً
+        // 🌟 ترتيب البيانات بدقة بحيث يكون الأحدث من حيث وقت الإنشاء (createdAt) أولاً
         allTableData.sort((a, b) => {
-            let timeA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime()) : 0;
-            let timeB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime()) : 0;
-            if (timeB !== timeA) return timeB - timeA;
-            return Number(b.id || 0) - Number(a.id || 0); // في حال التساوي يتم الترتيب بالـ ID تنازلياً
+            let timeA = 0;
+            let timeB = 0;
+
+            if (a.createdAt) {
+                timeA = a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+            }
+            if (b.createdAt) {
+                timeB = b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+            }
+
+            if (timeB !== timeA) {
+                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً
+            }
+            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال التساوي
         });
 
         updateLanguageFilterDropdown(allTableData);
@@ -345,7 +353,7 @@ if (languageFilterSearch) {
 }
 
 // ==========================================================
-// الإضافات والمميزات الجديدة (تصدير PDF دقيق للبيانات المعروضة حالياً)
+// تصدير PDF للبيانات المعروضة حالياً
 // ==========================================================
 
 if (downloadPdfBtn) {
@@ -436,7 +444,7 @@ if (downloadPdfBtn) {
     });
 }
 
-// زر تغيير وتوحيد اسم أي لغة جماعياً
+// تغيير اسم التصنيف جماعياً
 const renameLangBtn = document.getElementById("renameAnyLangBtn");
 if (renameLangBtn) {
     renameLangBtn.addEventListener("click", async () => {
@@ -473,7 +481,7 @@ if (renameLangBtn) {
     });
 }
 
-// زر حذف الكلمات المكررة جماعياً (مُصلح بالكامل)
+// حذف الكلمات المكررة جماعياً
 const deleteDuplicatesBtn = document.getElementById("deleteDuplicatesBtn");
 if (deleteDuplicatesBtn) {
     deleteDuplicatesBtn.addEventListener("click", async () => {
@@ -515,17 +523,17 @@ if (deleteDuplicatesBtn) {
     });
 }
 
-// ميزة حذف الكلمات بناءً على نطاق الـ ID (من ID كذا إلى ID كذا)
+// 🌟 تفعيل زر حذف النطاق حسب الـ ID (من ID كذا إلى ID كذا) بشكل صحيح
 const deleteRangeBtn = document.getElementById("deleteRangeBtn");
 const startIdInput = document.getElementById("startIdInput");
 const endIdInput = document.getElementById("endIdInput");
 
 if (deleteRangeBtn) {
     deleteRangeBtn.addEventListener("click", async () => {
-        const startId = Number(startIdInput ? startIdInput.value : 0);
-        const endId = Number(endIdInput ? endIdInput.value : 0);
+        const startId = Number(startIdInput ? startIdInput.value : NaN);
+        const endId = Number(endIdInput ? endIdInput.value : NaN);
 
-        if (!startId || !endId || startId > endId) {
+        if (isNaN(startId) || isNaN(endId) || startId > endId) {
             showNotification("يرجى إدخال نطاق صحيح (من ID أصغر إلى ID أكبر).");
             return;
         }
@@ -536,7 +544,7 @@ if (deleteRangeBtn) {
             let targetDocsIds = [];
             allTableData.forEach(item => {
                 const currentIdNum = Number(item.id);
-                if (currentIdNum >= startId && currentIdNum <= endId && item._documentId) {
+                if (!isNaN(currentIdNum) && currentIdNum >= startId && currentIdNum <= endId && item._documentId) {
                     targetDocsIds.push(item._documentId);
                 }
             });
@@ -560,10 +568,7 @@ if (deleteRangeBtn) {
     });
 }
 
-// ==========================================================
 // إدارة الاستمارة (إضافة وتعديل ومسح)
-// ==========================================================
-
 if (registerButton) {
     registerButton.addEventListener("click", async () => {
         const usernameVal = userIdInput ? userIdInput.value.trim() : "";
