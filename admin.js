@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث وحل مشكلة الطرد لصفحة الدخول)
+// LANGDEX - admin.js (محدث وشامل كافة المميزات الجديدة)
 // ======================================================
 
 import {
@@ -67,12 +67,10 @@ async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase().trim();
 
-    // 1. التحقق الفوري من القائمة الثابتة للإيميلات
     if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
         return true;
     }
 
-    // 2. التحقق الاحتياطي من قاعدة البيانات Firestore
     try {
         let userDocRef = doc(db, "users", email);
         let userDocSnap = await getDoc(userDocRef);
@@ -339,8 +337,13 @@ if (languageFilterSearch) {
     languageFilterSearch.addEventListener("change", performSearchAndFilter);
 }
 
+// ==========================================================
+// الإضافات والمميزات الجديدة (تصدير PDF دقيق لكل اللغات + توحيد اللغات + حذف المكرر)
+// ==========================================================
+
+// 1. تصدير PDF يدعم العربي والهندي وكل اللغات (HTML to PDF Canvas)
 if (downloadPdfBtn) {
-    downloadPdfBtn.addEventListener("click", () => {
+    downloadPdfBtn.addEventListener("click", async () => {
         const { jsPDF } = window.jspdf;
         if (!jsPDF) {
             showNotification("مكتبة الـ PDF لم يتم تحميلها بشكل صحيح!");
@@ -353,55 +356,159 @@ if (downloadPdfBtn) {
             return;
         }
 
-        const docPDF = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        
-        docPDF.setFont("helvetica", "normal");
-        docPDF.setFontSize(16);
-        docPDF.text("Langdex - Words Report", 105, 15, { align: "center" });
+        let printContainer = document.createElement("div");
+        printContainer.style.direction = "rtl";
+        printContainer.style.padding = "20px";
+        printContainer.style.background = "#ffffff";
+        printContainer.style.color = "#000000";
+        printContainer.style.fontFamily = "Cairo, Arial, sans-serif";
+        printContainer.style.width = "800px";
 
-        docPDF.setFontSize(10);
-        docPDF.text(`Generated Date: ${new Date().toLocaleString()}`, 105, 22, { align: "center" });
-        docPDF.text(`Total Records: ${currentRows.length}`, 105, 28, { align: "center" });
-
-        let y = 38;
-        docPDF.setFontSize(9);
-        docPDF.setFillColor(35, 35, 35);
-        docPDF.setTextColor(255, 255, 255);
-        docPDF.rect(10, y - 5, 190, 8, "F");
-        
-        docPDF.text("ID", 15, y);
-        docPDF.text("Word", 35, y);
-        docPDF.text("Meaning", 75, y);
-        docPDF.text("Language", 130, y);
-        docPDF.text("User", 165, y);
-
-        y += 8;
-        docPDF.setTextColor(0, 0, 0);
+        let htmlContent = `
+            <h2 style="text-align: center; color: #333; margin-bottom: 10px;">Langdex - تقرير سجل الكلمات والبيانات</h2>
+            <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 20px;">تاريخ التصدير: ${new Date().toLocaleString()} | عدد السجلات: ${currentRows.length}</p>
+            <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
+                <thead>
+                    <tr style="background: #f0f0f0; color: #000;">
+                        <th>ID</th>
+                        <th>بواسطة (اليوزر)</th>
+                        <th>الكلمة</th>
+                        <th>المعنى</th>
+                        <th>التفاصيل / المرادفات</th>
+                        <th>اللغة</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
         currentRows.forEach((item, index) => {
-            if (y > 280) {
-                docPDF.addPage();
-                y = 20;
-            }
-
-            const wordText = String(item.word || "-");
-            const meaningText = String(item.meaning || "-");
-            const langText = String(item.language || "-");
-            const userText = extractUsername(item.userEmail || item.userId);
-
-            docPDF.text(String(item.id || index + 1), 15, y);
-            docPDF.text(wordText, 35, y);
-            docPDF.text(meaningText.substring(0, 30), 75, y);
-            docPDF.text(langText, 130, y);
-            docPDF.text(userText, 165, y);
-
-            y += 7;
+            htmlContent += `
+                <tr>
+                    <td>${item.id || (index + 1)}</td>
+                    <td>${extractUsername(item.userEmail || item.userId)}</td>
+                    <td>${item.word || ''}</td>
+                    <td>${item.meaning || ''}</td>
+                    <td>${item.synonyms || ''}</td>
+                    <td>${item.language || ''}</td>
+                </tr>
+            `;
         });
 
-        docPDF.save("Langdex_Report.pdf");
-        showNotification("تم تحميل ملف الـ PDF بنجاح 🚀");
+        htmlContent += `</tbody></table>`;
+        printContainer.innerHTML = htmlContent;
+        document.body.appendChild(printContainer);
+
+        try {
+            let canvas = await html2canvas(printContainer, { scale: 2, useCORS: true });
+            let imgData = canvas.toDataURL("image/png");
+            
+            let pdf = new jsPDF("p", "mm", "a4");
+            let pdfWidth = pdf.internal.pageSize.getWidth();
+            let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            let heightLeft = pdfHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight();
+
+            while (heightLeft >= 0) {
+                position = heightLeft - pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pdf.internal.pageSize.getHeight();
+            }
+
+            pdf.save("Langdex_Words_Report.pdf");
+            showNotification("تم تحميل ملف الـ PDF بنجاح 🚀");
+        } catch (error) {
+            console.error("PDF Error:", error);
+            showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
+        } finally {
+            document.body.removeChild(printContainer);
+        }
     });
 }
+
+// 2. زر تغيير وتوحيد اسم أي لغة جماعياً
+const renameLangBtn = document.getElementById("renameAnyLangBtn");
+if (renameLangBtn) {
+    renameLangBtn.addEventListener("click", async () => {
+        let oldLang = prompt("اكتب اسم اللغة القديمة تماماً كما تظهر (مثلاً: Urdu):");
+        if (!oldLang) return;
+
+        let newLang = prompt(`اكتب الاسم الجديد للغة "${oldLang}" (مثلاً: اردو):`);
+        if (!newLang) return;
+
+        if (!confirm(`هل أنت متأكد من تغيير وتوحيد كل كلمات لغة "${oldLang}" إلى "${newLang}"؟`)) return;
+
+        try {
+            let updatedCount = 0;
+            let batchPromises = [];
+
+            allTableData.forEach(item => {
+                if (item.language && item.language.trim().toLowerCase() === oldLang.trim().toLowerCase()) {
+                    item.language = newLang.trim();
+                    if (item._documentId) {
+                        const docRef = doc(db, "words", item._documentId);
+                        batchPromises.push(updateDoc(docRef, { language: newLang.trim() }));
+                        updatedCount++;
+                    }
+                }
+            });
+
+            await Promise.all(batchPromises);
+            showNotification(`تم تحديث ${updatedCount} كلمة بنجاح من (${oldLang}) إلى (${newLang})!`);
+            await fetchAllData();
+        } catch (error) {
+            console.error("Rename Error:", error);
+            showNotification("حدث خطأ أثناء تنفيذ التعديل الجماعي.");
+        }
+    });
+}
+
+// 3. زر حذف الكلمات المكررة جماعياً
+const deleteDuplicatesBtn = document.getElementById("deleteDuplicatesBtn");
+if (deleteDuplicatesBtn) {
+    deleteDuplicatesBtn.addEventListener("click", async () => {
+        if (!confirm("هل أنت متأكد من البحث عن الكلمات المكررة وحذف النسخ المكررة مع إبقاء نسخة واحدة فقط؟")) return;
+
+        try {
+            let seenWords = new Set();
+            let duplicatesIds = [];
+            let uniqueData = [];
+
+            allTableData.forEach(item => {
+                let identifier = `${(item.word || "").trim().toLowerCase()}_${(item.language || "").trim().toLowerCase()}`;
+                
+                if (seenWords.has(identifier)) {
+                    if (item._documentId) duplicatesIds.push(item._documentId);
+                } else {
+                    seenWords.add(identifier);
+                    uniqueData.push(item);
+                }
+            });
+
+            if (duplicatesIds.length === 0) {
+                showNotification("لا توجد كلمات مكررة مطابقة في السجل!");
+                return;
+            }
+
+            let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
+            await Promise.all(deletePromises);
+
+            showNotification(`تم بنجاح العثور على ${duplicatesIds.length} كلمة مكررة وحذفها من السجل!`);
+            await fetchAllData();
+        } catch (error) {
+            console.error("Duplicates Error:", error);
+            showNotification("حدث خطأ أثناء محاولة حذف الكلمات المكررة.");
+        }
+    });
+}
+
+// ==========================================================
+// إدارة الاستمارة (إضافة وتعديل ومسح)
+// ==========================================================
 
 if (registerButton) {
     registerButton.addEventListener("click", async () => {
@@ -496,12 +603,10 @@ if (clearButton) {
     });
 }
 
-// مؤقت انتظار للتحقق من حالة المستخدم بدون طرد متسرع
 let authCheckCompleted = false;
 
 setTimeout(() => {
     if (!authCheckCompleted && (!auth.currentUser)) {
-        // لو فات سنتين ومفيش يوزر مسجل فعلياً طرد مباشر
         window.location.replace("login.html");
     }
 }, 3000);
