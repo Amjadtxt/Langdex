@@ -3,7 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
   <title>Langdex - إدارة المستخدمين</title>
 
   <!-- CSS -->
@@ -21,14 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
-    header > div, header > nav {
-      width: 75% !important;
-      max-width: 750px !important;
-      margin: 12px auto !important;
-      box-sizing: border-box !important;
-    }
-
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة (تم تركها سليمة تماماً) */
     .content > div {
       width: 85% !important;
       max-width: 850px !important;
@@ -36,48 +29,12 @@
       box-sizing: border-box !important;
     }
 
-    /* تعديلات الموبايل لمنع أي لخبطة */
+    /* تعديلات الموبايل لمنع أي لخبطة في الجدول والمحتوى فقط */
     @media (max-width: 768px) {
-      header > div, header > nav, .content > div {
+      .content > div {
         width: 94% !important;
         margin: 10px auto !important;
         padding: 12px !important;
-      }
-
-      nav.bar ul {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-around !important;
-        align-items: center !important;
-        list-style: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-      }
-
-      nav.bar ul a {
-        font-size: 13px !important;
-        padding: 6px 10px !important;
-        text-align: center !important;
-        flex: 1 !important;
-        white-space: nowrap !important;
-      }
-
-      .user-bar {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 8px 10px !important;
-      }
-
-      #username {
-        font-size: 13px !important;
-      }
-
-      #logout-btn {
-        font-size: 11px !important;
-        padding: 6px 12px !important;
       }
 
       /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
@@ -135,7 +92,7 @@
 <body>
 
   <!-- ==================================================
-       HEADER
+       HEADER (تم الاعتماد على ملفات الـ JS لتنسيق القائمة والبار من الـ CSS الأساسي)
   ================================================== -->
   <header>
     <div class="user-bar">
@@ -148,7 +105,7 @@
         <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
         <a href="#"><li>السجل</li></a>
         <a href="/Langdex/users.html"><li>المستخدمين</li></a>
-<a href="#"><li>الإعدادات</li></a>
+        <a href="#"><li>الإعدادات</li></a>
       </ul>
     </nav>
   </header>
