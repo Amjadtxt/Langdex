@@ -359,7 +359,6 @@ function renderTable(rows) {
     dataTable.innerHTML = "";
     const isAdmin = isCurrentUserAdmin();
 
-    // ضبط هيدر الجدول بناءً على حالة الأدمن بحيث تكون كلمة "المستخدم" فوق الإيميلات مباشرة في الجدول
     const thead = dataTable.closest('table')?.querySelector('thead tr');
     if (thead) {
         if (isAdmin) {
@@ -389,7 +388,6 @@ function renderTable(rows) {
     rows.forEach(data => {
         const row = document.createElement("tr");
 
-        // ترتيب الأعمدة الأساسية
         const values = [
             data.id,
             data.word,
@@ -398,7 +396,6 @@ function renderTable(rows) {
             data.language
         ];
 
-        // لو أدمن، بنحط إيميل المستخدم في آخر المصفوفة تحت هيدر "المستخدم"
         if (isAdmin) {
             values.push(data.userEmail || data.username || "غير معروف");
         }
@@ -493,11 +490,20 @@ if (clearFilterButton) {
 
 
 // ======================================================
-// SEARCH FIREBASE
+// SEARCH FIREBASE (Updated to search all records for index.html)
 // ======================================================
 
 async function searchFirebase(text) {
-    const rows = await getAllWords();
+    const snapshot = await getDocs(wordsCollection);
+    const rows = [];
+    snapshot.forEach(firebaseDoc => {
+        const data = firebaseDoc.data();
+        rows.push({
+            ...data,
+            _documentId: firebaseDoc.id
+        });
+    });
+
     const target = normalize(text);
 
     return rows.filter(item => {
@@ -620,6 +626,15 @@ if (updateButton) {
             return;
         }
 
+        // التحقق من أن الكلمة تخص المستخدم الحالي حصراً (أو الأدمن)
+        const rows = await getAllWords();
+        const isOwner = rows.some(item => item._documentId === selectedDocumentId);
+
+        if (!isOwner && !isCurrentUserAdmin()) {
+            showNotification("عذراً، لا يمكنك تعديل كلمة تخص مستخدم آخر!");
+            return;
+        }
+
         const word = wordInput ? wordInput.value.trim() : "";
         const meaning = meaningInput ? meaningInput.value.trim() : "";
         const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
@@ -660,6 +675,15 @@ if (deleteButton) {
 
         if (!currentUser || !selectedDocumentId) {
             showNotification("اختر الكلمة أولاً لحذفها.");
+            return;
+        }
+
+        // التحقق من أن الكلمة تخص المستخدم الحالي حصراً (أو الأدمن) قبل الحذف
+        const rows = await getAllWords();
+        const isOwner = rows.some(item => item._documentId === selectedDocumentId);
+
+        if (!isOwner && !isCurrentUserAdmin()) {
+            showNotification("عذراً، لا يمكنك حذف كلمة تخص مستخدم آخر!");
             return;
         }
 
