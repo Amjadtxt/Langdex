@@ -180,7 +180,7 @@ async function fetchAllData() {
             allTableData.push({ _documentId: d.id, ...d.data() });
         });
 
-        // 🌟 ترتيب البيانات بدقة بحيث يكون الأحدث من حيث وقت الإنشاء (createdAt) أولاً
+        // 🌟 الترتيب الأساسي والنهائي: الأحدث من حيث تاريخ الإنشاء (createdAt) يظهر أولاً دائماً
         allTableData.sort((a, b) => {
             let timeA = 0;
             let timeB = 0;
@@ -193,9 +193,9 @@ async function fetchAllData() {
             }
 
             if (timeB !== timeA) {
-                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً
+                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً بدقة
             }
-            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال التساوي
+            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال تساوي الوقت تماماً
         });
 
         updateLanguageFilterDropdown(allTableData);
@@ -523,7 +523,7 @@ if (deleteDuplicatesBtn) {
     });
 }
 
-// 🌟 تفعيل زر حذف النطاق حسب الـ ID (من ID كذا إلى ID كذا) بشكل صحيح
+// زر حذف النطاق حسب الـ ID
 const deleteRangeBtn = document.getElementById("deleteRangeBtn");
 const startIdInput = document.getElementById("startIdInput");
 const endIdInput = document.getElementById("endIdInput");
