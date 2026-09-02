@@ -4,58 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Langdex - Admin Dashboard</title>
-    <!-- مكتبات SheetJS و jsPDF لدعم الإكسيل وتصدير الـ PDF -->
+    
+    <!-- ربط ملف الـ CSS الأساسي للموقع -->
+    <link rel="stylesheet" href="/Langdex/style.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- مكتبات SheetJS و jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', Arial, sans-serif;
-        }
+        /* تعديلات عامة وتنسيق الدفات لتكون متساوية ومنظمة */
         body {
             background-color: #121212;
             color: #ffffff;
-            padding: 20px;
+            font-family: 'Cairo', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
         }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
+
+        .dashboard-wrapper {
+            width: 85%;
+            max-width: 1100px;
+            margin: 25px auto;
+            box-sizing: border-box;
         }
-        header h1 {
-            font-size: 24px;
-            color: #00bcd4;
-        }
-        .logout-btn {
-            background: #d9534f;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        /* Cards Section */
+
+        /* تنسيق الكاردز الإحصائية */
         .cards-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
+            width: 100%;
         }
         .card {
             background: #1e1e1e;
             padding: 20px;
             border-radius: 10px;
-            border: 1px solid #333;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
         }
         .card h3 {
-            font-size: 16px;
+            font-size: 15px;
             color: #aaa;
             margin-bottom: 8px;
         }
@@ -64,18 +59,25 @@
             font-weight: bold;
             color: #00bcd4;
         }
-        /* Search & Filter Bar */
+
+        /* شريط البحث */
         .search-box {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            width: 100%;
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
         }
         .search-txt {
             flex: 1;
             min-width: 200px;
             padding: 12px;
-            background: #1e1e1e;
+            background: #2a2a2a;
             border: 1px solid #444;
             color: white;
             border-radius: 8px;
@@ -83,44 +85,48 @@
         }
         .filter-select {
             padding: 12px;
-            background: #1e1e1e;
+            background: #2a2a2a;
             border: 1px solid #444;
             color: white;
             border-radius: 8px;
             font-size: 15px;
         }
-        .search-btn, .reg, .upa, .del, .cel, .pdf-btn {
+        .search-btn, .reg, .upa, .cel, .pdf-btn {
             padding: 10px 20px;
             border: none;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
         .search-btn { background: #00bcd4; color: #121212; }
         .reg { background: #5cb85c; color: white; }
         .upa { background: #f0ad4e; color: white; }
-        .del { background: #d9534f; color: white; }
         .cel { background: #6c757d; color: white; }
         .pdf-btn { background: #e67e22; color: white; }
 
+        /* فورم الإضافة والتعديل */
         .form {
             background: #1e1e1e;
             padding: 20px;
             border-radius: 10px;
-            border: 1px solid #333;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 25px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             align-items: center;
+            width: 100%;
+            box-sizing: border-box;
         }
         .form input, .form select {
-            padding: 10px;
+            padding: 12px;
             background: #2a2a2a;
             border: 1px solid #444;
             color: white;
             border-radius: 6px;
             width: 100%;
+            box-sizing: border-box;
         }
         .form-buttons {
             grid-column: 1 / -1;
@@ -129,12 +135,17 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        /* Table / Log Section */
+
+        /* جدول اللوج والبيانات */
         .table-container {
             background: #1e1e1e;
             border-radius: 10px;
-            border: 1px solid #333;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             overflow-x: auto;
+            width: 100%;
+            margin-bottom: 30px;
+            box-sizing: border-box;
+            padding: 10px;
         }
         table {
             width: 100%;
@@ -154,7 +165,7 @@
             background: #252525;
         }
         .action-btns button {
-            padding: 5px 10px;
+            padding: 6px 12px;
             margin-left: 5px;
             border-radius: 4px;
             border: none;
@@ -164,85 +175,167 @@
         }
         .btn-edit { background: #f0ad4e; color: white; }
         .btn-delete { background: #d9534f; color: white; }
+
+        /* تعديلات الشاشات الصغيرة والموبايل لتصبح الدفات متساوية تماماً */
+        @media (max-width: 768px) {
+            .dashboard-wrapper {
+                width: 95% !important;
+                margin: 10px auto !important;
+            }
+            .search-box, .form, .table-container {
+                width: 100% !important;
+                padding: 12px !important;
+                box-sizing: border-box !important;
+            }
+            .form-buttons {
+                flex-direction: column !important;
+            }
+            .form-buttons button {
+                width: 100% !important;
+            }
+
+            /* تحويل الجدول لبطاقات مرتبة على الموبايل زي صفحة المستخدمين بالضبط */
+            .table-container table, 
+            .table-container thead, 
+            .table-container tbody, 
+            .table-container th, 
+            .table-container td, 
+            .table-container tr {
+                display: block !important;
+                width: 100% !important;
+            }
+            .table-container thead {
+                display: none !important;
+            }
+            .table-container tr {
+                background: rgba(255, 255, 255, 0.05);
+                margin-bottom: 15px;
+                border-radius: 8px;
+                padding: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-sizing: border-box;
+            }
+            .table-container td {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                text-align: left !important;
+                padding: 8px 6px !important;
+                font-size: 13px !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            .table-container td:last-child {
+                border-bottom: none !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                padding-top: 10px !important;
+            }
+            .action-btns {
+                display: flex;
+                width: 100%;
+                gap: 5px;
+            }
+            .action-btns button {
+                flex: 1;
+                margin: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- الهيدر الأصلي (الناف بار واليوزر بار المعتمدين على style.css) -->
     <header>
-        <h1>لوحة تحكم الأدمن - Langdex</h1>
-        <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
+        <div class="user-bar">
+          <span id="username">مرحباً، User</span>
+          <button id="logout-btn">تسجيل الخروج</button>
+        </div>
+    
+        <nav class="bar">
+          <ul>
+            <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
+            <a href="#"><li>السجل</li></a>
+            <a href="/Langdex/users.html"><li>المستخدمين</li></a>
+            <a href="#"><li>الإعدادات</li></a>
+          </ul>
+        </nav>
     </header>
 
-    <!-- كاردز الإحصائيات -->
-    <div class="cards-container" id="cardsContainer">
-        <div class="card">
-            <h3>إجمالي المستخدمين</h3>
-            <p id="totalUsersCount">0</p>
+    <!-- المحتوى الرئيسي للداشبورد بدفات متساوية -->
+    <div class="dashboard-wrapper">
+
+        <!-- كاردز الإحصائيات -->
+        <div class="cards-container" id="cardsContainer">
+            <div class="card">
+                <h3>إجمالي المستخدمين</h3>
+                <p id="totalUsersCount">0</p>
+            </div>
+            <!-- سيتم حقن كاردز اللغات هنا برمجياً -->
         </div>
-        <!-- سيتم حقن كاردز اللغات هنا برمجياً -->
-    </div>
 
-    <!-- شريط البحث وفلتر اللغات العلوي -->
-    <div class="search-box">
-        <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
-        <select class="filter-select" id="languageFilterSearch">
-            <option value="all">كل اللغات (للبحث أو العرض)</option>
-        </select>
-        <button class="search-btn">بحث</button>
-        <span class="search-result" style="align-self: center; font-size: 14px; color: #aaa;"></span>
-    </div>
-
-    <!-- فورم الإضافة / التعديل -->
-    <div class="form">
-        <input type="number" placeholder="ID الكلمة" readonly>
-        <input type="text" placeholder="اسم اليوزر (قبل @)">
-        <input type="text" placeholder="الكلمة">
-        <input type="text" placeholder="المعنى">
-        <input type="text" placeholder="المرادفات / التفاصيل">
-        <select id="formLanguageSelect">
-            <option value="">اختر اللغة</option>
-            <option value="العربية">العربية</option>
-            <option value="الإنجليزية">الإنجليزية</option>
-            <option value="الفرنسية">الفرنسية</option>
-            <option value="الألمانية">الألمانية</option>
-            <option value="الهندية">الهندية</option>
-            <option value="الأوردو">الأوردو</option>
-            <option value="الفارسية">الفارسية</option>
-            <option value="عامة">عامة</option>
-        </select>
-        
-        <div class="form-buttons">
-            <button class="reg">إضافة كلمة جديدة</button>
-            <button class="upa">تعديل الكلمة المحددة</button>
-            <button class="cel">مسح الاستمارة</button>
-            <button class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
-            <button class="show-data" style="display:none;"></button>
+        <!-- شريط البحث وفلتر اللغات العلوي -->
+        <div class="search-box">
+            <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
+            <select class="filter-select" id="languageFilterSearch">
+                <option value="all">كل اللغات (للبحث أو العرض)</option>
+            </select>
+            <button class="search-btn">بحث</button>
+            <span class="search-result" style="align-self: center; font-size: 14px; color: #aaa;"></span>
         </div>
+
+        <!-- فورم الإضافة / التعديل -->
+        <div class="form">
+            <input type="number" placeholder="ID الكلمة" readonly>
+            <input type="text" placeholder="اسم اليوزر (قبل @)">
+            <input type="text" placeholder="الكلمة">
+            <input type="text" placeholder="المعنى">
+            <input type="text" placeholder="المرادفات / التفاصيل">
+            <select id="formLanguageSelect">
+                <option value="">اختر اللغة</option>
+                <option value="العربية">العربية</option>
+                <option value="الإنجليزية">الإنجليزية</option>
+                <option value="الفرنسية">الفرنسية</option>
+                <option value="الألمانية">الألمانية</option>
+                <option value="الهندية">الهندية</option>
+                <option value="الأوردو">الأوردو</option>
+                <option value="الفارسية">الفارسية</option>
+                <option value="عامة">عامة</option>
+            </select>
+            
+            <div class="form-buttons">
+                <button class="reg">إضافة كلمة جديدة</button>
+                <button class="upa">تعديل الكلمة المحددة</button>
+                <button class="cel">مسح الاستمارة</button>
+                <button class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
+            </div>
+        </div>
+
+        <!-- جدول الـ Log لكل الكلمات -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>بواسطة (اليوزر)</th>
+                        <th>الكلمة</th>
+                        <th>المعنى</th>
+                        <th>التفاصيل / المرادفات</th>
+                        <th>اللغة</th>
+                        <th>الرول</th>
+                        <th>الساعة والتاريخ</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table">
+                    <tr><td colspan="9" style="text-align: center; color: #777;">جاري تحميل البيانات...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
-    <!-- جدول الـ Log لكل الكلمات -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>بواسطة (اليوزر)</th>
-                    <th>الكلمة</th>
-                    <th>المعنى</th>
-                    <th>التفاصيل / المرادفات</th>
-                    <th>اللغة</th>
-                    <th>الرول</th>
-                    <th>الساعة والتاريخ</th>
-                    <th>الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody id="data-table">
-                <!-- يتم تعبئة اللوج هنا -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- ربط ملف الـ JS -->
+    <!-- ملفات الـ JS (شاملة سكربتات التحكم والمصادقة واليوزر بار الخاص بك) -->
+    <script type="module" src="/Langdex/user-bar.js"></script>
     <script type="module" src="admin.js"></script>
 </body>
 </html>
