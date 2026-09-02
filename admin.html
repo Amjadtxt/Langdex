@@ -102,7 +102,7 @@
       min-width: 120px;
       max-width: 250px;
       padding: 10px;
-      background: #ffffff; /* خلفية بيضاء تماماً زي ما طلبت */
+      background: #ffffff; /* خلفية بيضاء تماماً */
       border: 1px solid #ccc;
       color: #000000; /* نص أسود ليوضح جوه الخلفية البيضاء */
       border-radius: 8px;
@@ -142,17 +142,17 @@
         width: 100% !important;
       }
 
-      /* تنسيق عناصر حذف النطاق على الموبايل لتكون جوه الفريم تماماً وبالعرض المناسب */
+      /* تنسيق عناصر حذف النطاق على الموبايل لتكون في المنتصف تماماً جوه الفريم */
       .range-delete-box {
         flex-direction: column !important;
-        align-items: stretch !important; /* لملء المساحة المتاحة جوه الفريم بدون خروج عنه */
+        align-items: center !important; /* التوسيط في المنتصف بدلاً من التمدد */
         justify-content: center !important;
-        padding: 12px !important;
+        padding: 15px !important;
       }
       .range-delete-box input, 
       .range-delete-box button {
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 85% !important; /* عرض متناسق ومسوتر في المنتصف */
+        max-width: 300px !important;
         box-sizing: border-box !important;
       }
 
