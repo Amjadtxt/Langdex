@@ -467,7 +467,7 @@ if (renameLangBtn) {
     });
 }
 
-// 3. زر حذف الكلمات المكررة جماعياً
+// 3. زر حذف الكلمات المكررة جماعياً (تم الإصلاح والتفعيل التام)
 const deleteDuplicatesBtn = document.getElementById("deleteDuplicatesBtn");
 if (deleteDuplicatesBtn) {
     deleteDuplicatesBtn.addEventListener("click", async () => {
@@ -476,16 +476,21 @@ if (deleteDuplicatesBtn) {
         try {
             let seenWords = new Set();
             let duplicatesIds = [];
-            let uniqueData = [];
 
-            allTableData.forEach(item => {
-                let identifier = `${(item.word || "").trim().toLowerCase()}_${(item.language || "").trim().toLowerCase()}`;
+            // جلب البيانات مباشرة من الكوليكشن للتأكد من فحص كل المستندات بدقة
+            const querySnapshot = await getDocs(wordsCollection);
+            querySnapshot.forEach(d => {
+                const data = d.data();
+                const wordVal = String(data.word || "").trim().toLowerCase();
+                const langVal = String(data.language || "").trim().toLowerCase();
                 
-                if (seenWords.has(identifier)) {
-                    if (item._documentId) duplicatesIds.push(item._documentId);
-                } else {
+                // مفتاح فريد لكل كلمة ولغتها
+                const identifier = `${wordVal}_${langVal}`;
+
+                if (wordVal && seenWords.has(identifier)) {
+                    duplicatesIds.push(d.id);
+                } else if (wordVal) {
                     seenWords.add(identifier);
-                    uniqueData.push(item);
                 }
             });
 
@@ -494,6 +499,7 @@ if (deleteDuplicatesBtn) {
                 return;
             }
 
+            // تنفيذ الحذف لكل الوثائق المكررة
             let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
 
