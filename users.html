@@ -21,19 +21,34 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* توحيد العرض للأقسام الرئيسية */
-    .content > div, header > div, header > nav {
-      width: 88% !important;
-      max-width: 850px !important;
+    /* 1. الهيدر والنافبار ياخدوا براحهم وحجمهم الطبيعي والمتناسق في الكمبيوتر */
+    header > div, header > nav {
+      width: 75% !important;
+      max-width: 750px !important;
       margin: 12px auto !important;
       box-sizing: border-box !important;
     }
 
-    /* جعل النافبار في سطر واحد وبحجم متناسق مثل الصندوق العلوي تماماً للموبايل */
+    /* 2. الأقسام اللي تحت (المحتوى داخل الـ content) تاخد عرض موحد ومتناسق مع بعضها */
+    .content > div {
+      width: 85% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* تعديلات الموبايل الاحترافية */
     @media (max-width: 768px) {
-      .content > div, header > div, header > nav {
+      /* الهيدر والنافبار ياخدوا العرض المناسب للموبايل بدون تقييد مبالغ فيه */
+      header > div, header > nav {
         width: 94% !important;
         padding: 10px !important;
+      }
+
+      /* المحتوى كله تحت ياخد عرض موحد ومريح للشاشة الصغيرة */
+      .content > div {
+        width: 94% !important;
+        padding: 12px !important;
       }
 
       nav.bar ul {
