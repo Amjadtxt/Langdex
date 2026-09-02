@@ -45,7 +45,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// إنشاء شاشة التحميل بنفس لون خلفية الموقع وخط أبيض
+// إنشاء شاشة التحميل وتثبيتها فوراً فوق كل عناصر الصفحة
 const loaderOverlay = document.createElement("div");
 loaderOverlay.id = "auth-loader-overlay";
 loaderOverlay.style.cssText = `
@@ -54,21 +54,27 @@ loaderOverlay.style.cssText = `
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--bg-color, #1a1a1a);
+    background-color: #121212;
     color: #ffffff;
-    z-index: 999999999;
+    z-index: 9999999999;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Cairo', Arial, sans-serif;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: bold;
     direction: rtl;
 `;
 loaderOverlay.textContent = "جاري التحميل...";
 
-// إخفاء الصفحة تماماً وإظهار شاشة التحميل لحين انتهاء التحقق
-document.documentElement.style.visibility = "hidden";
-document.body.appendChild(loaderOverlay);
+// إدراج شاشة التحميل في الـ DOM بمجرد قراءة السكربت
+if (document.body) {
+    document.body.appendChild(loaderOverlay);
+} else {
+    document.addEventListener("DOMContentLoaded", () => {
+        document.body.appendChild(loaderOverlay);
+    });
+}
 
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
@@ -494,7 +500,7 @@ if (searchInput) {
     });
 }
 
-// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً مع إزالة شاشة التحميل
+// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً
 onAuthStateChanged(auth, async user => {
     if (!user) {
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
@@ -506,12 +512,11 @@ onAuthStateChanged(auth, async user => {
     const isAdmin = await verifyAdminPermission(user);
     if (!isAdmin) {
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
-        window.location.replace("index.html"); // تحويل فوري وصامت
+        window.location.replace("index.html");
         return;
     }
 
-    // لو أدمن حقيقي: إظهار الصفحة وإزالة شاشة التحميل وتحميل البيانات
-    document.documentElement.style.visibility = "visible";
+    // لو أدمن: إزالة شاشة التحميل وعرض الصفحة وتحميل البيانات
     if (loaderOverlay && loaderOverlay.parentNode) {
         loaderOverlay.remove();
     }
