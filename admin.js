@@ -650,15 +650,15 @@ onAuthStateChanged(auth, async user => {
 });
 
 // ======================================================
-// CLEAN DUPLICATE WORDS BUTTON ACTION
+// CLEAN DUPLICATE WORDS BUTTON ACTION (Admin Fixed)
 // ======================================================
 
 const cleanDuplicatesBtn = document.querySelector("#cleanDuplicatesBtn");
 
 if (cleanDuplicatesBtn) {
     cleanDuplicatesBtn.addEventListener("click", async function () {
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً.");
+        if (!currentAdmin) {
+            showNotification("يجب تسجيل الدخول كأدمن أولاً.");
             return;
         }
 
@@ -669,7 +669,7 @@ if (cleanDuplicatesBtn) {
         try {
             showNotification("جاري فحص الكلمات وتصفية التكرارات...");
 
-            // جلب كل الكلمات من فايربيز
+            // جلب كل الكلمات باستخدام دالة الأدمن
             const snapshot = await getDocs(wordsCollection);
             
             const seenWords = new Set();
@@ -683,12 +683,31 @@ if (cleanDuplicatesBtn) {
                 if (!wordKey) continue;
 
                 if (seenWords.has(wordKey)) {
-                    // الكلمة متكررة، يتم حذفها فوراً
+                    // الكلمة متكررة، يتم حذفها فوراً من فايربيز
                     const wordRef = doc(db, "words", firebaseDoc.id);
                     await deleteDoc(wordRef);
                     deletedCount++;
                 } else {
                     // أول مرة نرى الكلمة، نحفظها في القائمة
+                    seenWords.add(wordKey);
+                }
+            }
+
+            showNotification(`تم بنجاح حذف ${deletedCount} كلمة متكررة!`);
+            alert(`تم الانتهاء بنجاح! تم حذف ${deletedCount} كلمة متكررة من قاعدة البيانات.`);
+
+            // تحديث الجدول والبيانات تلقائياً بعد الحذف
+            allTableData = await getAllWordsAdmin();
+            populateLanguageFilter(allTableData);
+            applyLanguageFilterAdmin();
+
+        } catch (error) {
+            console.error("Clean Duplicates Error:", error);
+            showNotification("حدث خطأ أثناء عملية التنظيف.");
+        }
+    });
+}
+ في القائمة
                     seenWords.add(wordKey);
                 }
             }
