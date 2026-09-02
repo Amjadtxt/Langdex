@@ -717,7 +717,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Optimized for Speed with Large Data while preserving exact styling and pagination)
+// DOWNLOAD PDF (Optimized for Speed with Large Data while preserving exact styling and 30 words pagination)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -754,7 +754,7 @@ if (downloadPdfButton) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const chunkSize = 30; // الحفاظ على تقسيم 30 كلمة في كل صفحة بدقة كما طلبت
+            const chunkSize = 30; // الحفاظ على تقسيم 30 كلمة في كل صفحة بدقة
             const totalChunks = Math.ceil(rows.length / chunkSize);
 
             for (let i = 0; i < totalChunks; i++) {
@@ -806,11 +806,11 @@ if (downloadPdfButton) {
 
                 document.body.appendChild(printArea);
                 
-                // تسريع المعالجة عبر تقليل زمن الانتظار ليناسب البيانات الضخمة
+                // تقليل زمن الانتظار لتسريع معالجة الملفات الضخمة
                 await new Promise(resolve => setTimeout(resolve, 30));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 1.8, // تحسين طفيف للسرعة مع الحفاظ الكامل على دقة التنسيق
+                    scale: 1.8, // تحسين السرعة مع الحفاظ على دقة ووضوح التنسيق
                     backgroundColor: "#ffffff",
                     useCORS: true
                 });
