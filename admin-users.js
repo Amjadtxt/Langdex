@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (Fixed Full Data Export Edition)
+// LANGDEX - admin-users.js (Complete User Data Export Edition)
 // ======================================================
 
 import {
@@ -261,45 +261,46 @@ function setupActionEvents() {
         });
     });
 
-    // 2. زر تحميل كلمات المستخدم بصيغة Excel (شامل كل التفاصيل والخصائص وبدون استثناء)
+    // 2. زر تحميل كل بيانات المستخدم بكل اللغات والمعاني والمرادفات بصيغة Excel
     document.querySelectorAll(".btn-excel").forEach(btn => {
         btn.addEventListener("click", async function () {
-            const email = this.getAttribute("data-email");
+            const targetEmail = this.getAttribute("data-email").toLowerCase();
             try {
-                showNotification(`جاري تجهيز تقرير Excel الشامل للمستخدم (${email})...`);
-                const q = query(wordsCollection, where("userEmail", "==", email));
-                const snap = await getDocs(q);
-                const rawData = [];
+                showNotification(`جاري جلب كل بيانات وسجلات المستخدم (${targetEmail})...`);
                 
+                // جلب كل الكلمات من القاعدة ومطابقتها بغض النظر عن حالة الحروف الكبيرة والصغيرة للإيميل
+                const snap = await getDocs(wordsCollection);
+                const rawData = [];
                 let counter = 1;
+
                 snap.forEach(d => {
                     const item = d.data();
-                    
-                    // استخراج الحقول بكل الاحتمالات الممكنة لتجنب أي نقص
-                    const wordVal = item.word || item.term || item.title || "";
-                    const meaningVal = item.meaning || item.translation || item.definition || "";
-                    const synonymVal = item.synonym || item.synonyms || item.similar || "-";
-                    const langVal = item.language || item.lang || "أخرى";
-                    const userVal = item.userEmail || email;
+                    const recordEmail = (item.userEmail || item.email || "").toLowerCase();
 
-                    rawData.push({
-                        "م": counter++,
-                        "الكلمة": wordVal,
-                        "المعنى": meaningVal,
-                        "المرادف": synonymVal,
-                        "اللغة": langVal,
-                        "المستخدم": userVal
-                    });
+                    if (recordEmail === targetEmail) {
+                        const wordVal = item.word || item.term || item.title || "";
+                        const meaningVal = item.meaning || item.translation || item.definition || "";
+                        const synonymVal = item.synonym || item.synonyms || item.similar || "-";
+                        const langVal = item.language || item.lang || "أخرى";
+
+                        rawData.push({
+                            "م": counter++,
+                            "الكلمة": wordVal,
+                            "المعنى": meaningVal,
+                            "المرادف": synonymVal,
+                            "اللغة": langVal,
+                            "المستخدم": item.userEmail || targetEmail
+                        });
+                    }
                 });
 
                 if (rawData.length === 0) {
-                    showNotification("لا توجد كلمات لهذا المستخدم لتصديرها.");
+                    showNotification("لا توجد أي كلمات مسجلة لهذا المستخدم.");
                     return;
                 }
 
-                // إنشاء الـ Worksheet وتنسيق عرض الأعمدة
+                // إنشاء ملف الـ Excel وتنسيق الأعمدة
                 const worksheet = XLSX.utils.json_to_sheet(rawData);
-
                 worksheet['!cols'] = [
                     { wch: 6 },   // م
                     { wch: 22 },  // الكلمة
@@ -310,14 +311,13 @@ function setupActionEvents() {
                 ];
 
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "User Words Full Report");
+                XLSX.utils.book_append_sheet(workbook, worksheet, "User Complete Report");
 
-                // تصدير وتحميل الملف
-                XLSX.writeFile(workbook, `Langdex-Full-Report-${email.split('@')[0]}.xlsx`);
-                showNotification("تم تحميل تقرير الـ Excel الشامل والمفصل بنجاح!");
+                XLSX.writeFile(workbook, `Langdex-User-All-Data-${targetEmail.split('@')[0]}.xlsx`);
+                showNotification("تم تحميل كل داتا المستخدم بكل اللغات والمعاني بنجاح!");
             } catch (err) {
                 console.error(err);
-                showNotification("حدث خطأ أثناء تصدير الـ Excel.");
+                showNotification("حدث خطأ أثناء تصدير البيانات.");
             }
         });
     });
