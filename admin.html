@@ -81,7 +81,7 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً */
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
     .range-delete-box {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
@@ -92,21 +92,26 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: center; /* توسيط العناصر أفقياً */
+      justify-content: center;
       box-sizing: border-box;
       text-align: center;
+      width: 100%;
     }
     .range-delete-box input {
       flex: 1;
       min-width: 120px;
       max-width: 250px;
       padding: 10px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: white;
+      background: #ffffff; /* خلفية بيضاء تماماً زي ما طلبت */
+      border: 1px solid #ccc;
+      color: #000000; /* نص أسود ليوضح جوه الخلفية البيضاء */
       border-radius: 8px;
       font-family: 'Cairo', sans-serif;
       text-align: center;
+      box-sizing: border-box;
+    }
+    .range-delete-box input::placeholder {
+      color: #666;
     }
     .range-delete-btn {
       background: #852222;
@@ -118,6 +123,7 @@
       cursor: pointer;
       font-family: 'Cairo', sans-serif;
       transition: 0.2s;
+      box-sizing: border-box;
     }
     .range-delete-btn:hover { background: #a93232; }
 
@@ -136,16 +142,18 @@
         width: 100% !important;
       }
 
-      /* تنسيق عناصر حذف النطاق على الموبايل لتكون في المنتصف وبشكل طولي مرتب */
+      /* تنسيق عناصر حذف النطاق على الموبايل لتكون جوه الفريم تماماً وبالعرض المناسب */
       .range-delete-box {
         flex-direction: column !important;
-        align-items: center !important;
+        align-items: stretch !important; /* لملء المساحة المتاحة جوه الفريم بدون خروج عنه */
         justify-content: center !important;
+        padding: 12px !important;
       }
       .range-delete-box input, 
       .range-delete-box button {
         width: 100% !important;
         max-width: 100% !important;
+        box-sizing: border-box !important;
       }
 
       /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
@@ -255,7 +263,7 @@
       <input type="text" placeholder="المعنى">
       <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
-          <option hidden>اختر اللغة</option>
+          <option hidden>English</option>
           <option hidden>Hindi</option>
           <option hidden>Urdu</option>
           <option hidden>Persian</option>
@@ -299,7 +307,7 @@
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
-    <!-- ديف حذف نطاق الـ ID (متمركز في المنتصف) -->
+    <!-- ديف حذف نطاق الـ ID (متمركز وجوه الفريم بخلفية حقول بيضاء) -->
     <div class="range-delete-box" style="width: 100%;">
       <input type="number" id="startIdInput" placeholder="من ID رقم...">
       <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
