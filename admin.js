@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث مع حاشة التحميل وفحص الأدمن والأدوات الكاملة)
+// LANGDEX - admin.js (Updated with Excel Upload & Toast Notifications)
 // ======================================================
 
 import {
@@ -14,7 +14,6 @@ import {
     addDoc,
     getDocs,
     doc,
-    getDoc,
     updateDoc,
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
@@ -42,68 +41,6 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
-
-const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
-
-// ======================================================
-// LOADER OVERLAY (شاشة التحميل الذكية فور بدء السكربت)
-// ======================================================
-
-const loaderOverlay = document.createElement("div");
-loaderOverlay.id = "auth-loader-overlay";
-loaderOverlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #1a1a1a;
-    color: #ffffff;
-    z-index: 9999999999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 20px;
-    font-weight: bold;
-    direction: rtl;
-`;
-loaderOverlay.textContent = "جاري التحميل...";
-
-if (document.body) {
-    document.body.appendChild(loaderOverlay);
-} else {
-    document.addEventListener("DOMContentLoaded", () => {
-        document.body.appendChild(loaderOverlay);
-    });
-}
-
-// دالة التحقق الأمني من جدول الـ users في فايربيز
-async function verifyAdminPermission(user) {
-    if (!user || !user.email) return false;
-    const email = user.email.toLowerCase().trim();
-
-    if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
-        return true;
-    }
-
-    try {
-        const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-        const userDocRef = doc(db, "users", customDocId);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            if (data.role && String(data.role).toLowerCase().trim() === "admin") {
-                return true;
-            }
-        }
-    } catch (err) {
-        console.error("Admin role check error:", err);
-    }
-
-    return false;
-}
 
 // ======================================================
 // STATE VARIABLES
@@ -448,7 +385,7 @@ if (searchButton && searchInput) {
 }
 
 // ======================================================
-// EXCEL UPLOAD FEATURE
+// EXCEL UPLOAD FEATURE (NEW)
 // ======================================================
 
 if (uploadExcelButton && excelFileInput) {
@@ -477,10 +414,12 @@ if (uploadExcelButton && excelFileInput) {
         uploadExcelButton.innerText = "جاري حساب الأرقام والرفع... ⏳";
 
         try {
+            // جلب أحدث ID مستخص خصيصاً لهذا المستخدم
             const rows = await getAllWordsAdmin();
             let maxUserSpecificId = 0;
 
             rows.forEach(item => {
+                // فلترة الكلمات الخاصة بهذا المستخدم فقط لحساب تتابع الـ ID الخاص به
                 const itemUser = item.userEmail || item.userId || "";
                 if (normalize(itemUser) === normalize(userEmail) || item.userId === currentAdmin.uid) {
                     const idNum = Number(item.id);
@@ -500,7 +439,7 @@ if (uploadExcelButton && excelFileInput) {
                     const excelRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     
                     let successCount = 0;
-                    let nextId = maxUserSpecificId + 1;
+                    let nextId = maxUserSpecificId + 1; // البدء تتابعياً بعد آخر ID للمستخدم
 
                     for (let i = 1; i < excelRows.length; i++) {
                         const row = excelRows[i];
@@ -692,7 +631,32 @@ if (clearFilterButton) {
 }
 
 // ======================================================
-// AUTO-INJECT & CLEAN DUPLICATE WORDS BUTTON
+// AUTH STATE
+// ======================================================
+
+onAuthStateChanged(auth, async user => {
+    if (!user) {
+        currentAdmin = null;
+        return;
+    }
+
+    currentAdmin = user;
+    await setNextIdAdmin();
+
+    if (languageFilter) {
+        allTableData = await getAllWordsAdmin();
+        populateLanguageFilter(allTableData);
+    }
+});
+
+
+                
+
+    
+        
+            
+        // ======================================================
+// AUTO-INJECT & CLEAN DUPLICATE WORDS BUTTON (Custom Position)
 // ======================================================
 
 function initAutoCleanButton() {
@@ -712,12 +676,24 @@ function initAutoCleanButton() {
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     `;
 
+    // -----------------------------------------------------------------
+    // حدد هنا المكان اللي عايز تحط فيه الزر بالضبط جوه الكود:
+    // -----------------------------------------------------------------
+    
+    // الخيار الأول: لو عايز تحطه جوه الفورم (Form) نفسها مع باقي الأزرار
     const targetElement = document.querySelector(".form"); 
+    
+    // الخيار الثاني (لو حبيت): لو عايز تحطه جنب زرار البحث مثلاً، شيل السطر اللي فوق وحط ده:
+    // const targetElement = document.querySelector(".search-btn");
+    
+    // الخيار الثالث (لو حبيت): لو عايز تحطه فوق جدول البيانات مباشرة:
+    // const targetElement = dataTable;
 
     if (targetElement) {
+        // لو اخترت الفورم أو ديف، هيحطه جواها. لو عايز تحطه جنبه استخدم insertBefore
         targetElement.appendChild(cleanBtn); 
     } else {
-        document.body.appendChild(cleanBtn);
+        document.body.appendChild(cleanBtn); // احتياطي لو ملقاش العنصر
     }
 
     cleanBtn.addEventListener("click", async function () {
@@ -755,6 +731,7 @@ function initAutoCleanButton() {
             showNotification(`تم بنجاح حذف ${deletedCount} كلمة متكررة!`);
             alert(`تم الانتهاء بنجاح! تم حذف ${deletedCount} كلمة متكررة من قاعدة البيانات.`);
 
+            // تحديث الجدول
             allTableData = await getAllWordsAdmin();
             populateLanguageFilter(allTableData);
             applyLanguageFilterAdmin();
@@ -766,41 +743,9 @@ function initAutoCleanButton() {
     });
 }
 
+// تشغيل الدالة تلقائياً
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAutoCleanButton);
 } else {
     initAutoCleanButton();
 }
-
-// ======================================================
-// AUTH STATE & ADMIN SECURITY CHECK
-// ======================================================
-
-onAuthStateChanged(auth, async user => {
-    if (!user) {
-        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
-        window.location.replace("login.html");
-        return;
-    }
-
-    const isAdmin = await verifyAdminPermission(user);
-
-    if (!isAdmin) {
-        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
-        window.location.replace("index.html");
-        return;
-    }
-
-    // إذا تم التحقق وأصبح أدمن: إزالة شاشة التحميل واستكمال العمل
-    if (loaderOverlay && loaderOverlay.parentNode) {
-        loaderOverlay.remove();
-    }
-
-    currentAdmin = user;
-    await setNextIdAdmin();
-
-    if (languageFilter) {
-        allTableData = await getAllWordsAdmin();
-        populateLanguageFilter(allTableData);
-    }
-});
