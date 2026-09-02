@@ -1,304 +1,248 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langdex - Admin Dashboard</title>
+    <!-- مكتبات SheetJS و jsPDF لدعم الإكسيل وتصدير الـ PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+        header h1 {
+            font-size: 24px;
+            color: #00bcd4;
+        }
+        .logout-btn {
+            background: #d9534f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        /* Cards Section */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .card h3 {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        .card p {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00bcd4;
+        }
+        /* Search & Filter Bar */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-txt {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .filter-select {
+            padding: 12px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .search-btn, .reg, .upa, .del, .cel, .pdf-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .search-btn { background: #00bcd4; color: #121212; }
+        .reg { background: #5cb85c; color: white; }
+        .upa { background: #f0ad4e; color: white; }
+        .del { background: #d9534f; color: white; }
+        .cel { background: #6c757d; color: white; }
+        .pdf-btn { background: #e67e22; color: white; }
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-  <meta http-equiv="CONTENT-TYPE"
-        content="text/html; charset=UTF-8">
-
-  <title>Langdex Dashboard</title>
-
-
-  <!-- CSS -->
-
-  <link rel="stylesheet"
-        href="/Langdex/style.css">
-
-
-  <!-- Google Fonts -->
-
-  <link rel="preconnect"
-        href="https://fonts.googleapis.com">
-
-  <link rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
-
-
-  <style>
-
-  </style>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-
+        .form {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            align-items: center;
+        }
+        .form input, .form select {
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            width: 100%;
+        }
+        .form-buttons {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        /* Table / Log Section */
+        .table-container {
+            background: #1e1e1e;
+            border-radius: 10px;
+            border: 1px solid #333;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #333;
+        }
+        th {
+            background: #252525;
+            color: #00bcd4;
+        }
+        tr:hover {
+            background: #252525;
+        }
+        .action-btns button {
+            padding: 5px 10px;
+            margin-left: 5px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .btn-edit { background: #f0ad4e; color: white; }
+        .btn-delete { background: #d9534f; color: white; }
+    </style>
 </head>
-
-
 <body>
 
+    <header>
+        <h1>لوحة تحكم الأدمن - Langdex</h1>
+        <button class="logout-btn" id="logoutBtn">تسجيل الخروج</button>
+    </header>
 
-  <!-- ==================================================
-       HEADER
-  ================================================== -->
-
-  <header>
-
-
-    <!-- USER BAR -->
-
-    <div class="user-bar">
-
-      <span id="username">
-        مرحباً، User
-      </span>
-
-      <button id="logout-btn">
-        تسجيل الخروج
-      </button>
-
+    <!-- كاردز الإحصائيات -->
+    <div class="cards-container" id="cardsContainer">
+        <div class="card">
+            <h3>إجمالي المستخدمين</h3>
+            <p id="totalUsersCount">0</p>
+        </div>
+        <!-- سيتم حقن كاردز اللغات هنا برمجياً -->
     </div>
 
-
-    <!-- NAVBAR -->
-
-    <nav class="bar">
-
-      <ul>
-
-        <a href="/Langdex/admin.html">
-          <li>الرئيسية</li>
-        </a>
-
-        <a href="#">
-          <li>السجل</li>
-        </a>
-
-        <a href="/Langdex/users.html">
-          <li>المستخدمين</li>
-        </a>
-
-
-
-        <a href="#">
-          <li>الإعدادات</li>
-        </a>
-
-      </ul>
-
-    </nav>
-
-
-  </header>
-
-
-  <!-- ==================================================
-       DASHBOARD CONTENT
-  ================================================== -->
-
-  <div class="content">
-
-
-    <!-- ==================================================
-         SEARCH
-    ================================================== -->
-
-    <div class="search-section">
-<h1>البحث</h1>
-      <input
-        type="text"
-        placeholder="اكتب كلمة"
-        class="search-txt"
-        id="search-input"
-      >
-
-      <button
-        type="button"
-        class="search-btn"
-        id="search-btn">
-        البحث عن عنصر
-      </button>
-
-      <div
-        class="search-result"
-        id="search-result">
-      </div>
-
+    <!-- شريط البحث وفلتر اللغات العلوي -->
+    <div class="search-box">
+        <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
+        <select class="filter-select" id="languageFilterSearch">
+            <option value="all">كل اللغات (للبحث أو العرض)</option>
+        </select>
+        <button class="search-btn">بحث</button>
+        <span class="search-result" style="align-self: center; font-size: 14px; color: #aaa;"></span>
     </div>
 
-
-    <!-- ==================================================
-         FORM
-    ================================================== -->
-
+    <!-- فورم الإضافة / التعديل -->
     <div class="form">
-
-      <h1>لوحة التحكم</h1>
-
-
-      <!-- ID -->
-
-      <input
-        type="text"
-        placeholder="ID"
-        class="id"
-        id="word-id"
-       
-      >
-
-
-      <!-- USER EMAIL -->
-
-      <input
-        type="text"
-        placeholder="اسم المستخدم"
-        class="id"
-        id="word-user"
-   
-      >
-
-
-      <!-- WORD -->
-
-      <input
-        type="text"
-        placeholder="الكلمة"
-        id="word"
-      >
-
-
-      <!-- MEANING -->
-
-      <input
-        type="text"
-        placeholder="المعنى"
-        id="meaning"
-      >
-
-
-      <!-- SYNONYMS -->
-
-      <input
-        type="text"
-        placeholder="المرادف"
-        id="synonyms"
-      >
-
-
-      <!-- LANGUAGE -->
-
-      <select id="language">
-
-        <option value="" disabled selected>
-          اختر اللغة
-        </option>
-<option hidden>English</option>
-<option hidden>Hindi</option>
-<option hidden>Urdu</option>
-<option hidden>Persian</option>
-<option hidden>Chinese</option>
-<option hidden>Bengali</option>
-<option hidden>Turkish</option>
-<option hidden>French</option>
-<option hidden>Spanish</option>
-<option hidden>German</option>
-<option hidden>Japanese</option>
-<option hidden>Korean</option>
-<option hidden>Dutch</option>
-<option hidden>Hebrew</option>
-        <option>الإنجليزية</option>
-<option>الهندية</option>
-<option>الأردية</option>
-<option>الفارسية</option>
-<option>الصينية</option>
-<option>البنغالية</option>
-<option>التركية</option>
-<option>الفرنسية</option>
-<option>الإسبانية</option>
-<option>الألمانية</option>
-<option>اليابانية</option>
-<option>الكورية</option>
-<option>الهولندية</option>
-<option>العبرية</option>
-      </select>
-<input type="file" id="excelFileInput" accept=".xlsx, .xls" />
-<button id="uploadExcelButton">رفع ملف</button>
-
-
-
-      <!-- SAVE -->
-
-      <div class="inter1">
-
-        <button
-          type="button"
-          class="reg"
-          id="save-word">
-          حفظ
-        </button>
-
-      </div>
-
-
-      <!-- ACTIONS -->
-
-      <div class="inter">
-
-        <button
-          type="button"
-          class="upa"
-          id="update-word">
-          تحديث
-        </button>
-
-        <button
-          type="button"
-          class="del"
-          id="delete-word">
-          حذف
-        </button>
-
-        <button
-          type="button"
-          class="cel"
-          id="clear-form">
-          مسح
-        </button>
-
-      </div>
-
+        <input type="number" placeholder="ID الكلمة" readonly>
+        <input type="text" placeholder="اسم اليوزر (قبل @)">
+        <input type="text" placeholder="الكلمة">
+        <input type="text" placeholder="المعنى">
+        <input type="text" placeholder="المرادفات / التفاصيل">
+        <select id="formLanguageSelect">
+            <option value="">اختر اللغة</option>
+            <option value="العربية">العربية</option>
+            <option value="الإنجليزية">الإنجليزية</option>
+            <option value="الفرنسية">الفرنسية</option>
+            <option value="الألمانية">الألمانية</option>
+            <option value="الهندية">الهندية</option>
+            <option value="الأوردو">الأوردو</option>
+            <option value="الفارسية">الفارسية</option>
+            <option value="عامة">عامة</option>
+        </select>
+        
+        <div class="form-buttons">
+            <button class="reg">إضافة كلمة جديدة</button>
+            <button class="upa">تعديل الكلمة المحددة</button>
+            <button class="cel">مسح الاستمارة</button>
+            <button class="pdf-btn" id="downloadPdfBtn">تحميل PDF للبيانات</button>
+            <button class="show-data" style="display:none;"></button>
+        </div>
     </div>
 
-  </div>
+    <!-- جدول الـ Log لكل الكلمات -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>بواسطة (اليوزر)</th>
+                    <th>الكلمة</th>
+                    <th>المعنى</th>
+                    <th>التفاصيل / المرادفات</th>
+                    <th>اللغة</th>
+                    <th>الرول</th>
+                    <th>الساعة والتاريخ</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+                <!-- يتم تعبئة اللوج هنا -->
+            </tbody>
+        </table>
+    </div>
 
-
-  <!-- ==================================================
-       JAVASCRIPT
-  ================================================== -->
-
-  <script
-    type="module"
-    src="/Langdex/auth-guard.js">
-  </script>
-
-  <script
-    type="module"
-    src="/Langdex/user-bar.js">
-  </script>
-
-  <script
-    type="module"
-    src="/Langdex/admin.js">
-  </script>
-
-
+    <!-- ربط ملف الـ JS -->
+    <script type="module" src="admin.js"></script>
 </body>
-
 </html>
