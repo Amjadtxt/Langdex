@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (Updated with Excel Upload, Toast & Secure Admin Check)
+// LANGDEX - admin.js (محدث لضمان مطابقة الإيميل وصلاحيات الأدمن بدقة)
 // ======================================================
 
 import {
@@ -43,7 +43,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
 
-// الإيميلات المصرح لها كمشرفين أساسيين (يمكنك التعديل أو الاعتماد على داتا بيز الـ users)
 const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
 
 // ======================================================
@@ -79,7 +78,7 @@ if (document.body) {
     });
 }
 
-// دالة التحقق الأمني من صلاحيات الأدمن
+// دالة التحقق الأمني المحسنة (تبحث بالإيميل في جدول users بأكثر من طريقة)
 async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase().trim();
@@ -89,9 +88,9 @@ async function verifyAdminPermission(user) {
     }
 
     try {
-        const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-        const userDocRef = doc(db, "users", customDocId);
-        const userDocSnap = await getDoc(userDocRef);
+        // الطريقة الأولى: البحث المباشر بالإيميل كـ Document ID
+        let userDocRef = doc(db, "users", email);
+        let userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
             const data = userDocSnap.data();
@@ -99,6 +98,31 @@ async function verifyAdminPermission(user) {
                 return true;
             }
         }
+
+        // الطريقة الثانية: البحث بالـ ID المعقم (بدون رموز مثل @ و .)
+        const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
+        userDocRef = doc(db, "users", customDocId);
+        userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+            const data = userDocSnap.data();
+            if (data.role && String(data.role).toLowerCase().trim() === "admin") {
+                return true;
+            }
+        }
+
+        // الطريقة الثالثة: عمل Query شامل على كل المستندات في جدول users للتأكد مطابقة حقل الـ email
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        for (const userDoc of usersSnapshot.docs) {
+            const data = userDoc.data();
+            const docEmail = String(data.email || data.userEmail || "").toLowerCase().trim();
+            const docRole = String(data.role || "").toLowerCase().trim();
+
+            if (docEmail === email && docRole === "admin") {
+                return true;
+            }
+        }
+
     } catch (err) {
         console.error("Admin role check error:", err);
     }
@@ -133,7 +157,7 @@ let languageSelect = null;
 if (form) {
     const inputs = form.querySelectorAll("input");
     idInput = inputs[0] || null;
-    userIdInput = inputs[1] || null; // يظهر فيه اسم المستخدم قبل الـ @
+    userIdInput = inputs[1] || null;
     wordInput = inputs[2] || null;
     meaningInput = inputs[3] || null;
     synonymsInput = inputs[4] || null;
@@ -155,7 +179,6 @@ const languageFilter = document.querySelector("#language-filter");
 const clearFilterButton = document.querySelector("#clear-filter");
 const downloadPdfButton = document.querySelector("#download-pdf");
 
-// عناصر رفع الإكسيل
 const uploadExcelButton = document.getElementById('uploadExcelButton');
 const excelFileInput = document.getElementById('excelFileInput');
 
@@ -167,7 +190,6 @@ function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
 }
 
-// استخراج الاسم قبل علامة @ من الإيميل
 function extractUsername(emailOrUser) {
     if (!emailOrUser) return "-";
     const str = String(emailOrUser).trim();
@@ -774,28 +796,24 @@ if (document.readyState === 'loading') {
 }
 
 // ======================================================
-// AUTH STATE & ADMIN SECURITY CHECK (محدث وبدون تعليق لـ index.html)
+// AUTH STATE & ADMIN SECURITY CHECK
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
-    // لو اليوزر مش مسجل دخول، شيل شاشة التحميل وحوله للوigin فوراً
     if (!user) {
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
         window.location.replace("login.html");
         return;
     }
 
-    // فحص هل هو أدمن ولا لأ
     const isAdmin = await verifyAdminPermission(user);
 
     if (!isAdmin) {
-        // شيل شاشة التحميل فوراً قبل التحويل لـ index.html عشان الصفحة ما تعلّقش عند اليوزر العادي
         if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
         window.location.replace("index.html");
         return;
     }
 
-    // لو طلع أدمن بجد: شيل شاشة التحميل وكمل شغلك طبيعي في لوحة التحكم
     if (loaderOverlay && loaderOverlay.parentNode) {
         loaderOverlay.remove();
     }
