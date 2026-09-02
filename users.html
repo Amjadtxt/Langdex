@@ -21,7 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* 1. الهيدر والنافبار ياخدوا براحهم وحجمهم الطبيعي والمتناسق في الكمبيوتر */
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
     header > div, header > nav {
       width: 75% !important;
       max-width: 750px !important;
@@ -29,7 +29,6 @@
       box-sizing: border-box !important;
     }
 
-    /* 2. الأقسام اللي تحت (المحتوى داخل الـ content) تاخد عرض موحد ومتناسق مع بعضها */
     .content > div {
       width: 85% !important;
       max-width: 850px !important;
@@ -37,37 +36,32 @@
       box-sizing: border-box !important;
     }
 
-    /* تعديلات الموبايل الاحترافية */
+    /* تعديلات الموبايل لمنع أي لخبطة */
     @media (max-width: 768px) {
-      /* الهيدر والنافبار ياخدوا العرض المناسب للموبايل بدون تقييد مبالغ فيه */
-      header > div, header > nav {
-        width: 94% !important;
-        padding: 10px !important;
-      }
-
-      /* المحتوى كله تحت ياخد عرض موحد ومريح للشاشة الصغيرة */
-      .content > div {
-        width: 94% !important;
+      header > div, header > nav, .content > div {
+        width: 92% !important;
+        margin: 10px auto !important;
         padding: 12px !important;
       }
 
+      /* ضبط شريط التنقل (النافبار) ليعرض الروابط بشكل سليم وبدون تداخل */
       nav.bar ul {
         display: flex !important;
-        flex-wrap: nowrap !important; /* منع النزول لسطر جديد وتثبيتها في سطر واحد */
-        justify-content: space-between !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
         align-items: center !important;
-        gap: 2px !important;
-        padding: 4px 0 !important;
-        overflow-x: auto !important; /* السماح بالتمرير البسيط لو الشاشة صغيرة جداً */
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
       }
 
       nav.bar ul a {
-        font-size: 11px !important;
-        padding: 4px 6px !important;
-        white-space: nowrap !important;
+        font-size: 13px !important;
+        padding: 6px 10px !important;
         text-align: center !important;
-        flex: 1;
-        margin: 0 !important;
+        flex: 1 !important;
+        white-space: nowrap !important;
       }
 
       .user-bar {
@@ -75,7 +69,7 @@
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 8px 12px !important;
+        padding: 8px 10px !important;
       }
 
       #username {
@@ -87,7 +81,7 @@
         padding: 6px 12px !important;
       }
 
-      /* تحويل الجدول العادي في الموبايل إلى تصميم بطاقات احترافي */
+      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
