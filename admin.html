@@ -81,7 +81,7 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* تنسيق قسم الحذف بالـ ID */
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً */
     .range-delete-box {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
@@ -92,17 +92,21 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+      justify-content: center; /* توسيط العناصر أفقياً */
       box-sizing: border-box;
+      text-align: center;
     }
     .range-delete-box input {
       flex: 1;
       min-width: 120px;
+      max-width: 250px;
       padding: 10px;
       background: #2a2a2a;
       border: 1px solid #444;
       color: white;
       border-radius: 8px;
       font-family: 'Cairo', sans-serif;
+      text-align: center;
     }
     .range-delete-btn {
       background: #852222;
@@ -125,11 +129,23 @@
         padding: 12px !important;
       }
 
-      .actions-top-bar, .range-delete-box {
+      .actions-top-bar {
         flex-direction: column !important;
       }
-      .actions-top-bar button, .range-delete-box input, .range-delete-box button {
+      .actions-top-bar button {
         width: 100% !important;
+      }
+
+      /* تنسيق عناصر حذف النطاق على الموبايل لتكون في المنتصف وبشكل طولي مرتب */
+      .range-delete-box {
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      .range-delete-box input, 
+      .range-delete-box button {
+        width: 100% !important;
+        max-width: 100% !important;
       }
 
       /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
@@ -230,7 +246,7 @@
       </select>
     </div>
 
-    <!-- فورم إدارة الكلمات (الإضافة والتعديل بدون أزرار خارجية) -->
+    <!-- فورم إدارة الكلمات -->
     <div class="form" style="width: 100%;">
       <h1>إدارة الكلمات</h1>
       <input type="number" placeholder="ID الكلمة" readonly>
@@ -239,7 +255,7 @@
       <input type="text" placeholder="المعنى">
       <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
-          <option hidden>English</option>
+          <option hidden>اختر اللغة</option>
           <option hidden>Hindi</option>
           <option hidden>Urdu</option>
           <option hidden>Persian</option>
@@ -283,7 +299,7 @@
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
-    <!-- ديف حذف نطاق الـ ID -->
+    <!-- ديف حذف نطاق الـ ID (متمركز في المنتصف) -->
     <div class="range-delete-box" style="width: 100%;">
       <input type="number" id="startIdInput" placeholder="من ID رقم...">
       <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
