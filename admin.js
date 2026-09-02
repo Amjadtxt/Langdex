@@ -651,80 +651,101 @@ onAuthStateChanged(auth, async user => {
 
 
                 
+
+    
+        
+            
+        // ======================================================
+// AUTO-INJECT & CLEAN DUPLICATE WORDS BUTTON (Custom Position)
 // ======================================================
-// AUTO-INJECT & CLEAN DUPLICATE WORDS BUTTON
-// ======================================================
 
-// إنشاء الزر تلقائياً وإضافته فوق الجدول أو في أباتشي الصفحة مباشرة لضمان ظهوره
-const cleanBtn = document.createElement("button");
-cleanBtn.textContent = "🧹 حذف الكلمات المتكررة نهائياً";
-cleanBtn.style.cssText = `
-    display: block;
-    width: 100%;
-    max-width: 300px;
-    margin: 15px auto;
-    background-color: #d9534f;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    z-index: 9999;
-`;
+function initAutoCleanButton() {
+    const cleanBtn = document.createElement("button");
+    cleanBtn.textContent = "🧹 حذف الكلمات المتكررة نهائياً";
+    cleanBtn.style.cssText = `
+        background-color: #d9534f;
+        color: white;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Cairo', Arial, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    `;
 
-// وضع الزر قبل الجدول مباشرة ليكون ظاهراً وواضحاً
-if (dataTable && dataTable.parentNode) {
-    dataTable.parentNode.insertBefore(cleanBtn, dataTable);
-} else {
-    document.body.appendChild(cleanBtn);
-}
+    // -----------------------------------------------------------------
+    // حدد هنا المكان اللي عايز تحط فيه الزر بالضبط جوه الكود:
+    // -----------------------------------------------------------------
+    
+    // الخيار الأول: لو عايز تحطه جوه الفورم (Form) نفسها مع باقي الأزرار
+    const targetElement = document.querySelector(".form"); 
+    
+    // الخيار الثاني (لو حبيت): لو عايز تحطه جنب زرار البحث مثلاً، شيل السطر اللي فوق وحط ده:
+    // const targetElement = document.querySelector(".search-btn");
+    
+    // الخيار الثالث (لو حبيت): لو عايز تحطه فوق جدول البيانات مباشرة:
+    // const targetElement = dataTable;
 
-cleanBtn.addEventListener("click", async function () {
-    if (!currentAdmin) {
-        showNotification("يجب تسجيل الدخول كأدمن أولاً.");
-        return;
+    if (targetElement) {
+        // لو اخترت الفورم أو ديف، هيحطه جواها. لو عايز تحطه جنبه استخدم insertBefore
+        targetElement.appendChild(cleanBtn); 
+    } else {
+        document.body.appendChild(cleanBtn); // احتياطي لو ملقاش العنصر
     }
 
-    if (!confirm("هل أنت متأكد من رغبتك في فحص وحذف الكلمات المتكررة تماماً من قاعدة البيانات؟")) {
-        return;
-    }
-
-    try {
-        showNotification("جاري فحص الكلمات وتصفية التكرارات...");
-
-        const snapshot = await getDocs(wordsCollection);
-        const seenWords = new Set();
-        let deletedCount = 0;
-
-        for (const firebaseDoc of snapshot.docs) {
-            const data = firebaseDoc.data();
-            const wordKey = String(data.word || "").trim().toLowerCase();
-
-            if (!wordKey) continue;
-
-            if (seenWords.has(wordKey)) {
-                const wordRef = doc(db, "words", firebaseDoc.id);
-                await deleteDoc(wordRef);
-                deletedCount++;
-            } else {
-                seenWords.add(wordKey);
-            }
+    cleanBtn.addEventListener("click", async function () {
+        if (!currentAdmin) {
+            showNotification("يجب تسجيل الدخول كأدمن أولاً.");
+            return;
         }
 
-        showNotification(`تم بنجاح حذف ${deletedCount} كلمة متكررة!`);
-        alert(`تم الانتهاء بنجاح! تم حذف ${deletedCount} كلمة متكررة من قاعدة البيانات.`);
+        if (!confirm("هل أنت متأكد من رغبتك في فحص وحذف الكلمات المتكررة تماماً من قاعدة البيانات؟")) {
+            return;
+        }
 
-        // تحديث الجدول
-        allTableData = await getAllWordsAdmin();
-        populateLanguageFilter(allTableData);
-        applyLanguageFilterAdmin();
+        try {
+            showNotification("جاري فحص الكلمات وتصفية التكرارات...");
 
-    } catch (error) {
-        console.error("Clean Duplicates Error:", error);
-        showNotification("حدث خطأ أثناء عملية التنظيف.");
-    }
-});
+            const snapshot = await getDocs(wordsCollection);
+            const seenWords = new Set();
+            let deletedCount = 0;
+
+            for (const firebaseDoc of snapshot.docs) {
+                const data = firebaseDoc.data();
+                const wordKey = String(data.word || "").trim().toLowerCase();
+
+                if (!wordKey) continue;
+
+                if (seenWords.has(wordKey)) {
+                    const wordRef = doc(db, "words", firebaseDoc.id);
+                    await deleteDoc(wordRef);
+                    deletedCount++;
+                } else {
+                    seenWords.add(wordKey);
+                }
+            }
+
+            showNotification(`تم بنجاح حذف ${deletedCount} كلمة متكررة!`);
+            alert(`تم الانتهاء بنجاح! تم حذف ${deletedCount} كلمة متكررة من قاعدة البيانات.`);
+
+            // تحديث الجدول
+            allTableData = await getAllWordsAdmin();
+            populateLanguageFilter(allTableData);
+            applyLanguageFilterAdmin();
+
+        } catch (error) {
+            console.error("Clean Duplicates Error:", error);
+            showNotification("حدث خطأ أثناء عملية التنظيف.");
+        }
+    });
+}
+
+// تشغيل الدالة تلقائياً
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAutoCleanButton);
+} else {
+    initAutoCleanButton();
+}
