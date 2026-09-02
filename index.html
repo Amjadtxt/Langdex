@@ -1,26 +1,215 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
   <link rel="stylesheet" href="/Langdex/style.css"/>
   <title>Langdex</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-    html {
-        visibility: hidden;
-    }
-</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+      /* تنسيقات مستوحاة من لوحة الأدمن الفخمة والمظلمة بدون تعديل العناصر */
+      html {
+          visibility: visible !important;
+          background-color: #121212;
+          color: #ffffff;
+          font-family: 'Cairo', sans-serif;
+      }
+
+      body {
+          background-color: #121212;
+          color: #ffffff;
+          margin: 0;
+          padding: 0;
+          font-family: 'Cairo', sans-serif;
+      }
+
+      header {
+          background: #1e1e1e;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 12px 20px;
+      }
+
+      .user-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+      }
+
+      .user-bar span {
+          color: #00bcd4;
+          font-weight: 600;
+      }
+
+      .user-bar button {
+          background: #c0392b;
+          color: white;
+          border: none;
+          padding: 6px 14px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-family: 'Cairo', sans-serif;
+          transition: 0.2s;
+      }
+      .user-bar button:hover { background: #962d22; }
+
+      .bar ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          gap: 15px;
+      }
+
+      .bar ul a {
+          color: #aaa;
+          text-decoration: none;
+          font-weight: 500;
+          transition: 0.2s;
+      }
+      .bar ul a:hover, .bar ul a li:hover {
+          color: #00bcd4;
+      }
+
+      .content {
+          width: 85% !important;
+          max-width: 850px !important;
+          margin: 25px auto !important;
+          box-sizing: border-box !important;
+      }
+
+      .search-section {
+          background: rgba(255, 255, 255, 0.03);
+          padding: 20px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 20px;
+          box-sizing: border-box;
+      }
+
+      .search-section h1 {
+          font-size: 18px;
+          color: #fff;
+          margin-top: 0;
+          margin-bottom: 12px;
+      }
+
+      .search-txt {
+          width: 100%;
+          padding: 12px;
+          background: #2a2a2a;
+          border: 1px solid #444;
+          color: white;
+          border-radius: 8px;
+          box-sizing: border-box;
+          font-family: 'Cairo', sans-serif;
+          margin-bottom: 10px;
+      }
+
+      .search-btn {
+          background: #00bcd4;
+          color: #121212;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          font-weight: bold;
+          cursor: pointer;
+          font-family: 'Cairo', sans-serif;
+          transition: 0.2s;
+          width: 100%;
+      }
+      .search-btn:hover { background: #008ba3; color: white; }
+
+      .search-result {
+          margin-top: 10px;
+          color: #aaa;
+          font-size: 14px;
+      }
+
+      .form {
+          background: rgba(255, 255, 255, 0.03);
+          padding: 20px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-sizing: border-box;
+      }
+
+      .form h1 {
+          font-size: 18px;
+          color: #fff;
+          margin-top: 0;
+          margin-bottom: 15px;
+      }
+
+      .form input, .form select {
+          width: 100%;
+          padding: 12px;
+          margin-bottom: 12px;
+          background: #2a2a2a;
+          border: 1px solid #444;
+          color: white;
+          border-radius: 8px;
+          box-sizing: border-box;
+          font-family: 'Cairo', sans-serif;
+      }
+
+      .form input:focus, .form select:focus {
+          border-color: #00bcd4;
+          outline: none;
+      }
+
+      .inter1, .inter {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 5px;
+      }
+
+      .form button {
+          flex: 1;
+          padding: 11px;
+          border: none;
+          border-radius: 8px;
+          font-weight: bold;
+          cursor: pointer;
+          font-family: 'Cairo', sans-serif;
+          transition: 0.2s;
+      }
+
+      .reg { background: #27ae60; color: white; }
+      .reg:hover { background: #219653; }
+
+      .upa { background: #2980b9; color: white; }
+      .upa:hover { background: #2471a3; }
+
+      .del { background: #c0392b; color: white; }
+      .del:hover { background: #962d22; }
+
+      .cel { background: #7f8c8d; color: white; }
+      .cel:hover { background: #626d6e; }
+
+      @media (max-width: 768px) {
+          .content {
+              width: 94% !important;
+              margin: 10px auto !important;
+          }
+          .inter1, .inter {
+              flex-direction: column;
+          }
+          .form button {
+              width: 100%;
+          }
+      }
+  </style>
 </head>
 <body>
   <header>
-<div class="user-bar">
-    <span id="username">مرحباً، User</span>
-
-    <button id="logout-btn">تسجيل الخروج</button>
-</div>
+    <div class="user-bar">
+        <span id="username">مرحباً، User</span>
+        <button id="logout-btn">تسجيل الخروج</button>
+    </div>
     <nav class="bar">
       <ul>
         <a href="#"><li>الرئيسية</li></a> 
@@ -31,65 +220,69 @@
       </ul>
     </nav> 
   </header>
+
   <div class="content">
-      <div class="search-section">
-  <h1>البحث</h1>
-  <input type="text" placeholder="اكتب كلمة" class="search-txt">
-  <button type="button" class="search-btn">
-    بحث
-  </button>
-  <div class="search-result"></div>
-</div>
-    <div class="form"> 
-      <h1>تسجيل كلمة جديدة</h1>
-    <input type="text" placeholder="ID" class="id" readonly=""></input>
-    <input type="text" placeholder="الكلمة"></input>
-    <input type="text" placeholder="المعنى"></input>
-    <input type="text" placeholder="المرادف"></input>
-      <select>
-        <option value="" disabled selected>اختر اللغة</option>
-<option hidden>English</option>
-<option hidden>Hindi</option>
-<option hidden>Urdu</option>
-<option hidden>Persian</option>
-<option hidden>Chinese</option>
-<option hidden>Bengali</option>
-<option hidden>Turkish</option>
-<option hidden>French</option>
-<option hidden>Spanish</option>
-<option hidden>German</option>
-<option hidden>Japanese</option>
-<option hidden>Korean</option>
-<option hidden>Dutch</option>
-<option hidden>Hebrew</option>
-  <option>الإنجليزية</option>
-<option>الهندية</option>
-<option>الأردية</option>
-<option>الفارسية</option>
-<option>الصينية</option>
-<option>البنغالية</option>
-<option>التركية</option>
-<option>الفرنسية</option>
-<option>الإسبانية</option>
-<option>الألمانية</option>
-<option>اليابانية</option>
-<option>الكورية</option>
-<option>الهولندية</option>
-<option>العبرية</option>
-</select>
-      <div class="inter1">
-         <button type="button" class="reg">حفظ</button
-  </div>
-      <div class="inter">
-         <button type="button" class="upa">تحديث</button>
-      <button type="Cancel" class="del">حذف</button>
-        <button type="button" class="cel">مسح</button>
-  </div>
+    <div class="search-section">
+      <h1>البحث</h1>
+      <input type="text" placeholder="اكتب كلمة" class="search-txt">
+      <button type="button" class="search-btn">
+        بحث
+      </button>
+      <div class="search-result"></div>
     </div>
 
+    <div class="form"> 
+      <h1>تسجيل كلمة جديدة</h1>
+      <input type="text" placeholder="ID" class="id" readonly="">
+      <input type="text" placeholder="الكلمة">
+      <input type="text" placeholder="المعنى">
+      <input type="text" placeholder="المرادف">
+      <select>
+        <option value="" disabled selected>اختر اللغة</option>
+        <option hidden>English</option>
+        <option hidden>Hindi</option>
+        <option hidden>Urdu</option>
+        <option hidden>Persian</option>
+        <option hidden>Chinese</option>
+        <option hidden>Bengali</option>
+        <option hidden>Turkish</option>
+        <option hidden>French</option>
+        <option hidden>Spanish</option>
+        <option hidden>German</option>
+        <option hidden>Japanese</option>
+        <option hidden>Korean</option>
+        <option hidden>Dutch</option>
+        <option hidden>Hebrew</option>
+        <option>الإنجليزية</option>
+        <option>الهندية</option>
+        <option>الأردية</option>
+        <option>الفارسية</option>
+        <option>الصينية</option>
+        <option>البنغالية</option>
+        <option>التركية</option>
+        <option>الفرنسية</option>
+        <option>الإسبانية</option>
+        <option>الألمانية</option>
+        <option>اليابانية</option>
+        <option>الكورية</option>
+        <option>الهولندية</option>
+        <option>العبرية</option>
+      </select>
+      
+      <div class="inter1">
+        <button type="button" class="reg">حفظ</button>
+      </div>
+      
+      <div class="inter">
+        <button type="button" class="upa">تحديث</button>
+        <button type="button" class="del">حذف</button>
+        <button type="button" class="cel">مسح</button>
+      </div>
     </div>
-<script type="module" src="auth-guard.js"></script>
-<script type="module" src="user-bar.js"></script>
+  </div>
+
+  <script type="module" src="auth-guard.js"></script>
+  <script type="module" src="user-bar.js"></script>
   <script type="module" src="/Langdex/script.js"></script>
 </body>
 </html>
