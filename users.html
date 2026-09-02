@@ -29,25 +29,27 @@
       box-sizing: border-box !important;
     }
 
-    /* تنسيق النافبار وزر تسجيل الخروج للموبايل */
+    /* تنسيق النافبار وزر تسجيل الخروج للموبايل (بحجم أكبر ومرتب) */
     @media (max-width: 768px) {
       .content > div, header > div, header > nav {
         width: 94% !important;
-        padding: 10px !important;
+        padding: 12px !important;
       }
 
       nav.bar ul {
         display: flex !important;
         flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 3px !important; /* تقليل المسافة لتسع كل الكلمات */
-        padding: 4px 0 !important;
+        justify-content: space-between !important; /* توزيع متساوي يأخذ عرض الشاشة بالكامل */
+        gap: 4px !important;
+        padding: 6px 0 !important;
       }
 
       nav.bar ul a {
-        font-size: 10px !important; /* تصغير الخط قليلاً لضبط المساحة */
-        padding: 3px 5px !important; /* تقليل الحواف الداخلية */
+        font-size: 13px !important; /* تكبير الخط قليلاً ليكون واضحاً */
+        padding: 6px 8px !important; /* مساحة ضغط أكبر ومريحة */
         margin: 0 !important;
+        flex-grow: 1;
+        text-align: center;
       }
 
       .user-bar {
@@ -55,16 +57,17 @@
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 8px 12px !important;
+        padding: 10px 14px !important;
       }
 
       #username {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        font-weight: 600;
       }
 
       #logout-btn {
-        font-size: 11px !important;
-        padding: 5px 10px !important;
+        font-size: 12px !important;
+        padding: 8px 14px !important; /* تكبير زر تسجيل الخروج ليكون واضحاً وسهل الضغط */
       }
 
       /* تحويل الجدول العادي في الموبايل إلى تصميم بطاقات احترافي */
