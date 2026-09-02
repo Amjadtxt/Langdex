@@ -626,7 +626,6 @@ if (updateButton) {
             return;
         }
 
-        // التحقق من أن الكلمة تخص المستخدم الحالي حصراً (أو الأدمن)
         const rows = await getAllWords();
         const isOwner = rows.some(item => item._documentId === selectedDocumentId);
 
@@ -678,7 +677,6 @@ if (deleteButton) {
             return;
         }
 
-        // التحقق من أن الكلمة تخص المستخدم الحالي حصراً (أو الأدمن) قبل الحذف
         const rows = await getAllWords();
         const isOwner = rows.some(item => item._documentId === selectedDocumentId);
 
@@ -717,7 +715,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Optimized for Speed with Large Data while preserving exact styling and 30 words pagination)
+// DOWNLOAD PDF (Optimized for high speed & 30 words per page)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -744,7 +742,7 @@ if (downloadPdfButton) {
                 return;
             }
 
-            showNotification("جاري تجهيز ملف PDF بسرعة فائقة...");
+            showNotification("جاري تجهيز ملف PDF بسرعة عالية...");
 
             const isAdmin = isCurrentUserAdmin();
             const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
@@ -754,24 +752,27 @@ if (downloadPdfButton) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const chunkSize = 30; // الحفاظ على تقسيم 30 كلمة في كل صفحة بدقة
+            const chunkSize = 30; // 30 كلمة لكل صفحة تماماً كما طلبْت
             const totalChunks = Math.ceil(rows.length / chunkSize);
+
+            // إنشاء عنصر حاوية مخفي واحد واستخدامه لتسريع العملية وعدم إنشاء/حذف عناصر كثيرة بالذاكرة
+            const printArea = document.createElement("div");
+            printArea.style.cssText = `
+                position: fixed;
+                top: -9999px;
+                left: -9999px;
+                width: 800px;
+                background: #ffffff;
+                color: #000000;
+                padding: 20px;
+                font-family: Cairo, Arial, sans-serif;
+                direction: rtl;
+                z-index: -9999;
+            `;
+            document.body.appendChild(printArea);
 
             for (let i = 0; i < totalChunks; i++) {
                 const chunkRows = rows.slice(i * chunkSize, (i + 1) * chunkSize);
-
-                const printArea = document.createElement("div");
-                printArea.style.cssText = `
-                    position: fixed;
-                    top: -9999px;
-                    left: -9999px;
-                    width: 800px;
-                    background: #ffffff;
-                    color: #000000;
-                    padding: 20px;
-                    font-family: Cairo, Arial, sans-serif;
-                    direction: rtl;
-                `;
 
                 printArea.innerHTML = `
                     <div style="text-align: center; margin-bottom: 20px;">
@@ -804,20 +805,16 @@ if (downloadPdfButton) {
                     </table>
                 `;
 
-                document.body.appendChild(printArea);
-                
-                // تقليل زمن الانتظار لتسريع معالجة الملفات الضخمة
+                // وقت انتظار صغير جداً ومناسب للبيانات الضخمة (10000 كلمة) لتقليل وقت التجهيز مع ضمان الاستقرار
                 await new Promise(resolve => setTimeout(resolve, 30));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 1.8, // تحسين السرعة مع الحفاظ على دقة ووضوح التنسيق
+                    scale: 1.5, // تقليل الـ scale قليلاً لتسريع الـ rendering للبيانات الكبيرة دون التأثير على الوضوح المقبول
                     backgroundColor: "#ffffff",
                     useCORS: true
                 });
 
-                printArea.remove();
-
-                const imgData = canvas.toDataURL("image/jpeg", 0.95);
+                const imgData = canvas.toDataURL("image/jpeg", 0.85); // ضغط خفيف للسرعة الفائقة
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
@@ -828,10 +825,13 @@ if (downloadPdfButton) {
                 pdf.addImage(imgData, "JPEG", 0, 10, pdfWidth, pdfHeight);
             }
             
+            // تنظيف العنصر المخفي بعد الانتهاء
+            printArea.remove();
+
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            showNotification("تم تحميل ملف PDF بنجاح وسرعة فائقة.");
+            showNotification("تم تحميل ملف PDF بنجاح وبسرعة فائقة!");
         } catch (error) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
