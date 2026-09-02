@@ -16,6 +16,7 @@ import {
     doc,
     setDoc,
     deleteDoc,
+    updateDoc,
     query,
     where,
     serverTimestamp
@@ -73,7 +74,7 @@ function showNotification(message) {
     }, 3000);
 }
 
-// التحقق من صلاحيات الأدمن أمنياً وطرد غير المعتمدين
+// التحقق من صلاحيات الأدمن أمنياً
 async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase();
@@ -98,7 +99,7 @@ async function verifyAdminPermission(user) {
     return false;
 }
 
-// جلب وتحميل بيانات المستخدمين والكلمات واللغات
+// جلب وتحميل بيانات المستخدمين والكلمات وإحصائيات كل لغة
 async function loadUsersData() {
     try {
         const usersSnap = await getDocs(usersCollection);
@@ -115,7 +116,7 @@ async function loadUsersData() {
                     email: email,
                     role: data.role || "user",
                     wordsCount: 0,
-                    languages: new Set()
+                    languagesMap: {}
                 });
             }
         });
@@ -123,7 +124,7 @@ async function loadUsersData() {
         wordsSnap.forEach(docSnap => {
             const data = docSnap.data();
             const email = (data.userEmail || "").toLowerCase();
-            const lang = data.language || "";
+            const lang = data.language || "أخرى";
 
             if (email) {
                 if (!usersMap.has(email)) {
@@ -132,16 +133,28 @@ async function loadUsersData() {
                         email: data.userEmail,
                         role: "user",
                         wordsCount: 0,
-                        languages: new Set()
+                        languagesMap: {}
                     });
                 }
                 const userObj = usersMap.get(email);
                 userObj.wordsCount++;
-                if (lang) userObj.languages.add(lang);
+                
+                if (!userObj.languagesMap[lang]) {
+                    userObj.languagesMap[lang] = 0;
+                }
+                userObj.languagesMap[lang]++;
             }
         });
 
         allUsersData = [...usersMap.values()];
+
+        // **تثبيت الـ Admin في أول القائمة دائماً**
+        allUsersData.sort((a, b) => {
+            if (a.role === "admin" && b.role !== "admin") return -1;
+            if (a.role !== "admin" && b.role === "admin") return 1;
+            return 0;
+        });
+
         renderUsersTable(allUsersData);
     } catch (error) {
         console.error("Error loading users:", error);
@@ -162,16 +175,32 @@ function renderUsersTable(usersList) {
 
     usersList.forEach((user, index) => {
         const row = document.createElement("tr");
-        const langsArray = user.languages instanceof Set ? [...user.languages] : [];
-        const langsOptionsHtml = langsArray.map(l => `<option value="${l}">${l}</option>`).join("");
+        
+        const langsArray = Object.keys(user.languagesMap);
+        const langsOptionsHtml = langsArray.map(l => `<option value="${l}">${l} (${user.languagesMap[l]} كلمة)</option>`).join("");
+
+        let langStatsHtml = "-";
+        if (langsArray.length > 0) {
+            langStatsHtml = langsArray.map(l => `<span style="display:inline-block; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; font-size:11px;">${l}: <b>${user.languagesMap[l]}</b></span>`).join(" ");
+        }
 
         row.innerHTML = `
             <td style="text-align: center;">${index + 1}</td>
             <td>${user.email}</td>
             <td style="text-align: center;"><b>${user.role}</b></td>
             <td style="text-align: center;">${user.wordsCount} كلمة</td>
-            <td style="text-align: center;">${langsArray.length > 0 ? langsArray.join("، ") : "-"}</td>
-            <td style="text-align: center; display: flex; flex-direction: column; gap: 5px; align-items: center;">
+            <td style="text-align: center;">${langStatsHtml}</td>
+            <td style="text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+                
+                <!-- تحديث الرول -->
+                <div style="display: flex; gap: 3px; width: 100%;">
+                    <select class="role-select-${index}" style="padding: 3px; font-size: 11px; width: 65%; margin:0;">
+                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>مستخدم عادي (user)</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>مشرف (admin)</option>
+                    </select>
+                    <button class="upa btn-update-role" data-email="${user.email}" data-docid="${user.docId || ''}" data-index="${index}" style="padding: 4px; font-size: 11px; width: 35%;">تحديث الرول</button>
+                </div>
+
                 <button class="upa btn-pdf" data-email="${user.email}" style="padding: 5px 10px; font-size: 11px; width: 100%;">تحميل PDF كلمات الشخص</button>
                 
                 <div style="display: flex; gap: 3px; width: 100%;">
@@ -192,7 +221,47 @@ function renderUsersTable(usersList) {
 }
 
 function setupActionEvents() {
-    // 1. زر تحميل كلمات المستخدم كله PDF (منظم وداعم للطباعة)
+    // 1. زر تحديث صلاحية الرول للمستخدم
+    document.querySelectorAll(".btn-update-role").forEach(btn => {
+        btn.addEventListener("click", async function () {
+            const email = this.getAttribute("data-email");
+            let docId = this.getAttribute("data-docid");
+            const index = this.getAttribute("data-index");
+            const selectEl = document.querySelector(`.role-select-${index}`);
+            const newRole = selectEl ? selectEl.value : "";
+
+            if (!newRole) return;
+
+            try {
+                showNotification("جاري تحديث الرول للمستخدم...");
+                
+                if (!docId || docId === "null" || docId === "") {
+                    docId = email.replace(/[^a-zA-Z0-9]/g, "_");
+                }
+
+                const userDocRef = doc(db, "users", docId);
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    await updateDoc(userDocRef, { role: newRole });
+                } else {
+                    await setDoc(userDocRef, {
+                        email: email,
+                        role: newRole,
+                        createdAt: serverTimestamp()
+                    });
+                }
+
+                showNotification(`تم تحديث رول المستخدم (${email}) إلى (${newRole}) بنجاح!`);
+                loadUsersData();
+            } catch (err) {
+                console.error(err);
+                showNotification("حدث خطأ أثناء تحديث الرول.");
+            }
+        });
+    });
+
+    // 2. زر تحميل كلمات المستخدم كله PDF
     document.querySelectorAll(".btn-pdf").forEach(btn => {
         btn.addEventListener("click", async function () {
             const email = this.getAttribute("data-email");
@@ -222,7 +291,6 @@ function setupActionEvents() {
                 pdf.text(`Email: ${email}`, 105, yPos, { align: "center" });
                 yPos += 15;
 
-                // رأس الجدول
                 pdf.setFillColor(103, 128, 113);
                 pdf.rect(15, yPos, 180, 8, "F");
                 pdf.setTextColor(255, 255, 255);
@@ -253,7 +321,6 @@ function setupActionEvents() {
                     pdf.text(langText.substring(0, 15), 175, yPos);
 
                     yPos += 8;
-                    
                     pdf.setDrawColor(220, 220, 220);
                     pdf.line(15, yPos - 2, 195, yPos - 2);
                 });
@@ -267,7 +334,7 @@ function setupActionEvents() {
         });
     });
 
-    // 2. زر حذف تصنيف/لغة معينة للمستخدم
+    // 3. زر حذف تصنيف/لغة معينة للمستخدم
     document.querySelectorAll(".btn-delete-lang").forEach(btn => {
         btn.addEventListener("click", async function () {
             const email = this.getAttribute("data-email");
@@ -299,7 +366,7 @@ function setupActionEvents() {
         });
     });
 
-    // 3. زر حذف المستخدم تماماً
+    // 4. زر حذف المستخدم تماماً
     document.querySelectorAll(".btn-delete-user").forEach(btn => {
         btn.addEventListener("click", async function () {
             const email = this.getAttribute("data-email");
@@ -327,7 +394,7 @@ function setupActionEvents() {
     });
 }
 
-// إضافة يوزر جديد (مع إنشاء الحساب بالباسورد في Auth وحفظه في users collection)
+// إضافة يوزر جديد
 const addUserBtn = document.querySelector("#add-user-btn");
 if (addUserBtn) {
     addUserBtn.addEventListener("click", async function () {
@@ -381,7 +448,7 @@ if (searchInput) {
     });
 }
 
-// التحقق الأمني عند تحميل الصفحة وطرد غير الأدمن
+// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً بدون تنبيه
 onAuthStateChanged(auth, async user => {
     if (!user) {
         window.location.href = "login.html";
@@ -391,8 +458,7 @@ onAuthStateChanged(auth, async user => {
 
     const isAdmin = await verifyAdminPermission(user);
     if (!isAdmin) {
-        alert("عذراً، هذه الصفحة مخصصة للمشرفين فقط!");
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // تحويل فوري وصامت
         return;
     }
 
