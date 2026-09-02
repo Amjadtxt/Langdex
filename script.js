@@ -717,7 +717,7 @@ if (clearButton) {
 
 
 // ======================================================
-// DOWNLOAD PDF (Optimized for Speed & Stability with Large Data)
+// DOWNLOAD PDF (Optimized for Speed with Large Data while preserving exact styling and pagination)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -754,8 +754,7 @@ if (downloadPdfButton) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            // زيادة عدد الكلمات في الصفحة الواحدة إلى 45 لتقليل عدد الصفحات وصناعة ملف أسرع للبيانات الضخمة
-            const chunkSize = 45; 
+            const chunkSize = 30; // الحفاظ على تقسيم 30 كلمة في كل صفحة بدقة كما طلبت
             const totalChunks = Math.ceil(rows.length / chunkSize);
 
             for (let i = 0; i < totalChunks; i++) {
@@ -769,36 +768,36 @@ if (downloadPdfButton) {
                     width: 800px;
                     background: #ffffff;
                     color: #000000;
-                    padding: 15px;
+                    padding: 20px;
                     font-family: Cairo, Arial, sans-serif;
                     direction: rtl;
                 `;
 
                 printArea.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
-                        <p style="margin:4px 0; font-size: 13px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="margin:0; font-size: 22px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
+                        <p style="margin:5px 0; font-size: 14px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; color: #000; background: #ffffff;">
                         <thead>
                             <tr style="background-color: #b5b5b5;">
-                                <th style="border: 1px solid #333; padding: 5px; width: 8%;">#</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 22%;">الكلمة</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 28%;">المعنى</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 18%;">المرادف</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 14%;">اللغة</th>
-                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>' : ''}
+                                <th style="border: 1px solid #333; padding: 6px; width: 8%;">#</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 22%;">الكلمة</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 28%;">المعنى</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 18%;">المرادف</th>
+                                <th style="border: 1px solid #333; padding: 6px; width: 14%;">اللغة</th>
+                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 6px; width: 10%;">المستخدم</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
                             ${chunkRows.map((item, idx) => `
                                 <tr>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.word || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
-                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
+                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.word || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.meaning || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px;">${item.synonyms || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.language || '-'}</td>
+                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 5px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -807,18 +806,18 @@ if (downloadPdfButton) {
 
                 document.body.appendChild(printArea);
                 
-                // تقليص وقت الانتظار (Delay) لتسريع المعالجة بشكل ملحوظ مع البيانات الكبيرة
+                // تسريع المعالجة عبر تقليل زمن الانتظار ليناسب البيانات الضخمة
                 await new Promise(resolve => setTimeout(resolve, 30));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 1.5, // تقليل مقياس الرندر قليلاً لزيادة السرعة وتقليل حجم الذاكرة مع الحفاظ على وضوح التنسيق تماماً
+                    scale: 1.8, // تحسين طفيف للسرعة مع الحفاظ الكامل على دقة التنسيق
                     backgroundColor: "#ffffff",
                     useCORS: true
                 });
 
                 printArea.remove();
 
-                const imgData = canvas.toDataURL("image/jpeg", 0.9); // ضغط خفيف لزيادة سرعة التصدير للملفات الكبيرة
+                const imgData = canvas.toDataURL("image/jpeg", 0.95);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
@@ -933,9 +932,9 @@ if (uploadExcelButton && excelFileInput) {
 
 // ======================================================
 // AUTH STATE & ROUTE GUARD
-// =================================0=====================
+// ======================================================
 
-onAuthStateChanged(auth, async user > {
+onAuthStateChanged(auth, async user => {
     if (!user) {
         currentUser = null;
         window.location.href = "login.html";
