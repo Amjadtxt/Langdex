@@ -9,26 +9,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-      /* تنسيقات مستوحاة من لوحة الأدمن الفخمة والمظلمة بدون تعديل العناصر */
+      /* تنسيقات الألوان والستايل المظلم المستوحى من لوحة الأدمن */
       html {
           visibility: visible !important;
-          background-color: #121212;
-          color: #ffffff;
-          font-family: 'Cairo', sans-serif;
+          background-color: #121212 !important;
+          color: #ffffff !important;
+          font-family: 'Cairo', sans-serif !important;
       }
 
       body {
-          background-color: #121212;
-          color: #ffffff;
+          background-color: #121212 !important;
+          color: #ffffff !important;
           margin: 0;
           padding: 0;
-          font-family: 'Cairo', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
       }
 
       header {
-          background: #1e1e1e;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 12px 20px;
+          background: #1e1e1e !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+          padding: 12px 20px !important;
       }
 
       .user-bar {
@@ -38,22 +38,22 @@
           margin-bottom: 10px;
       }
 
-      .user-bar span {
-          color: #00bcd4;
+      #username {
+          color: #00bcd4 !important;
           font-weight: 600;
       }
 
-      .user-bar button {
-          background: #c0392b;
-          color: white;
-          border: none;
-          padding: 6px 14px;
-          border-radius: 6px;
+      #logout-btn {
+          background: #c0392b !important;
+          color: white !important;
+          border: none !important;
+          padding: 6px 14px !important;
+          border-radius: 6px !important;
           cursor: pointer;
-          font-family: 'Cairo', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
           transition: 0.2s;
       }
-      .user-bar button:hover { background: #962d22; }
+      #logout-btn:hover { background: #962d22 !important; }
 
       .bar ul {
           list-style: none;
@@ -64,13 +64,13 @@
       }
 
       .bar ul a {
-          color: #aaa;
+          color: #aaa !important;
           text-decoration: none;
           font-weight: 500;
           transition: 0.2s;
       }
       .bar ul a:hover, .bar ul a li:hover {
-          color: #00bcd4;
+          color: #00bcd4 !important;
       }
 
       .content {
@@ -81,114 +81,114 @@
       }
 
       .search-section {
-          background: rgba(255, 255, 255, 0.03);
-          padding: 20px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          margin-bottom: 20px;
-          box-sizing: border-box;
+          background: rgba(255, 255, 255, 0.03) !important;
+          padding: 20px !important;
+          border-radius: 10px !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          margin-bottom: 20px !important;
+          box-sizing: border-box !important;
       }
 
       .search-section h1 {
-          font-size: 18px;
-          color: #fff;
-          margin-top: 0;
-          margin-bottom: 12px;
+          font-size: 18px !important;
+          color: #fff !important;
+          margin-top: 0 !important;
+          margin-bottom: 12px !important;
       }
 
       .search-txt {
-          width: 100%;
-          padding: 12px;
-          background: #2a2a2a;
-          border: 1px solid #444;
-          color: white;
-          border-radius: 8px;
-          box-sizing: border-box;
-          font-family: 'Cairo', sans-serif;
-          margin-bottom: 10px;
+          width: 100% !important;
+          padding: 12px !important;
+          background: #2a2a2a !important;
+          border: 1px solid #444 !important;
+          color: white !important;
+          border-radius: 8px !important;
+          box-sizing: border-box !important;
+          font-family: 'Cairo', sans-serif !important;
+          margin-bottom: 10px !important;
       }
 
       .search-btn {
-          background: #00bcd4;
-          color: #121212;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-weight: bold;
+          background: #00bcd4 !important;
+          color: #121212 !important;
+          border: none !important;
+          padding: 10px 20px !important;
+          border-radius: 8px !important;
+          font-weight: bold !important;
           cursor: pointer;
-          font-family: 'Cairo', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
           transition: 0.2s;
-          width: 100%;
+          width: 100% !important;
       }
-      .search-btn:hover { background: #008ba3; color: white; }
+      .search-btn:hover { background: #008ba3 !important; color: white !important; }
 
       .search-result {
-          margin-top: 10px;
-          color: #aaa;
-          font-size: 14px;
+          margin-top: 10px !important;
+          color: #aaa !important;
+          font-size: 14px !important;
       }
 
       .form {
-          background: rgba(255, 255, 255, 0.03);
-          padding: 20px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-sizing: border-box;
+          background: rgba(255, 255, 255, 0.03) !important;
+          padding: 20px !important;
+          border-radius: 10px !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-sizing: border-box !important;
       }
 
       .form h1 {
-          font-size: 18px;
-          color: #fff;
-          margin-top: 0;
-          margin-bottom: 15px;
+          font-size: 18px !important;
+          color: #fff !important;
+          margin-top: 0 !important;
+          margin-bottom: 15px !important;
       }
 
       .form input, .form select {
-          width: 100%;
-          padding: 12px;
-          margin-bottom: 12px;
-          background: #2a2a2a;
-          border: 1px solid #444;
-          color: white;
-          border-radius: 8px;
-          box-sizing: border-box;
-          font-family: 'Cairo', sans-serif;
+          width: 100% !important;
+          padding: 12px !important;
+          margin-bottom: 12px !important;
+          background: #2a2a2a !important;
+          border: 1px solid #444 !important;
+          color: white !important;
+          border-radius: 8px !important;
+          box-sizing: border-box !important;
+          font-family: 'Cairo', sans-serif !important;
       }
 
       .form input:focus, .form select:focus {
-          border-color: #00bcd4;
-          outline: none;
+          border-color: #00bcd4 !important;
+          outline: none !important;
       }
 
       .inter1, .inter {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-top: 5px;
+          display: flex !important;
+          gap: 10px !important;
+          flex-wrap: wrap !important;
+          margin-top: 5px !important;
       }
 
       .form button {
-          flex: 1;
-          padding: 11px;
-          border: none;
-          border-radius: 8px;
-          font-weight: bold;
+          flex: 1 !important;
+          padding: 11px !important;
+          border: none !important;
+          border-radius: 8px !important;
+          font-weight: bold !important;
           cursor: pointer;
-          font-family: 'Cairo', sans-serif;
+          font-family: 'Cairo', sans-serif !important;
           transition: 0.2s;
       }
 
-      .reg { background: #27ae60; color: white; }
-      .reg:hover { background: #219653; }
+      .reg { background: #27ae60 !important; color: white !important; }
+      .reg:hover { background: #219653 !important; }
 
-      .upa { background: #2980b9; color: white; }
-      .upa:hover { background: #2471a3; }
+      .upa { background: #2980b9 !important; color: white !important; }
+      .upa:hover { background: #2471a3 !important; }
 
-      .del { background: #c0392b; color: white; }
-      .del:hover { background: #962d22; }
+      .del { background: #c0392b !important; color: white !important; }
+      .del:hover { background: #962d22 !important; }
 
-      .cel { background: #7f8c8d; color: white; }
-      .cel:hover { background: #626d6e; }
+      .cel { background: #7f8c8d !important; color: white !important; }
+      .cel:hover { background: #626d6e !important; }
 
       @media (max-width: 768px) {
           .content {
@@ -196,10 +196,10 @@
               margin: 10px auto !important;
           }
           .inter1, .inter {
-              flex-direction: column;
+              flex-direction: column !important;
           }
           .form button {
-              width: 100%;
+              width: 100% !important;
           }
       }
   </style>
