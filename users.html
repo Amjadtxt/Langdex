@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Langdex - إدارة المستخدمين</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/Langdex/style.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    .users-container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      direction: rtl;
+      font-family: 'Cairo', sans-serif;
+    }
+    .users-container h1 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 20px;
+      color: #222;
+    }
+    .add-user-section, .search-users-section {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .add-user-section input, .add-user-section select, .search-users-section input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: 'Cairo', sans-serif;
+      box-sizing: border-box;
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      text-align: right;
+    }
+    .users-table th, .users-table td {
+      border: 1px solid #ddd;
+      padding: 9px 10px;
+      font-size: 13px;
+    }
+    .users-table th {
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    .users-table tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    .action-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 4px;
+      margin-bottom: 3px;
+    }
+    .btn-edit { background-color: #4CAF50; color: white; }
+    .btn-delete-records { background-color: #ff9800; color: white; }
+    .btn-delete-user { background-color: #f44336; color: white; }
+    .btn-main {
+      background-color: #2196F3;
+      color: white;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-family: 'Cairo', sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================================================
+       HEADER
+  ================================================== -->
+  <header>
+    <div class="user-bar">
+      <span id="username">مرحباً، User</span>
+      <button id="logout-btn">تسجيل الخروج</button>
+    </div>
+
+    <nav class="bar">
+      <ul>
+        <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
+        <a href="/Langdex/data.html"><li>البيانات</li></a>
+        <a href="/Langdex/users.html" class="active"><li>المستخدمين</li></a>
+        <a href="#"><li>الإحصائيات</li></a>
+        <a href="#"><li>الإعدادات</li></a>
+      </ul>
+    </nav>
+  </header>
+
+
+  <!-- ==================================================
+       DASHBOARD CONTENT
+  ================================================== -->
+  <div class="content">
+    <div class="users-container">
+
+      <!-- قسم البحث عن المستخدمين -->
+      <div class="search-users-section">
+        <h1>بحث عن مستخدم</h1>
+        <input type="text" id="search-user-input" placeholder="اكتب البريد الإلكتروني أو اسم المستخدم للبحث...">
+      </div>
+
+      <!-- قسم إضافة مستخدم جديد -->
+      <div class="add-user-section">
+        <h1>إضافة مستخدم جديد للنظام</h1>
+        <input type="email" id="new-user-email" placeholder="البريد الإلكتروني للمستخدم">
+        <select id="new-user-role">
+          <option value="" disabled selected>اختر الرول (الصلاحية)</option>
+          <option value="user">مستخدم عادي (user)</option>
+          <option value="admin">مشرف (admin)</option>
+        </select>
+        <button type="button" class="btn-main" id="add-user-btn">حفظ وإضافة المستخدم</button>
+      </div>
+
+      <!-- جدول عرض المستخدمين -->
+      <h1>قائمة المستخدمين المسجلين</h1>
+      <div style="overflow-x: auto;">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>البريد الإلكتروني</th>
+              <th>الرول (Role)</th>
+              <th>عدد الكلمات</th>
+              <th>اللغات المستخدمة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr><td colspan="6" style="text-align: center;">جاري تحميل بيانات المستخدمين...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ==================================================
+       JAVASCRIPT
+  ================================================== -->
+  <script type="module" src="/Langdex/auth-guard.js"></script>
+  <script type="module" src="/Langdex/user-bar.js"></script>
+  <script type="module" src="/Langdex/admin-users.js"></script>
+
+</body>
+
+</html>
