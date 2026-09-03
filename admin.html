@@ -88,7 +88,7 @@
       box-sizing: border-box;
     }
     .inter1 button {
-      flex: 1; /* توزيع المساحة بالتساوي 100% بدون أي تفاوت بين الأزرار */
+      flex: 1;
       min-width: 0;
       padding: 12px 10px;
       border: none;
@@ -111,36 +111,51 @@
     .inter1 .cel { background: #7f8c8d; }
     .inter1 .cel:hover { background: #626d6e; }
 
-    /* ديف الأزرار العلوية المستقل */
+    /* ديف الأزرار العلوية المستقله (تنسيق موحد تماماً مع باقي الديفات) */
     .actions-top-bar {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       padding: 15px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 15px;
       box-sizing: border-box;
+      width: 100%;
     }
-
-    .pdf-btn { background: #e67e22; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
-    .pdf-btn:hover { background: #d35400; }
-
-    .delete-edited-btn { background: #c0392b; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
-    .delete-edited-btn:hover { background: #962d22; }
-
-    .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .actions-top-bar button {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
+      font-size: 14px;
+    }
+    .fix-lang-btn { background: #8e44ad; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* قسم رفع الإكسيل المنفصل تماماً (لرفع الملف وقراءة البيانات إلى فايربيز مباشرة) */
+    .delete-edited-btn { background: #c0392b; }
+    .delete-edited-btn:hover { background: #962d22; }
+
+    .pdf-btn { background: #e67e22; }
+    .pdf-btn:hover { background: #d35400; }
+
+    /* قسم رفع الإكسيل المنفصل (بنفس التنسيق الموحد) */
     .excel-upload-section {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       padding: 15px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       margin-bottom: 15px;
       display: flex;
       align-items: center;
@@ -152,7 +167,7 @@
     }
     .excel-upload-section h3 {
       color: #00bcd4;
-      font-size: 16px;
+      font-size: 15px;
       margin: 0;
     }
     .excel-upload-label {
@@ -166,32 +181,31 @@
       transition: 0.2s;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       font-size: 14px;
     }
     .excel-upload-label:hover { background: #219653; }
 
-    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته تماماً مع تنسيق الديفات */
     .range-delete-box {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       padding: 15px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       margin-bottom: 15px;
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      text-align: center;
       width: 100%;
     }
     .range-delete-box input {
       flex: 1;
-      min-width: 120px;
-      max-width: 250px;
-      padding: 10px;
+      min-width: 0;
+      padding: 12px 10px;
       background: #ffffff;
       border: 1px solid #ccc;
       color: #000000;
@@ -199,14 +213,17 @@
       font-family: 'Cairo', sans-serif;
       text-align: center;
       box-sizing: border-box;
+      font-size: 14px;
     }
     .range-delete-box input::placeholder {
       color: #666;
     }
     .range-delete-btn {
+      flex: 1;
+      min-width: 0;
       background: #852222;
       color: white;
-      padding: 10px 20px;
+      padding: 12px 10px;
       border: none;
       border-radius: 8px;
       font-weight: bold;
@@ -214,6 +231,8 @@
       font-family: 'Cairo', sans-serif;
       transition: 0.2s;
       box-sizing: border-box;
+      text-align: center;
+      font-size: 14px;
     }
     .range-delete-btn:hover { background: #a93232; }
 
@@ -245,7 +264,7 @@
       background-color: #962d22;
     }
 
-    /* تعديلات الموبايل */
+    /* تعديلات الموبايل للتجاوب السلس */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
@@ -253,35 +272,28 @@
         padding: 12px !important;
       }
 
-      .actions-top-bar, .excel-upload-section {
+      .excel-upload-section {
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
       }
-      .actions-top-bar button, .excel-upload-section label {
+      .excel-upload-section label {
         width: 100% !important;
         box-sizing: border-box !important;
-        justify-content: center !important;
       }
 
-      .inter1 {
-        flex-direction: column !important;
-      }
-      .inter1 button {
-        width: 100% !important;
-      }
-
+      .inter1, 
+      .actions-top-bar, 
       .range-delete-box {
         flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 15px !important;
       }
+      
+      .inter1 button, 
+      .actions-top-bar button, 
       .range-delete-box input, 
       .range-delete-box button {
-        width: 85% !important;
-        max-width: 300px !important;
-        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: none !important;
       }
 
       .table-container table, 
@@ -330,13 +342,6 @@
         padding: 10px !important;
         box-sizing: border-box !important;
         margin: 2px 0 !important;
-      }
-
-      .table-container td select {
-        width: 100% !important;
-        font-size: 13px !important;
-        padding: 8px !important;
-        box-sizing: border-box !important;
       }
     }
   </style>
@@ -388,7 +393,7 @@
       </select>
     </div>
 
-    <!-- 4. فورم إدارة الكلمات (بالشكل الأصلي تماماً بدون أي دمج) -->
+    <!-- 3. فورم إدارة الكلمات -->
     <div class="form" style="width: 100%;">
       <h1>إدارة الكلمات</h1>
       <input type="number" placeholder="ID الكلمة" readonly>
@@ -433,21 +438,24 @@
         <button type="button" class="cel">مسح البيانات</button>
       </div>
     </div>
-<div class="excel-upload-section" style="width: 100%;">
-      <h3>استيراد وتصعيد الكلمات عبر ملف Excel</h3>
+
+    <!-- 4. قسم رفع ملف الإكسيل -->
+    <div class="excel-upload-section" style="width: 100%;">
+      <h3>رفع كلمات بإستخدام ملف إكسيل</h3>
       <label for="excelFileInput" class="excel-upload-label">
-        <span>📊 رفع ملف إكسيل مباشر</span>
+        <span<رفع الملف</span>
         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
       </label>
     </div>
-    <!-- 5. ديف الأزرار الإضافية -->
+
+    <!-- 5. ديف الأزرار العلوية المنسقة -->
     <div class="actions-top-bar" style="width: 100%;">
       <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
       <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
-    <!-- 6. ديف حذف نطاق الـ ID -->
+    <!-- 6. ديف حذف نطاق الـ ID المنسق -->
     <div class="range-delete-box" style="width: 100%;">
       <input type="number" id="startIdInput" placeholder="من ID رقم...">
       <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
@@ -462,7 +470,7 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>بواسطة (اليوزر)</th>
+              <th<بواسطة</th>
               <th>الكلمة</th>
               <th>المعنى</th>
               <th>التفاصيل / المرادفات</th>
