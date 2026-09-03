@@ -16,7 +16,8 @@ import {
     doc,
     getDoc,
     updateDoc,
-    deleteDoc
+    deleteDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 import {
@@ -47,6 +48,7 @@ setPersistence(auth, browserLocalPersistence).catch((err) => {
 
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
+const logsCollection = collection(db, "logs"); // 🌟 كوليكشن السجل
 
 const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
 
@@ -146,6 +148,35 @@ function showNotification(message) {
     `;
     clearTimeout(notification._timer);
     notification._timer = setTimeout(() => notification.remove(), 3000);
+}
+
+// ======================================================
+// 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
+// ======================================================
+// action:         "add" | "update" | "delete" | "bulk_update" | "bulk_delete"
+// collectionName: اسم الكوليكشن المتأثر ("words")
+// targetDocId:    الـ document id بتاع العنصر (لو عملية مفردة)
+// oldData:        نسخة من البيانات *قبل* التعديل/الحذف (عنصر واحد أو مصفوفة في الجماعي)
+// newData:        نسخة من البيانات *بعد* الإضافة/التعديل (عنصر واحد أو مصفوفة في الجماعي)
+// details:        نص وصفي مختصر يظهر في جدول اللوج
+async function writeLog({ action, collectionName, targetDocId = null, oldData = null, newData = null, details = "" }) {
+    try {
+        await addDoc(logsCollection, {
+            userName: currentAdmin?.email || "أدمن",
+            uid: currentAdmin?.uid || null,
+            action,
+            collectionName,
+            targetDocId,
+            oldData,
+            newData,
+            details,
+            role: "admin",
+            undone: false, // 🌟 يتحول true بعد التراجع عنه
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("فشل تسجيل الحدث في اللوج:", error);
+    }
 }
 
 function updateLanguageFilterDropdown(rows) {
@@ -290,7 +321,30 @@ function renderTableLog(rows) {
         deleteBtn.addEventListener("click", async () => {
             if (!confirm(`هل أنت متأكد من حذف الكلمة "${data.word}"؟`)) return;
             try {
+                // 🌟 نجهز نسخة من البيانات قبل الحذف عشان التراجع
+                const oldData = {
+                    id: data.id ?? null,
+                    word: data.word ?? "",
+                    meaning: data.meaning ?? "",
+                    synonyms: data.synonyms ?? "",
+                    language: data.language ?? "",
+                    userId: data.userId ?? "",
+                    userEmail: data.userEmail ?? "",
+                    username: data.username ?? "",
+                    role: data.role ?? "user"
+                };
+
                 await deleteDoc(doc(db, "words", data._documentId));
+
+                await writeLog({
+                    action: "delete",
+                    collectionName: "words",
+                    targetDocId: data._documentId,
+                    oldData,
+                    newData: null,
+                    details: `حذف كلمة "${data.word || ""}" (بواسطة الأدمن)`
+                });
+
                 showNotification("تم حذف الكلمة بنجاح.");
                 await fetchAllData();
             } catch (err) {
@@ -449,6 +503,7 @@ if (renameLangBtn) {
         try {
             let updatedCount = 0;
             let batchPromises = [];
+            let affectedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
 
             allTableData.forEach(item => {
                 if (item.language && item.language.trim().toLowerCase() === oldLang.trim().toLowerCase()) {
@@ -456,12 +511,24 @@ if (renameLangBtn) {
                     if (item._documentId) {
                         const docRef = doc(db, "words", item._documentId);
                         batchPromises.push(updateDoc(docRef, { language: newLang.trim() }));
+                        affectedDocIds.push(item._documentId);
                         updatedCount++;
                     }
                 }
             });
 
             await Promise.all(batchPromises);
+
+            // 🌟 تسجيل حدث جماعي — التراجع عنه = إرجاع اللغة القديمة لكل الـ docIds دي
+            await writeLog({
+                action: "bulk_update",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: { field: "language", value: oldLang.trim(), docIds: affectedDocIds },
+                newData: { field: "language", value: newLang.trim(), docIds: affectedDocIds },
+                details: `تغيير جماعي للغة من "${oldLang}" إلى "${newLang}" (${updatedCount} كلمة)`
+            });
+
             showNotification(`تم تحديث ${updatedCount} كلمة بنجاح من (${oldLang}) إلى (${newLang})!`);
             await fetchAllData();
         } catch (error) {
@@ -480,6 +547,7 @@ if (deleteDuplicatesBtn) {
         try {
             let seenWords = new Set();
             let duplicatesIds = [];
+            let duplicatesOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
 
             const querySnapshot = await getDocs(wordsCollection);
             querySnapshot.forEach(d => {
@@ -491,6 +559,7 @@ if (deleteDuplicatesBtn) {
 
                 if (wordVal && seenWords.has(identifier)) {
                     duplicatesIds.push(d.id);
+                    duplicatesOldData.push({ _documentId: d.id, ...data, createdAt: null });
                 } else if (wordVal) {
                     seenWords.add(identifier);
                 }
@@ -503,6 +572,16 @@ if (deleteDuplicatesBtn) {
 
             let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
+
+            // 🌟 تسجيل حدث الحذف الجماعي — التراجع عنه = إعادة إضافة كل الكلمات دي من oldData
+            await writeLog({
+                action: "bulk_delete",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: duplicatesOldData,
+                newData: null,
+                details: `حذف جماعي لـ ${duplicatesIds.length} كلمة مكررة`
+            });
 
             showNotification(`تم بنجاح العثور على ${duplicatesIds.length} كلمة مكررة وحذفها من السجل!`);
             await fetchAllData();
@@ -532,10 +611,13 @@ if (deleteRangeBtn) {
 
         try {
             let targetDocsIds = [];
+            let targetOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
+
             allTableData.forEach(item => {
                 const currentIdNum = Number(item.id);
                 if (!isNaN(currentIdNum) && currentIdNum >= startId && currentIdNum <= endId && item._documentId) {
                     targetDocsIds.push(item._documentId);
+                    targetOldData.push({ ...item, createdAt: null });
                 }
             });
 
@@ -546,6 +628,16 @@ if (deleteRangeBtn) {
 
             let deletePromises = targetDocsIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
+
+            // 🌟 تسجيل حدث الحذف الجماعي بالنطاق — التراجع عنه = إعادة إضافة كل الكلمات دي
+            await writeLog({
+                action: "bulk_delete",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: targetOldData,
+                newData: null,
+                details: `حذف جماعي بالنطاق (${startId} - ${endId}) لـ ${targetDocsIds.length} كلمة`
+            });
 
             showNotification(`تم بنجاح حذف ${targetDocsIds.length} كلمة ضمن النطاق المحدد!`);
             if (startIdInput) startIdInput.value = "";
@@ -577,7 +669,7 @@ if (registerButton) {
             const adminEmail = currentAdmin.email || "";
             const finalUser = usernameVal ? usernameVal + "@admin" : extractUsername(adminEmail);
 
-            await addDoc(wordsCollection, {
+            const newWordData = {
                 id: newId,
                 word: word,
                 meaning: meaning,
@@ -588,6 +680,18 @@ if (registerButton) {
                 username: finalUser,
                 role: "admin",
                 createdAt: new Date()
+            };
+
+            const newDocRef = await addDoc(wordsCollection, newWordData);
+
+            // 🌟 تسجيل حدث الإضافة — التراجع عنه = حذف الـ doc ده
+            await writeLog({
+                action: "add",
+                collectionName: "words",
+                targetDocId: newDocRef.id,
+                oldData: null,
+                newData: { ...newWordData, createdAt: null },
+                details: `إضافة كلمة "${word}" (بواسطة الأدمن)`
             });
 
             showNotification("تم إضافة الكلمة بنجاح للقاعدة!");
@@ -617,12 +721,30 @@ if (updateButton) {
         }
 
         try {
+            // 🌟 نجيب النسخة الحالية (قبل التعديل) من البيانات المحلية عشان نسجلها كـ oldData
+            const beforeEdit = allTableData.find(item => item._documentId === selectedDocumentId);
+            const oldData = beforeEdit
+                ? {
+                    id: beforeEdit.id ?? null,
+                    word: beforeEdit.word ?? "",
+                    meaning: beforeEdit.meaning ?? "",
+                    synonyms: beforeEdit.synonyms ?? "",
+                    language: beforeEdit.language ?? ""
+                }
+                : null;
+
             const docRef = doc(db, "words", selectedDocumentId);
-            await updateDoc(docRef, {
-                word: word,
-                meaning: meaning,
-                synonyms: synonyms,
-                language: language
+            const updatedFields = { word, meaning, synonyms, language };
+            await updateDoc(docRef, updatedFields);
+
+            // 🌟 تسجيل حدث التعديل — التراجع عنه = رجّع oldData على نفس الـ doc
+            await writeLog({
+                action: "update",
+                collectionName: "words",
+                targetDocId: selectedDocumentId,
+                oldData,
+                newData: updatedFields,
+                details: `تعديل كلمة "${oldData?.word || word}" ← "${word}" (بواسطة الأدمن)`
             });
 
             showNotification("تم تحديث الكلمة بنجاح!");
@@ -697,6 +819,8 @@ if (excelFileInput) {
                 const finalUser = extractUsername(adminEmail);
 
                 let importedCount = 0;
+                let importedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
+
                 // نبدأ من الصف 1 (تخطي الصف 0 الهيدر)
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
@@ -707,7 +831,7 @@ if (excelFileInput) {
                         const language = String(row[3] || "").trim();  // العمود الرابع: اللغة
 
                         if (word && meaning && language) {
-                            await addDoc(wordsCollection, {
+                            const newDocRef = await addDoc(wordsCollection, {
                                 id: currentNextId++,
                                 word: word,
                                 meaning: meaning,
@@ -719,9 +843,22 @@ if (excelFileInput) {
                                 role: "admin",
                                 createdAt: new Date()
                             });
+                            importedDocIds.push(newDocRef.id);
                             importedCount++;
                         }
                     }
+                }
+
+                // 🌟 تسجيل حدث استيراد جماعي — التراجع عنه = حذف كل الـ docIds دي
+                if (importedCount > 0) {
+                    await writeLog({
+                        action: "bulk_add",
+                        collectionName: "words",
+                        targetDocId: null,
+                        oldData: null,
+                        newData: { docIds: importedDocIds },
+                        details: `استيراد ${importedCount} كلمة من ملف إكسيل`
+                    });
                 }
 
                 showNotification(`تم بنجاح رفع واستيراد ${importedCount} كلمة من ملف الإكسيل! 🚀`);
