@@ -1,6 +1,6 @@
 // ======================================================
 // LANGDEX - user-bar.js
-// Username + Logout + استقبال إشعارات الأدمن
+// Username + Logout + جرس إشعارات الأدمن (مع تشخيص Console)
 // ======================================================
 
 import {
@@ -67,12 +67,72 @@ const logoutButton =
 
 
 // ======================================================
-// USERNAME + استدعاء الإشعارات
+// 🔔 حقن أيقونة الجرس جنب زر الخروج
+// ======================================================
+
+let bellBtn = null;
+let bellBadge = null;
+let currentNotifs = [];
+
+function injectBellIcon() {
+    const userBar = document.querySelector(".user-bar");
+    if (!userBar || document.querySelector("#notifyBellBtn")) return;
+
+    bellBtn = document.createElement("button");
+    bellBtn.id = "notifyBellBtn";
+    bellBtn.type = "button";
+    bellBtn.style.cssText = `
+        position: relative; background: transparent; border: none; cursor: pointer;
+        font-size: 20px; color: #fff; margin: 0 6px; padding: 4px 6px; line-height: 1;
+    `;
+    bellBtn.textContent = "🔔";
+
+    bellBadge = document.createElement("span");
+    bellBadge.id = "notifyBellBadge";
+    bellBadge.style.cssText = `
+        position: absolute; top: -2px; left: -2px; background: #e74c3c; color: #fff;
+        border-radius: 50%; min-width: 16px; height: 16px; font-size: 10px;
+        display: none; align-items: center; justify-content: center; padding: 0 3px;
+        font-family: Arial, sans-serif;
+    `;
+    bellBtn.appendChild(bellBadge);
+
+    // نحطه قبل زرار تسجيل الخروج لو موجود، وإلا في آخر الـ user-bar
+    if (logoutButton) {
+        userBar.insertBefore(bellBtn, logoutButton);
+    } else {
+        userBar.appendChild(bellBtn);
+    }
+
+    bellBtn.addEventListener("click", () => {
+        console.log("[Langdex Notify] تم الضغط على الجرس، عدد الإشعارات الحالية:", currentNotifs.length);
+        showNotificationsPopup(currentNotifs);
+    });
+
+    console.log("[Langdex Notify] تم حقن أيقونة الجرس بنجاح.");
+}
+
+function updateBellBadge(count) {
+    if (!bellBadge) return;
+    if (count > 0) {
+        bellBadge.textContent = count > 9 ? "9+" : String(count);
+        bellBadge.style.display = "flex";
+    } else {
+        bellBadge.style.display = "none";
+    }
+}
+
+
+// ======================================================
+// USERNAME + تشغيل نظام الإشعارات
 // ======================================================
 
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) return;
+    if (!user) {
+        console.log("[Langdex Notify] مفيش مستخدم مسجل دخول، تم إيقاف فحص الإشعارات.");
+        return;
+    }
 
     const email =
         user.email || "";
@@ -86,6 +146,9 @@ onAuthStateChanged(auth, (user) => {
             `مرحباً، ${name}`;
     }
 
+    console.log("[Langdex Notify] مستخدم مسجل دخول:", email);
+
+    injectBellIcon();
     checkAndShowNotifications(user);
 });
 
@@ -124,7 +187,7 @@ if (logoutButton) {
 
 
 // ======================================================
-// 🔔 استقبال وعرض إشعارات الأدمن
+// 🔔 جلب الإشعارات من Firestore
 // ======================================================
 
 async function checkAndShowNotifications(user) {
@@ -132,7 +195,8 @@ async function checkAndShowNotifications(user) {
         const notificationsCollection = collection(db, "notifications");
         const userEmail = (user.email || "").toLowerCase().trim();
 
-        // بدون شرط "read" داخل الـ query نفسه (تجنبًا للحاجة لـ composite index)
+        console.log("[Langdex Notify] بدء جلب الإشعارات لـ:", userEmail);
+
         const qAll = query(notificationsCollection, where("target", "==", "all"));
         const qSpecific = query(notificationsCollection, where("target", "==", userEmail));
 
@@ -141,35 +205,54 @@ async function checkAndShowNotifications(user) {
             getDocs(qSpecific)
         ]);
 
+        console.log("[Langdex Notify] عدد مستندات target=all:", snapAll.size);
+        console.log("[Langdex Notify] عدد مستندات target=" + userEmail + ":", snapSpecific.size);
+
         const notifs = [];
 
         snapAll.forEach(d => {
             const data = d.data();
+            console.log("[Langdex Notify] مستند (all):", d.id, data);
             if (data.read !== true) notifs.push({ id: d.id, ...data });
         });
 
         snapSpecific.forEach(d => {
             const data = d.data();
+            console.log("[Langdex Notify] مستند (specific):", d.id, data);
             if (data.read !== true) notifs.push({ id: d.id, ...data });
         });
 
-        if (notifs.length === 0) return;
-
-        // ترتيب الأحدث أولاً (لو فيه createdAt)
         notifs.sort((a, b) => {
             const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
             const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
             return tb - ta;
         });
 
-        showNotificationsPopup(notifs, userEmail);
+        currentNotifs = notifs;
+        console.log("[Langdex Notify] الإشعارات الغير مقروءة بعد الفلترة:", notifs.length, notifs);
+
+        updateBellBadge(notifs.length);
+
+        // فتح تلقائي أول ما فيه إشعار جديد غير مقروء
+        if (notifs.length > 0) {
+            showNotificationsPopup(notifs);
+        }
 
     } catch (error) {
-        console.error("Notifications fetch error:", error);
+        console.error("[Langdex Notify] خطأ أثناء جلب الإشعارات:", error);
     }
 }
 
-function showNotificationsPopup(notifs, userEmail) {
+function showNotificationsPopup(notifs) {
+    // امنع فتح أكتر من بوب أب في نفس الوقت
+    const existing = document.querySelector("#langdex-notify-overlay");
+    if (existing) existing.remove();
+
+    if (!notifs || notifs.length === 0) {
+        console.log("[Langdex Notify] لا توجد إشعارات لعرضها حاليًا.");
+        return;
+    }
+
     const overlay = document.createElement("div");
     overlay.id = "langdex-notify-overlay";
     overlay.style.cssText = `
@@ -200,7 +283,7 @@ function showNotificationsPopup(notifs, userEmail) {
     });
 
     box.innerHTML = `
-        <h3 style="margin:0 0 15px; text-align:center; font-size:18px;">🔔 لديك إشعارات جديدة</h3>
+        <h3 style="margin:0 0 15px; text-align:center; font-size:18px;">🔔 الإشعارات</h3>
         ${itemsHtml}
         <button id="closeNotifyPopup" style="
             width:100%; margin-top:10px; padding:12px; border:none; border-radius:8px;
@@ -214,12 +297,15 @@ function showNotificationsPopup(notifs, userEmail) {
 
     document.querySelector("#closeNotifyPopup").addEventListener("click", async () => {
         overlay.remove();
-        // تعليم الإشعارات كمقروءة عشان متتكررش تاني
+        console.log("[Langdex Notify] تم إغلاق البوب أب، جاري تعليم الإشعارات كمقروءة...");
         try {
             const updates = notifs.map(n => updateDoc(doc(db, "notifications", n.id), { read: true }));
             await Promise.all(updates);
+            console.log("[Langdex Notify] تم تعليم الإشعارات كمقروءة بنجاح.");
+            currentNotifs = [];
+            updateBellBadge(0);
         } catch (err) {
-            console.error("Mark as read error:", err);
+            console.error("[Langdex Notify] خطأ أثناء تعليم الإشعارات كمقروءة:", err);
         }
     });
 }
