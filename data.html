@@ -16,7 +16,7 @@
   
   <style>
     html {
-        visibility: visible !important; /* إلغاء الإخفاء لضمان ظهور الصفحة فوراً */
+        visibility: visible !important;
     }
 
     body {
@@ -50,7 +50,7 @@
       font-size: 20px;
     }
 
-    /* تحجيم وتوسيط قائمة اختيار اللغة داخل التحكمات */
+    /* تحجيم وتوسيط حقل البحث وقائمة اختيار اللغات */
     .data-controls {
       display: flex;
       flex-direction: column;
@@ -58,11 +58,12 @@
       width: 100%;
     }
 
+    .search-input,
     .language-filter {
       display: block !important;
       width: 100% !important;
       max-width: 450px !important;
-      margin: 10px auto !important;
+      margin: 8px auto !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
@@ -73,13 +74,13 @@
       color: #000000 !important;
     }
 
-    /* تنسيق أزرار التحكم (عرض البيانات، إلغاء الفلتر، تحميل PDF) لتكون ملمومة ومتساوية */
+    /* تنسيق أزرار التحكم (إلغاء الفلتر، تحميل PDF) لتكون ملمومة ومتساوية */
     .cntrl {
       display: flex !important;
       gap: 10px !important;
       width: 100% !important;
       max-width: 450px !important;
-      margin: 10px auto 15px auto !important;
+      margin: 8px auto 15px auto !important;
       box-sizing: border-box !important;
       flex-wrap: nowrap;
     }
@@ -100,9 +101,6 @@
     }
 
     /* ألوان الأزرار المخصصة */
-    .show-data { background: #27ae60 !important; }
-    .show-data:hover { background: #219653 !important; }
-
     .clear-filter { background: #c0392b !important; }
     .clear-filter:hover { background: #962d22 !important; }
 
@@ -149,6 +147,7 @@
         padding: 15px !important;
       }
 
+      .search-input,
       .language-filter,
       .cntrl {
         max-width: 100% !important;
@@ -233,14 +232,16 @@
       <h1>جميع البيانات</h1>
       
       <div class="data-controls">
+        <!-- SEARCH INPUT -->
+        <input type="text" id="search-input" class="search-input" placeholder="ابحث في الكلمات، المعاني، أو المرادفات...">
+
         <!-- LANGUAGE FILTER -->
         <select id="language-filter" class="language-filter">
           <option value="all">جميع اللغات</option>
         </select>
         
         <div class="cntrl">
-          <button type="button" class="show-data">عرض البيانات</button>
-          <button type="button" id="clear-filter" class="clear-filter">إلغاء الفلتر</button>
+          <button type="button" id="clear-filter" class="clear-filter">إلغاء الفلتر والبحث</button>
           <button type="button" id="download-pdf" class="download-pdf">تحميل PDF</button>
         </div>
       </div>
