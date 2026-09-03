@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Langdex</title>
+  <title>Langdex - البحث والإضافة</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة - جعل الصفحة ملمومة كارد في المنتصف */
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
     .content {
       padding: 0 15px !important;
       box-sizing: border-box !important;
@@ -23,12 +23,12 @@
 
     .content > div {
       width: 100% !important;
-      max-width: 450px !important; /* تصحيح العرض ليكون ملموماً واحترافياً مثل صفحات الدخول */
+      max-width: 450px !important;
       margin: 25px auto !important;
       box-sizing: border-box !important;
     }
 
-    /* تثبيت اللون الموحد #678071 لقسم البحث وفورم تسجيل الكلمات */
+    /* تثبيت اللون الموحد لقسم البحث وفورم تسجيل الكلمات */
     .search-section,
     .form {
       background: #678071 !important;
@@ -59,7 +59,7 @@
       font-size: 14px !important;
     }
 
-    .form select {
+    .form select, .form input {
       padding: 12px;
       background: #ffffff;
       border: 1px solid #ccc;
@@ -67,23 +67,15 @@
       margin-top: 10px;
     }
 
-    .form input {
-      padding: 12px;
-      background: #ffffff;
-      border: 1px solid #ccc;
-      color: #000;
-      margin-top: 10px;
-    }
-
-    /* تنسيق حاويات الأزرار لتكون متساوية ومظبوطة */
-    .inter1, .inter {
+    /* زر الحفظ وزر مسح الحقول */
+    .inter1 {
       display: flex !important;
       gap: 8px !important;
       width: 100% !important;
       box-sizing: border-box !important;
     }
 
-    .inter button, .inter1 button {
+    .inter1 button {
       flex: 1 !important;
       margin-top: 12px !important;
       padding: 12px 5px !important;
@@ -97,18 +89,11 @@
       text-align: center;
     }
 
-    /* ألوان الأزرار المميزة */
     .inter1 .reg { background: #27ae60; }
     .inter1 .reg:hover { background: #219653; }
     
-    .inter .upa { background: #2980b9; }
-    .inter .upa:hover { background: #1f618d; }
-
-    .inter .del { background: #c0392b; }
-    .inter .del:hover { background: #962d22; }
-
-    .inter .cel { background: #7f8c8d; }
-    .inter .cel:hover { background: #626d6e; }
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
 
     .search-btn {
       width: 100%;
@@ -131,26 +116,49 @@
       text-align: center;
     }
 
-    /* تعديلات الموبايل لمنع أي لخبطة وتنظيم الأزرار بذكاء */
+    /* جدول عرض النتائج العامة أسفل الصفحة */
+    .table-container {
+      width: 100% !important;
+      max-width: 900px !important;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      overflow-x: auto;
+      margin: 30px auto !important;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #678071;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* تعديلات الموبايل */
     @media (max-width: 768px) {
       .content {
         padding: 0 10px !important;
       }
-      .content > div {
+      .content > div, .table-container {
         width: 100% !important;
         margin: 15px auto !important;
         padding: 15px !important;
-      }
-      
-      /* الأزرار الثلاثة متساوية تماماً وجنب بعض على الموبايل */
-      .inter {
-        display: flex !important;
-        gap: 6px !important;
-      }
-      
-      .inter button {
-        padding: 10px 4px !important;
-        font-size: 12px !important;
       }
     }
   </style>
@@ -169,7 +177,7 @@
 
     <nav class="bar">
       <ul>
-        <a href="#"><li>الرئيسية</li></a> 
+        <a href="index.html"><li>الرئيسية</li></a> 
         <a href="/Langdex/data.html"><li>البيانات</li></a> 
         <a href="#"><li>حول</li></a>
         <a href="#"><li>استكشاف</li></a>
@@ -180,26 +188,32 @@
 
 
   <!-- ==================================================
-       CONTENT
+       CONTENT (بحث وإضافة)
   ================================================== -->
   <div class="content">
 
-    <!-- قسم البحث -->
+    <!-- قسم البحث والفلترة -->
     <div class="search-section">
-      <h1>البحث</h1>
-      <input type="text" placeholder="اكتب كلمة" class="search-txt">
+      <h1>البحث العام</h1>
+      <input type="text" id="search-input" placeholder="اكتب كلمة للبحث..." class="search-txt">
+      
+      <select id="language-filter">
+        <option value="all">جميع اللغات</option>
+      </select>
+
       <button type="button" class="search-btn">بحث</button>
+      <button type="button" id="clear-filter" class="search-btn" style="background: #7f8c8d; margin-top: 5px;">إلغاء الفلتر</button>
       <div class="search-result"></div>
     </div>
 
-    <!-- فورم تسجيل الكلمات -->
+    <!-- فورم تسجيل كلمة جديدة (إضافة فقط بدون تحديث أو حذف) -->
     <div class="form"> 
       <h1>تسجيل كلمة جديدة</h1>
       <input type="text" placeholder="ID" class="id" readonly="">
-      <input type="text" placeholder="الكلمة">
-      <input type="text" placeholder="المعنى">
-      <input type="text" placeholder="المرادف">
-      <select>
+      <input type="text" placeholder="الكلمة" class="word-input">
+      <input type="text" placeholder="المعنى" class="meaning-input">
+      <input type="text" placeholder="المرادف" class="synonyms-input">
+      <select class="language-select">
         <option value="" disabled selected>اختر اللغة</option>
         <option hidden>English</option>
         <option hidden>Hindi</option>
@@ -233,15 +247,29 @@
       
       <div class="inter1">
         <button type="button" class="reg">حفظ</button>
-      </div>
-      
-      <div class="inter">
-        <button type="button" class="upa">تحديث</button>
-        <button type="button" class="del">حذف</button>
         <button type="button" class="cel">مسح</button>
       </div>
     </div>
 
+  </div>
+
+  <!-- جدول عرض النتائج العامة -->
+  <div class="table-container">
+    <h3 style="margin-top: 0; color: #333;">القاموس العام (كل الكلمات)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الكلمة</th>
+          <th>المعنى</th>
+          <th>المرادف</th>
+          <th>اللغة</th>
+        </tr>
+      </thead>
+      <tbody id="data-table">
+        <!-- البيانات ستعرض هنا ديناميكياً -->
+      </tbody>
+    </table>
   </div>
 
 
@@ -250,7 +278,7 @@
   ================================================== -->
   <script type="module" src="auth-guard.js"></script>
   <script type="module" src="user-bar.js"></script>
-  <script type="module" src="/Langdex/script.js"></script>
+  <script type="module" src="/Langdex/index-script.js"></script>
 
 </body>
 
