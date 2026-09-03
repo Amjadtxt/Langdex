@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>سجل الأحداث</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/Langdex/style.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- مكتبة jsPDF لتصدير الـ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    .content {
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+    }
+
+    .content > div,
+    .cards-container,
+    .search-section,
+    .actions-top-bar,
+    .data-section {
+      width: 100% !important;
+      max-width: 950px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+    }
+
+    .cards-container {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+      gap: 12px !important;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .card h3 {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+    .card p {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00bcd4;
+      margin: 0;
+    }
+
+    .search-section,
+    .actions-top-bar,
+    .data-section {
+      background: #678071 !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-section h1,
+    .data-section h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .search-section input.search-txt,
+    .search-section select.filter-select {
+      display: block !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 10px auto !important;
+      box-sizing: border-box !important;
+      font-family: 'Cairo', sans-serif !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      font-size: 14px !important;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
+    }
+
+    .actions-top-bar {
+      display: flex !important;
+      gap: 10px !important;
+      align-items: center !important;
+      max-width: 950px !important;
+    }
+    .actions-top-bar button {
+      flex: 1 !important;
+      padding: 12px 10px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      transition: 0.2s !important;
+    }
+    .pdf-btn { background: #e67e22; }
+    .pdf-btn:hover { background: #d35400; }
+
+    /* تنسيق زر التراجع */
+    .undo-btn { background: #c0392b; }
+    .undo-btn:hover { background: #962d22; }
+
+    .table-container {
+      width: 100% !important;
+      margin: 0 auto !important;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    th {
+      background: rgba(0, 0, 0, 0.25);
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .content { padding: 0 10px !important; }
+      .content > div,
+      .cards-container,
+      .search-section,
+      .actions-top-bar,
+      .data-section {
+        width: 100% !important;
+        margin: 10px auto !important;
+        padding: 15px !important;
+      }
+      .actions-top-bar { flex-direction: column !important; gap: 8px !important; max-width: 100% !important; }
+      .actions-top-bar button { width: 100% !important; max-width: none !important; margin: 0 !important; }
+
+      .table-container table, 
+      .table-container thead, 
+      .table-container tbody, 
+      .table-container th, 
+      .table-container td, 
+      .table-container tr {
+        display: block !important;
+        width: 100% !important;
+      }
+      .table-container thead { display: none !important; }
+      .table-container tr {
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 12px;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .table-container td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================================================
+       HEADER
+  ================================================== -->
+  <header>
+    <div class="user-bar">
+      <span id="username">مرحباً، User</span>
+      <button id="logout-btn">تسجيل الخروج</button>
+    </div>
+
+    <nav class="bar">
+      <ul>
+        <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
+        <a href="/Langdex/log.html"><li>السجل</li></a>
+        <a href="/Langdex/users.html"><li>المستخدمين</li></a>
+        <a href="#"><li>الإعدادات</li></a>
+      </ul>
+    </nav>
+  </header>
+
+
+  <!-- ==================================================
+       DASHBOARD CONTENT
+  ================================================== -->
+  <div class="content">
+
+    <!-- 1. الإحصائيات -->
+    <div>
+      <div class="cards-container" id="cardsContainer">
+          <div class="card">
+              <h3>أحداث اليوم</h3>
+              <p id="todayEventsCount">0</p>
+          </div>
+          <div class="card">
+              <h3>إجمالي الأحداث</h3>
+              <p id="totalEventsCount">0</p>
+          </div>
+      </div>
+    </div>
+
+    <!-- 2. البحث والفلترة -->
+    <div class="search-section">
+      <h1>البحث في السجل</h1>
+      <input type="text" id="logSearchInput" class="search-txt" placeholder="ابحث بالمستخدم أو الحدث أو التفاصيل...">
+      
+      <select id="timeRangeFilter" class="filter-select">
+          <option value="today" selected>اليوم</option>
+          <option value="yesterday">أمس</option>
+          <option value="last7">آخر 7 أيام</option>
+          <option value="last30">آخر 30 يوم</option>
+          <option value="all">كل السجلات</option>
+      </select>
+    </div>
+
+    <!-- 3. الأزرار العلوية -->
+    <div class="actions-top-bar">
+      <button type="button" class="undo-btn" id="undoActionBtn">تراجع عن آخر تغيير</button>
+      <button type="button" class="pdf-btn" id="downloadLogPdfBtn">تحميل السجل (PDF)</button>
+    </div>
+
+    <!-- 4. الجدول -->
+    <div class="data-section">
+      <h1>السجل</h1>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>المستخدم</th>
+              <th>الحدث</th>
+              <th>التفاصيل</th>
+              <th>الرول</th>
+              <th>التاريخ والوقت</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body">
+            <tr><td colspan="6" style="text-align: center;">جاري جلب السجل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ==================================================
+       JAVASCRIPT
+  ================================================== -->
+  <script type="module" src="/Langdex/auth-guard.js"></script>
+  <script type="module" src="/Langdex/user-bar.js"></script>
+  <script type="module" src="/Langdex/log-script.js"></script>
+
+</body>
+
+</html>
