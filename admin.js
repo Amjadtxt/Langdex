@@ -903,3 +903,33 @@ onAuthStateChanged(auth, async user => {
     
     await fetchAllData();
 });
+const sendNotificationBtn = document.querySelector("#sendNotificationBtn");
+const notifTitleInput = document.querySelector("#notifTitleInput");
+const notifBodyInput = document.querySelector("#notifBodyInput");
+
+if (sendNotificationBtn) {
+    sendNotificationBtn.addEventListener("click", async () => {
+        const title = notifTitleInput ? notifTitleInput.value.trim() : "";
+        const body = notifBodyInput ? notifBodyInput.value.trim() : "";
+
+        if (!title || !body) {
+            showNotification("يرجى كتابة العنوان والنص أولاً!");
+            return;
+        }
+
+        try {
+            // حفظ الإشعار في كوليكشن notifications
+            await addDoc(collection(db, "notifications"), {
+                title: title,
+                body: body,
+                createdAt: serverTimestamp()
+            });
+
+            showNotification("تم إرسال الإشعار بنجاح! 🚀");
+            notifTitleInput.value = "";
+            notifBodyInput.value = "";
+        } catch (error) {
+            showNotification("حدث خطأ أثناء الإرسال.");
+        }
+    });
+}
