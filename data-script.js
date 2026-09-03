@@ -124,6 +124,19 @@ function formatTimestamp(timestamp) {
     }
 }
 
+// حساب الـ ID التالي تلقائياً (أقصى ID موجود + 1، أو 1 لو الجدول فارغ)
+function updateNextIdInput() {
+    if (!wordIdInput) return;
+    if (editingDocId) return; // لو في وضع التعديل لا نغيره
+
+    let nextId = 1;
+    if (allUserTableData && allUserTableData.length > 0) {
+        const maxId = Math.max(...allUserTableData.map(item => Number(item.id) || 0));
+        nextId = maxId > 0 ? maxId + 1 : 1;
+    }
+    wordIdInput.value = nextId;
+}
+
 // 1. جلب بيانات المستخدم الحالي فقط وترتيبها حسب الأحدث
 async function getUserWords() {
     if (!currentUser) return [];
@@ -140,7 +153,7 @@ async function getUserWords() {
             });
         });
 
-        // ترتيب الكلمات حسب الأحدث تاريخاً (من الأحدث إلى الأقدم)
+        // ترتيب الكلمات حسب الأحدث تاريخاً
         rows.sort((a, b) => {
             const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
             const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
@@ -240,7 +253,7 @@ function renderTable(rows) {
     });
 }
 
-// تعبئة الفورم للأعلى عند الضغط على تعديل
+// تعبئة الفورم للأعند الضغط على تعديل
 function fillFormForEditing(data) {
     editingDocId = data._documentId;
     if (wordIdInput) wordIdInput.value = data.id || "";
@@ -253,17 +266,17 @@ function fillFormForEditing(data) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// مسح الفورم وإعادة تعقيم الحالة
+// مسح الفورم وإعادة تعيين الـ ID التلقائي
 function clearForm() {
     editingDocId = null;
-    if (wordIdInput) wordIdInput.value = "";
     if (wordInput) wordInput.value = "";
     if (meaningInput) meaningInput.value = "";
     if (synonymsInput) synonymsInput.value = "";
     if (formLanguageSelect) formLanguageSelect.selectedIndex = 0;
+    updateNextIdInput();
 }
 
-// عملية الإضافة (حساب الـ ID تلقائياً ويبدأ من 1 لو الجدول فاضي أو يزيد 1 على أقصى رقم موجود)
+// عملية الإضافة باستخدام الـ ID المعروض في الخانة تلقائياً
 if (addBtn) {
     addBtn.addEventListener("click", async () => {
         const word = wordInput ? wordInput.value.trim() : "";
@@ -277,15 +290,18 @@ if (addBtn) {
         }
 
         try {
-            // حساب الـ ID الجديد تلقائياً بناءً على الكلمات الحالية للمستخدم
-            let nextId = 1;
-            if (allUserTableData && allUserTableData.length > 0) {
-                const maxId = Math.max(...allUserTableData.map(item => Number(item.id) || 0));
-                nextId = maxId > 0 ? maxId + 1 : 1;
+            let currentIdToSave = wordIdInput ? Number(wordIdInput.value) : 1;
+            if (!currentIdToSave || isNaN(currentIdToSave)) {
+                let nextId = 1;
+                if (allUserTableData && allUserTableData.length > 0) {
+                    const maxId = Math.max(...allUserTableData.map(item => Number(item.id) || 0));
+                    nextId = maxId > 0 ? maxId + 1 : 1;
+                }
+                currentIdToSave = nextId;
             }
             
             await addDoc(wordsCollection, {
-                id: nextId,
+                id: currentIdToSave,
                 word,
                 meaning,
                 synonyms,
@@ -354,7 +370,11 @@ async function deleteWord(docId) {
     try {
         await deleteDoc(doc(db, "words", docId));
         showNotification("تم حذف الكلمة نهائياً.");
-        if (editingDocId === docId) clearForm();
+        if (editingDocId === docId) {
+            clearForm();
+        } else {
+            updateNextIdInput();
+        }
         await reloadUserData();
     } catch (error) {
         console.error("Delete error:", error);
@@ -474,6 +494,7 @@ async function reloadUserData() {
     allUserTableData = await getUserWords();
     populateLanguageFilter(allUserTableData);
     applyFiltersAndSearch();
+    updateNextIdInput();
 }
 
 onAuthStateChanged(auth, async user => {
