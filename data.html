@@ -27,27 +27,29 @@
     .content2 {
       padding: 0 15px !important;
       box-sizing: border-box !important;
+      display: flex;
+      justify-content: center;
     }
 
-    /* قسم عرض البيانات باللون الموحد والبوردر المميز */
+    /* قسم عرض البيانات باللون الموحد والبوردر المميز وتثبيت العرض للكمبيوتر */
     .data-section {
       width: 100% !important;
-      max-width: 850px !important;
-      margin: 15px auto !important;
+      max-width: 900px !important;
+      margin: 20px auto !important;
       background: #678071 !important;
-      padding: 20px !important;
-      border-radius: 10px !important;
+      padding: 25px !important;
+      border-radius: 12px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       box-sizing: border-box !important;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
 
     /* عنوان القسم */
     .data-section h1 {
       text-align: center;
       color: #ffffff;
-      margin-bottom: 15px;
-      font-size: 20px;
+      margin-bottom: 20px;
+      font-size: 22px;
     }
 
     /* تحجيم وتوسيط حقل البحث وقائمة اختيار اللغات */
@@ -62,7 +64,7 @@
     .language-filter {
       display: block !important;
       width: 100% !important;
-      max-width: 450px !important;
+      max-width: 500px !important;
       margin: 8px auto !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
@@ -74,20 +76,20 @@
       color: #000000 !important;
     }
 
-    /* تنسيق أزرار التحكم (إلغاء الفلتر، تحميل PDF) لتكون ملمومة ومتساوية */
+    /* تنسيق أزرار التحكم لتكون متناسقة وملمومة */
     .cntrl {
       display: flex !important;
       gap: 10px !important;
       width: 100% !important;
-      max-width: 450px !important;
-      margin: 8px auto 15px auto !important;
+      max-width: 500px !important;
+      margin: 8px auto 20px auto !important;
       box-sizing: border-box !important;
       flex-wrap: nowrap;
     }
 
     .cntrl button {
       flex: 1 !important;
-      padding: 12px 5px !important;
+      padding: 12px 10px !important;
       border: none !important;
       border-radius: 8px !important;
       font-weight: bold !important;
@@ -107,38 +109,47 @@
     .download-pdf { background: #e67e22 !important; }
     .download-pdf:hover { background: #d35400 !important; }
 
-    /* جدول عرض البيانات */
+    /* جدول عرض البيانات للكمبيوتر */
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
       overflow-x: auto;
+      border-radius: 8px;
     }
 
     table {
-      width: 100%;
+      width: 100% !important;
       border-collapse: collapse;
       background: rgba(0, 0, 0, 0.15);
-      border-radius: 8px;
-      overflow: hidden;
+      table-layout: fixed; /* لتوزيع الأعمدة بانتظام وثبات على الكمبيوتر */
     }
 
     th, td {
-      padding: 10px 8px;
+      padding: 12px 10px;
       text-align: center;
-      font-size: 13px;
+      font-size: 14px;
       color: #fff;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      word-wrap: break-word;
     }
 
     th {
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.3);
       font-weight: bold;
     }
+
+    /* تحديد نسب عرض الأعمدة للكمبيوتر لتوزيعها بانتظام */
+    th:nth-child(1), td:nth-child(1) { width: 10%; } /* ID */
+    th:nth-child(2), td:nth-child(2) { width: 22%; } /* الكلمة */
+    th:nth-child(3), td:nth-child(3) { width: 28%; } /* المعنى */
+    th:nth-child(4), td:nth-child(4) { width: 22%; } /* المرادف */
+    th:nth-child(5), td:nth-child(5) { width: 18%; } /* اللغة */
 
     /* تعديلات التجاوب للشاشات الصغيرة والموبايل */
     @media (max-width: 768px) {
       .content2 {
         padding: 0 10px !important;
+        display: block;
       }
 
       .data-section {
@@ -163,7 +174,7 @@
         font-size: 14px !important;
       }
 
-      /* تحويل الجدول إلى كاردز مرتبة على الموبايل لمنع أي مط أو لخبطة */
+      /* تحويل الجدول إلى كاردز مرتبة على الموبايل لمنع أي لخبطة */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -173,6 +184,7 @@
         display: block !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        table-layout: auto !important;
       }
 
       .table-container thead {
@@ -194,6 +206,7 @@
         text-align: left !important;
         padding: 6px 4px !important;
         font-size: 13px !important;
+        width: 100% !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
 
