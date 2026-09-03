@@ -11,8 +11,11 @@ import {
 
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// 🌟 تم تصحيح الـ apiKey هنا — كان فيه غلطة إملائية (حرف زيادة وحرف مختلف)
+// عن باقي الملفات، وده كان بيكسر كل الصفحات اللي بتحمّل هذا الملف الأول
+// لأنه بيعمل initializeApp بمفتاح غلط، وبقية السكربتات بتستخدم نفس الـ app بعد كده
 const firebaseConfig = {
-  apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
+  apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
   authDomain: "langdex.firebaseapp.com",
   projectId: "langdex",
   storageBucket: "langdex.firebasestorage.app",
