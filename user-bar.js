@@ -132,9 +132,9 @@ async function checkAndShowNotifications(user) {
         const notificationsCollection = collection(db, "notifications");
         const userEmail = (user.email || "").toLowerCase().trim();
 
-        // إشعارات لكل المستخدمين + إشعارات خاصة بالإيميل ده، غير المقروءة
-        const qAll = query(notificationsCollection, where("target", "==", "all"), where("read", "==", false));
-        const qSpecific = query(notificationsCollection, where("target", "==", userEmail), where("read", "==", false));
+        // بدون شرط "read" داخل الـ query نفسه (تجنبًا للحاجة لـ composite index)
+        const qAll = query(notificationsCollection, where("target", "==", "all"));
+        const qSpecific = query(notificationsCollection, where("target", "==", userEmail));
 
         const [snapAll, snapSpecific] = await Promise.all([
             getDocs(qAll),
@@ -142,8 +142,16 @@ async function checkAndShowNotifications(user) {
         ]);
 
         const notifs = [];
-        snapAll.forEach(d => notifs.push({ id: d.id, ...d.data() }));
-        snapSpecific.forEach(d => notifs.push({ id: d.id, ...d.data() }));
+
+        snapAll.forEach(d => {
+            const data = d.data();
+            if (data.read !== true) notifs.push({ id: d.id, ...data });
+        });
+
+        snapSpecific.forEach(d => {
+            const data = d.data();
+            if (data.read !== true) notifs.push({ id: d.id, ...data });
+        });
 
         if (notifs.length === 0) return;
 
