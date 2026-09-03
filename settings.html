@@ -23,13 +23,14 @@
   width:100% !important;box-sizing:border-box !important;font-family:'Cairo',sans-serif !important;
   border-radius:8px !important;padding:12px !important;font-size:14px !important;background:#fff !important;
   border:1px solid #ccc !important;color:#000 !important;margin:8px 0 !important;
+  text-align: center !important; /* تم ضبط النص في منتصف حقول الإدخال */
 }
-.switch{position:relative;display:inline-block;width:46px;height:24px;flex-shrink:0;}
+.switch{position:relative;display:inline-block;width:46px;height:24px;flex-shrink:0;direction: ltr !important;} /* ضبط اتجاه الزر ليعمل بشكل صحيح */
 .switch input{opacity:0;width:0;height:0;}
 .slider{position:absolute;cursor:pointer;inset:0;background:#a9b6ae;border-radius:24px;transition:.2s;}
 .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
 .switch input:checked + .slider{background:#00bcd4;}
-.switch input:checked + .slider:before{transform:translateX(-22px);}
+.switch input:checked + .slider:before{transform:translateX(22px);} /* تعديل اتجاه حركة الأيقونة ليناسب اللغة العربية */
 .save-btn{display:block;width:100%;color:#fff;padding:12px;border:none;border-radius:8px;font-weight:bold;
   cursor:pointer;margin:10px auto 0;font-family:'Cairo',sans-serif;font-size:14px;transition:.2s;text-align:center;background:#00bcd4;}
 .save-btn:hover{background:#008ba3;}
@@ -99,20 +100,20 @@
     </div>
     <select id="default-lang">
       <option value="all">جميع اللغات</option>
-  <option value="الإنجليزية">الإنجليزية</option>
-          <option value="الهندية">الهندية</option>
-          <option value="الأردية">الأردية</option>
-          <option value="الفارسية">الفارسية</option>
-          <option value="الصينية">الصينية</option>
-          <option value="البنغالية">البنغالية</option>
-          <option value="التركية">التركية</option>
-          <option value="الفرنسية">الفرنسية</option>
-          <option value="الإسبانية">الإسبانية</option>
-          <option value="الألمانية">الألمانية</option>
-          <option value="اليابانية">اليابانية</option>
-          <option value="الكورية">الكورية</option>
-          <option value="الهولندية">الهولندية</option>
-          <option value="العبرية">العبرية</option>
+      <option value="الإنجليزية">الإنجليزية</option>
+      <option value="الهندية">الهندية</option>
+      <option value="الأردية">الأردية</option>
+      <option value="الفارسية">الفارسية</option>
+      <option value="الصينية">الصينية</option>
+      <option value="البنغالية">البنغالية</option>
+      <option value="التركية">التركية</option>
+      <option value="الفرنسية">الفرنسية</option>
+      <option value="الإسبانية">الإسبانية</option>
+      <option value="الألمانية">الألمانية</option>
+      <option value="اليابانية">اليابانية</option>
+      <option value="الكورية">الكورية</option>
+      <option value="الهولندية">الهولندية</option>
+      <option value="العبرية">العبرية</option>
     </select>
 
     <div class="field-row">
