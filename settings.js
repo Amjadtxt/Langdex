@@ -165,7 +165,7 @@ if (savePrefsBtn) {
             pdfOrientation: pdfOrientation ? pdfOrientation.value : "portrait",
             notify: notifyToggle ? notifyToggle.checked : true,
         });
-        showMsg(prefsMsg, "تم حفظ التفضيلات بنجاح ✅");
+        showMsg(prefsMsg, "تم حفظ التفضيلات بنجاح ");
     });
 }
 
@@ -197,7 +197,7 @@ if (saveProfileBtn) {
                 { merge: true }
             );
 
-            showMsg(accountMsg, "تم تحديث بيانات الحساب ✅");
+            showMsg(accountMsg, "تم تحديث بيانات الحساب ");
 
         } catch (error) {
             console.error("Update profile error:", error.code, error.message);
@@ -239,7 +239,7 @@ if (changePasswordBtn) {
             await reauthenticateWithCredential(currentUser, credential);
             await updatePassword(currentUser, next);
 
-            showMsg(accountMsg, "تم تغيير كلمة المرور بنجاح ✅");
+            showMsg(accountMsg, "تم تغيير كلمة المرور بنجاح");
             currentPasswordInp.value = "";
             newPasswordInp.value = "";
 
