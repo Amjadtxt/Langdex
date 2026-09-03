@@ -29,7 +29,7 @@
       box-sizing: border-box !important;
     }
 
-    /* تنسيق الكاردز بنفس الستايل */
+    /* تنسيق الكاردز (مستثناة من اللون الموحد) */
     .cards-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -38,10 +38,10 @@
       width: 100%;
     }
     .card {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       padding: 15px;
       border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       text-align: center;
       box-sizing: border-box;
     }
@@ -57,15 +57,23 @@
       margin: 0;
     }
 
-    /* تنسيق قسم البحث وقائمة الفلترة لتكون مضبوطة تماماً وعرضها متناسق */
-    .search-section {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 15px;
-      box-sizing: border-box;
+    /* تثبيت اللون #678071 لكل الديفات ما عدا الكاردز */
+    .search-section,
+    .form,
+    .excel-upload-section,
+    .actions-top-bar,
+    .range-delete-box,
+    .data-section {
+      background: #678071 !important;
+      padding: 15px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      margin-bottom: 15px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
     }
+
+    /* تنسيق قسم البحث وقائمة الفلترة */
     .search-section input.search-txt {
       width: 100% !important;
       box-sizing: border-box !important;
@@ -82,7 +90,7 @@
       font-family: 'Cairo', sans-serif;
     }
 
-    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) لتكون بنفس الحجم والعرض تماماً وبجانب بعض على الكمبيوتر */
+    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) داخل الفورم */
     .inter1 {
       grid-column: 1 / -1;
       display: flex;
@@ -116,30 +124,13 @@
     .inter1 .cel { background: #7f8c8d; }
     .inter1 .cel:hover { background: #626d6e; }
 
-    /* فورم إدارة الكلمات */
-    .form {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-sizing: border-box;
-    }
-
-    /* ديف الأزرار العلوية المستقله (مطابق تماماً لباقي الديفات في الخلفية والحدود) */
+    /* ديف الأزرار العلوية المستقلة */
     .actions-top-bar {
-      background: rgba(255, 255, 255, 0.03) !important;
-      padding: 15px !important;
-      border-radius: 8px !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
       display: flex !important;
       gap: 10px !important;
       flex-wrap: nowrap !important;
       align-items: center !important;
       justify-content: space-between !important;
-      margin-bottom: 15px !important;
-      box-sizing: border-box !important;
-      width: 100% !important;
     }
     .actions-top-bar button {
       flex: 1 !important;
@@ -165,20 +156,13 @@
     .pdf-btn { background: #e67e22; }
     .pdf-btn:hover { background: #d35400; }
 
-    /* قسم رفع الإكسيل المنفصل (بنفس التنسيق الموحد) */
+    /* قسم رفع الإكسيل المنفصل */
     .excel-upload-section {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 15px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
-      box-sizing: border-box;
-      width: 100%;
     }
     .excel-upload-section h3 {
       color: #00bcd4;
@@ -202,20 +186,13 @@
     }
     .excel-upload-label:hover { background: #219653; }
 
-    /* تنسيق قسم الحذف بالـ ID ومحاذاته تماماً مع تنسيق الديفات */
+    /* تنسيق قسم الحذف بالـ ID */
     .range-delete-box {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 15px;
       display: flex;
       gap: 10px;
       flex-wrap: nowrap;
       align-items: center;
       justify-content: center;
-      box-sizing: border-box;
-      width: 100%;
     }
     .range-delete-box input {
       flex: 1;
@@ -250,16 +227,6 @@
       font-size: 14px;
     }
     .range-delete-btn:hover { background: #a93232; }
-
-    /* تنسيق جدول سجل البيانات */
-    .data-section {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 15px;
-      box-sizing: border-box;
-    }
 
     /* تنسيق أزرار الإجراءات داخل الجدول */
     .table-container td button {
@@ -336,11 +303,11 @@
       }
 
       .table-container tr {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.05);
         margin-bottom: 15px;
         border-radius: 8px;
         padding: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         box-sizing: border-box;
       }
 
