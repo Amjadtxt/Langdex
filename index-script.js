@@ -238,7 +238,7 @@ function applyFiltersAndSearch() {
 }
 
 // ======================================================
-// EXPORT PDF WITH ARABIC SUPPORT & FILTER COMPATIBILITY
+// EXPORT PDF WITH ALL DATA FIELDS & FILTER COMPATIBILITY
 // ======================================================
 
 async function exportFilteredDataToPdf() {
@@ -250,7 +250,7 @@ async function exportFilteredDataToPdf() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
-            orientation: 'portrait',
+            orientation: 'landscape', // استخدام الوضع الأفقي عشان يستوعب كل الأعمدة براحته
             unit: 'mm',
             format: 'a4'
         });
@@ -259,28 +259,32 @@ async function exportFilteredDataToPdf() {
         doc.setFont("Roboto");
 
         doc.setFontSize(16);
-        doc.text("Langdex - Public Dictionary Report", 105, 15, { align: "center" });
+        doc.text("Langdex - Public Dictionary Report", 148, 12, { align: "center" });
         
         doc.setFontSize(10);
-        doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 105, 22, { align: "center" });
+        doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 148, 18, { align: "center" });
 
-        let y = 35;
-        doc.setFontSize(11);
+        let y = 28;
+        doc.setFontSize(10);
 
+        // رأس الجدول في الـ PDF يطابق أعمدة الموقع تماماً (ID, الكلمة, المعنى, المرادف, اللغة, التاريخ)
         doc.setFillColor(103, 128, 113);
-        doc.rect(15, y, 180, 8, "F");
+        doc.rect(10, y, 277, 8, "F");
         doc.setTextColor(255, 255, 255);
-        doc.text("ID", 20, y + 6);
-        doc.text("Word", 45, y + 6);
-        doc.text("Meaning", 85, y + 6);
-        doc.text("Language", 145, y + 6);
+        
+        doc.text("ID", 15, y + 6);
+        doc.text("الكلمة (Word)", 35, y + 6);
+        doc.text("المعنى (Meaning)", 85, y + 6);
+        doc.text("المرادف (Synonyms)", 155, y + 6);
+        doc.text("اللغة (Lang)", 215, y + 6);
+        doc.text("تاريخ التسجيل", 245, y + 6);
 
         y += 10;
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
+        doc.setFontSize(9);
 
-        currentFilteredData.forEach((item, index) => {
-            if (y > 270) {
+        currentFilteredData.forEach((item) => {
+            if (y > 190) {
                 doc.addPage();
                 y = 20;
             }
@@ -288,20 +292,24 @@ async function exportFilteredDataToPdf() {
             const idStr = String(item.id || "-");
             const wordStr = String(item.word || "-");
             const meaningStr = String(item.meaning || "-");
+            const synonymsStr = String(item.synonyms || "-");
             const langStr = String(item.language || "-");
+            const dateStr = formatTimestamp(item.createdAt);
 
-            doc.text(idStr, 20, y);
-            doc.text(wordStr, 45, y);
-            doc.text(meaningStr, 85, y, { maxWidth: 55 });
-            doc.text(langStr, 145, y);
+            doc.text(idStr, 15, y);
+            doc.text(wordStr, 35, y, { maxWidth: 45 });
+            doc.text(meaningStr, 85, y, { maxWidth: 65 });
+            doc.text(synonymsStr, 155, y, { maxWidth: 55 });
+            doc.text(langStr, 215, y, { maxWidth: 25 });
+            doc.text(dateStr, 245, y);
 
-            y += 8;
-            doc.setDrawColor(200, 200, 200);
-            doc.line(15, y - 2, 195, y - 2);
+            y += 9;
+            doc.setDrawColor(220, 220, 220);
+            doc.line(10, y - 3, 287, y - 3);
         });
 
-        doc.save("langdex-filtered-dictionary.pdf");
-        showNotification("تم تصدير ملف الـ PDF بنجاح!");
+        doc.save("langdex-dictionary-report.pdf");
+        showNotification("تم تصدير ملف الـ PDF كاملاً بنجاح!");
     } catch (error) {
         console.error("PDF Export Error:", error);
         showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
