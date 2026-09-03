@@ -124,7 +124,7 @@ function formatTimestamp(timestamp) {
     }
 }
 
-// حساب الـ ID التالي تلقائياً (أقصى ID موجود + 1، أو 1 لو الجدول فارغ)
+// حساب الـ ID التالي تلقائياً للمستخدم نفسه (أكبر ID في كلماته + 1، أو 1 لو سجله فارغ)
 function updateNextIdInput() {
     if (!wordIdInput) return;
     if (editingDocId) return; // لو في وضع التعديل لا نغيره
@@ -253,7 +253,7 @@ function renderTable(rows) {
     });
 }
 
-// تعبئة الفورم للأعند الضغط على تعديل
+// تعبئة الفورم عند الضغط على تعديل
 function fillFormForEditing(data) {
     editingDocId = data._documentId;
     if (wordIdInput) wordIdInput.value = data.id || "";
@@ -266,7 +266,7 @@ function fillFormForEditing(data) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// مسح الفورم وإعادة تعيين الـ ID التلقائي
+// مسح الفورم وإعادة تعيين الـ ID التلقائي التالي لليوزر
 function clearForm() {
     editingDocId = null;
     if (wordInput) wordInput.value = "";
@@ -276,7 +276,7 @@ function clearForm() {
     updateNextIdInput();
 }
 
-// عملية الإضافة باستخدام الـ ID المعروض في الخانة تلقائياً
+// عملية الإضافة باستخدام الـ ID التلقائي المعروض في الخانة المقفولة
 if (addBtn) {
     addBtn.addEventListener("click", async () => {
         const word = wordInput ? wordInput.value.trim() : "";
