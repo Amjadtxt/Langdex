@@ -1,6 +1,8 @@
 // ======================================================
 // LANGDEX - admin-users.js (With Logger Edition)
 // ======================================================
+import { applyPrefsGlobally } from "/Langdex/prefs.js";
+applyPrefsGlobally();
 
 import {
     initializeApp,
