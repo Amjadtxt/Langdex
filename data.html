@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Management</title>
+  <title>Langdex - إدارة الكلمات الشخصية</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -14,8 +14,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- SheetJS للإكسيل -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- مكتبة jsPDF لتصدير الـ PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -29,7 +27,6 @@
     .content > div,
     .search-section,
     .form,
-    .excel-upload-section,
     .actions-top-bar,
     .data-section {
       width: 100% !important;
@@ -40,7 +37,6 @@
 
     .search-section,
     .form,
-    .excel-upload-section,
     .actions-top-bar,
     .data-section {
       background: #678071 !important;
@@ -129,34 +125,6 @@
     .pdf-btn { background: #e67e22; }
     .pdf-btn:hover { background: #d35400; }
 
-    .excel-upload-section {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .excel-upload-section h3 {
-      color: #ffffff;
-      font-size: 15px;
-      margin: 0;
-    }
-    .excel-upload-label {
-      background: #27ae60;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: 'Cairo', sans-serif;
-      transition: 0.2s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    .excel-upload-label:hover { background: #219653; }
-
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
@@ -202,11 +170,9 @@
 
     @media (max-width: 768px) {
       .content { padding: 0 10px !important; }
-      .content > div, .search-section, .form, .excel-upload-section, .actions-top-bar, .data-section {
+      .content > div, .search-section, .form, .actions-top-bar, .data-section {
         width: 100% !important; margin: 10px auto !important; padding: 15px !important;
       }
-      .excel-upload-section { flex-direction: column !important; text-align: center !important; }
-      .excel-upload-section label { width: 100% !important; box-sizing: border-box !important; }
       .inter1, .actions-top-bar { flex-direction: column !important; gap: 8px !important; max-width: 100% !important; }
       .inter1 button, .actions-top-bar button { width: 100% !important; max-width: none !important; margin: 0 !important; }
 
@@ -237,7 +203,7 @@
 <body>
 
   <!-- ==================================================
-       HEADER
+       HEADER (محدث بالكامل حسب الصورة والخانات المطلوبة)
   ================================================== -->
   <header>
     <div class="user-bar">
@@ -248,7 +214,10 @@
     <nav class="bar">
       <ul>
         <a href="index.html"><li>الرئيسية</li></a>
-        <a href="Data.html"><li>إدارة كلماتي</li></a>
+        <a href="Data.html"><li>البيانات</li></a>
+        <a href="about.html"><li>حول</li></a>
+        <a href="explore.html"><li>استكشاف</li></a>
+        <a href="contact.html"><li>التواصل</li></a>
       </ul>
     </nav>
   </header>
@@ -300,21 +269,12 @@
       </div>
     </div>
 
-    <!-- 3. رفع ملف إكسيل -->
-    <div class="excel-upload-section">
-      <h3>رفع كلماتك بإستخدام ملف إكسيل</h3>
-      <label for="excelFileInput" class="excel-upload-label">
-        <span>رفع الملف</span>
-        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
-      </label>
-    </div>
-
-    <!-- 4. الأزرار العلوية (تحميل PDF الخاص بي) -->
+    <!-- 3. الأزرار العلوية (تحميل PDF الخاص بي) -->
     <div class="actions-top-bar">
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل بياناتي المعروضة (PDF)</button>
     </div>
 
-    <!-- 5. جدول عرض السجل الشخصي للمستخدم فقط -->
+    <!-- 4. جدول عرض السجل الشخصي للمستخدم فقط -->
     <div class="data-section">
       <h1>سجل كلماتي الشخصية</h1>
       <div class="table-container">
