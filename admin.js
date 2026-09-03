@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث ومنظم بالكامل مع دعم رفع الإكسيل)
+// LANGDEX - admin.js (محدث ومنظم بالكامل مع دعم رفع الإكسيل والطباعة الشاملة)
 // ======================================================
 
 import {
@@ -354,93 +354,82 @@ if (languageFilterSearch) {
 }
 
 // ==========================================================
-// تصدير PDF للبيانات المعروضة حالياً
+// تصدير تقرير PDF للبيانات المعروضة (بطريقة الطباعة الآمنة والداعمة لكل اللغات)
 // ==========================================================
 
 if (downloadPdfBtn) {
-    downloadPdfBtn.addEventListener("click", async () => {
-        const { jsPDF } = window.jspdf;
-        if (!jsPDF) {
-            showNotification("مكتبة الـ PDF لم يتم تحميلها بشكل صحيح!");
-            return;
-        }
-
+    downloadPdfBtn.addEventListener("click", () => {
         const currentRows = performSearchAndFilter();
         if (currentRows.length === 0) {
             showNotification("لا توجد بيانات معروضة لتحميلها في الـ PDF!");
             return;
         }
 
-        let printContainer = document.createElement("div");
-        printContainer.style.direction = "rtl";
-        printContainer.style.padding = "20px";
-        printContainer.style.background = "#ffffff";
-        printContainer.style.color = "#000000";
-        printContainer.style.fontFamily = "Cairo, Arial, sans-serif";
-        printContainer.style.width = "800px";
-
-        let htmlContent = `
-            <h2 style="text-align: center; color: #333; margin-bottom: 10px;">Langdex - تقرير سجل الكلمات والبيانات</h2>
-            <p style="text-align: center; color: #666; font-size: 12px; margin-bottom: 20px;">تاريخ التصدير: ${new Date().toLocaleString()} | عدد السجلات المعروضة: ${currentRows.length}</p>
-            <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 12px;">
-                <thead>
-                    <tr style="background: #f0f0f0; color: #000;">
-                        <th>ID</th>
-                        <th>بواسطة (اليوزر)</th>
-                        <th>الكلمة</th>
-                        <th>المعنى</th>
-                        <th>التفاصيل / المرادفات</th>
-                        <th>اللغة</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        currentRows.forEach((item, index) => {
-            htmlContent += `
-                <tr>
-                    <td>${item.id || (index + 1)}</td>
-                    <td>${extractUsername(item.userEmail || item.userId)}</td>
-                    <td>${item.word || ''}</td>
-                    <td>${item.meaning || ''}</td>
-                    <td>${item.synonyms || ''}</td>
-                    <td>${item.language || ''}</td>
-                </tr>
-            `;
-        });
-
-        htmlContent += `</tbody></table>`;
-        printContainer.innerHTML = htmlContent;
-        document.body.appendChild(printContainer);
-
         try {
-            let canvas = await html2canvas(printContainer, { scale: 2, useCORS: true });
-            let imgData = canvas.toDataURL("image/png");
-            
-            let pdf = new jsPDF("p", "mm", "a4");
-            let pdfWidth = pdf.internal.pageSize.getWidth();
-            let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            showNotification("جاري تجهيز تقرير الـ PDF للطباعة والحفظ...");
 
-            let heightLeft = pdfHeight;
-            let position = 0;
+            let rowsHtml = "";
+            currentRows.forEach((item, index) => {
+                rowsHtml += `
+                    <tr>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.id || (index + 1)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${extractUsername(item.userEmail || item.userId)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${item.word || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.meaning || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.synonyms || ''}</td>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.language || ''}</td>
+                    </tr>
+                `;
+            });
 
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-            heightLeft -= pdf.internal.pageSize.getHeight();
-
-            while (heightLeft >= 0) {
-                position = heightLeft - pdfHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                heightLeft -= pdf.internal.pageSize.getHeight();
-            }
-
-            pdf.save("Langdex_Filtered_Words_Report.pdf");
-            showNotification("تم تحميل ملف الـ PDF للبيانات المعروضة بنجاح 🚀");
+            const printWindow = window.open("", "_blank");
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Langdex - تقرير السجلات والبيانات</title>
+                    <style>
+                        body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
+                        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+                        p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th { background-color: #678071; color: white; padding: 10px; border: 1px solid #678071; font-size: 13px; }
+                        td { font-size: 12px; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Langdex - تقرير سجل الكلمات والبيانات</h2>
+                    <p>تاريخ التصدير: <b>${new Date().toLocaleString()}</b> | عدد السجلات المعروضة: <b>${currentRows.length}</b></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">ID</th>
+                                <th style="width: 15%;">بواسطة (اليوزر)</th>
+                                <th style="width: 20%;">الكلمة</th>
+                                <th style="width: 25%;">المعنى</th>
+                                <th style="width: 22%;">التفاصيل / المرادفات</th>
+                                <th style="width: 10%;">اللغة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            showNotification("تم فتح نافذة التقرير، اختر حفظ كـ PDF (Save as PDF) من نافذة الطباعة!");
         } catch (error) {
             console.error("PDF Error:", error);
             showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
-        } finally {
-            document.body.removeChild(printContainer);
         }
     });
 }
