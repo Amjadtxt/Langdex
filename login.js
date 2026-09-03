@@ -3,6 +3,8 @@
 // Firebase Authentication - Login
 // ======================================================
 
+import { applyPrefsGlobally } from "/Langdex/prefs.js";
+applyPrefsGlobally();
 import {
     initializeApp,
     getApps,
