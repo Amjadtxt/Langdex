@@ -1,3 +1,7 @@
+import { applyPrefsGlobally } from "/Langdex/prefs.js";
+applyPrefsGlobally();
+
+
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
