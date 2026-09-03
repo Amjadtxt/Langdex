@@ -21,90 +21,148 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
+    /* الإعدادات الأساسية للكونتينر العام */
+    .content {
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+    }
+
     .content > div {
-      width: 85% !important;
+      width: 100% !important;
       max-width: 850px !important;
       margin: 15px auto !important;
       box-sizing: border-box !important;
     }
 
-    /* تثبيت اللون #678071 لكل الديفات في صفحة المستخدمين */
+    /* تثبيت اللون #678071 لكل الأقسام في صفحة المستخدمين */
     .search-section,
     .form,
     .data-section {
       background: #678071 !important;
-      padding: 15px !important;
-      border-radius: 8px !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       margin-bottom: 15px !important;
       box-sizing: border-box !important;
-      width: 100% !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* تنسيق عناصر الفورم والبحث */
+    /* العناوين الداخلية */
+    .search-section h1,
+    .form h1,
+    .data-section h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    /* --- تقييم وتوسيط حقول الإدخال والبحث لتكون ملمومة واحترافية --- */
     .search-section input.search-txt,
     .form input,
     .form select {
+      display: block !important;
       width: 100% !important;
+      max-width: 450px !important; /* تقييد العرض لتبقى ملمومة */
+      margin: 10px auto !important; /* توسيط الحقل داخل القسم */
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      font-size: 14px !important;
+    }
+
+    .search-section input.search-txt {
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
     }
 
     .form select {
-      padding: 12px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: white;
-      border-radius: 8px;
-      margin-top: 10px;
+      background: #2a2a2a !important;
+      border: 1px solid #444 !important;
+      color: white !important;
     }
 
     .form input {
-      padding: 12px;
-      background: #ffffff;
-      border: 1px solid #ccc;
-      color: #000;
-      border-radius: 8px;
-      margin-top: 10px;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
     }
 
-    /* تنسيق زر الإضافة */
+    /* تنسيق زر الإضافة ليكون ملموماً ومتوسطاً */
     .inter1 {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      width: 100%;
-      box-sizing: border-box;
+      display: flex !important;
+      gap: 10px !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 15px auto 0 auto !important;
+      box-sizing: border-box !important;
     }
     .inter1 button {
-      flex: 1;
-      min-width: 0;
-      padding: 12px 10px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: 'Cairo', sans-serif;
-      transition: 0.2s;
-      box-sizing: border-box;
-      color: white;
-      text-align: center;
-      font-size: 14px;
+      flex: 1 !important;
+      padding: 12px 10px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      transition: 0.2s !important;
+      box-sizing: border-box !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
     }
     .inter1 .reg { background: #27ae60; }
     .inter1 .reg:hover { background: #219653; }
 
-    /* تعديلات الموبايل لمنع أي لخبطة في الجدول والمحتوى */
+    /* جدول عرض المستخدمين (يأخذ راحته بالعرض المريح) */
+    .table-container {
+      width: 100% !important;
+      margin: 0 auto !important;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    th {
+      background: rgba(0, 0, 0, 0.25);
+      font-weight: bold;
+    }
+
+    /* تعديلات الموبايل لمنع أي لخبطة وتجاوب كامل */
     @media (max-width: 768px) {
+      .content {
+        padding: 0 10px !important;
+      }
       .content > div {
-        width: 94% !important;
+        width: 100% !important;
         margin: 10px auto !important;
-        padding: 12px !important;
+        padding: 15px !important;
       }
 
-      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة بلون الخلفية الموحد */
+      .inter1 {
+        max-width: 100% !important;
+      }
+
+      .search-section input.search-txt,
+      .form input,
+      .form select {
+        max-width: 100% !important;
+      }
+
+      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -121,7 +179,7 @@
 
       .table-container tr {
         background: rgba(255, 255, 255, 0.05);
-        margin-bottom: 15px;
+        margin-bottom: 12px;
         border-radius: 8px;
         padding: 10px;
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -184,13 +242,13 @@
   <div class="content">
 
     <!-- قسم البحث عن المستخدمين -->
-    <div class="search-section" style="width: 100%;">
+    <div class="search-section">
       <h1>بحث</h1>
       <input type="text" class="search-txt" id="search-user-input" placeholder="اكتب البريد الإلكتروني للبحث...">
     </div>
 
     <!-- قسم إضافة مستخدم جديد -->
-    <div class="form" style="width: 100%;">
+    <div class="form">
       <h1>إضافة مستخدم</h1>
       <input type="email" id="new-user-email" placeholder="البريد الإلكتروني">
       <input type="password" id="new-user-password" placeholder="كلمة المرور (الباسورد)">
@@ -205,9 +263,9 @@
     </div>
 
     <!-- جدول عرض المستخدمين -->
-    <div class="data-section" style="width: 100%;">
+    <div class="data-section">
       <h1>قائمة المستخدمين</h1>
-      <div class="table-container" style="width: 95%; margin: 15px auto;">
+      <div class="table-container">
         <table>
           <thead>
             <tr>
