@@ -1,6 +1,8 @@
 // ======================================================
 // LANGDEX - REGISTER
 // ======================================================
+import { applyPrefsGlobally } from "/Langdex/prefs.js";
+applyPrefsGlobally();
 
 import {
     initializeApp
