@@ -106,7 +106,7 @@ const clearButton = document.querySelector(".cel");
 
 
 // ======================================================
-// SEARCH ELEMENTS (Index & Data Page Support)
+// SEARCH ELEMENTS
 // ======================================================
 
 const searchInput = document.querySelector(".search-txt") || document.querySelector("#search-input");
@@ -193,8 +193,13 @@ function showNotification(message) {
 // ======================================================
 
 async function getAllWords() {
+    // إذا كان المستخدم لم يتم تعيينه بعد ولكن الـ auth جاهز، نحاول أخذه مباشرة
+    if (!currentUser && auth.currentUser) {
+        currentUser = auth.currentUser;
+    }
+
     if (!currentUser) {
-        throw new Error("No authenticated user.");
+        return [];
     }
 
     let snapshot;
@@ -224,7 +229,7 @@ async function getAllWords() {
         return rows;
     } catch (error) {
         console.error("Error fetching words:", error);
-        throw error;
+        return [];
     }
 }
 
@@ -350,7 +355,7 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE (Fixed Columns Order: User at the End)
+// RENDER TABLE
 // ======================================================
 
 function renderTable(rows) {
@@ -432,12 +437,10 @@ function applyFiltersAndSearch() {
 
     let filtered = allTableData;
 
-    // فلترة باللغة
     if (selectedLanguage !== "" && selectedLanguage !== "all") {
         filtered = filtered.filter(item => normalize(item.language) === normalize(selectedLanguage));
     }
 
-    // فلترة بالبحث (شامل الكلمة، المعنى، المرادف، أو اللغة)
     if (searchQuery !== "") {
         const target = normalize(searchQuery);
         filtered = filtered.filter(item => {
@@ -457,20 +460,30 @@ function applyFiltersAndSearch() {
 
 
 // ======================================================
-// LISTENERS (Show Data, Filter, Live Search & Clear)
+// INITIAL DATA LOADER FUNCTION
+// ======================================================
+
+async function initializePageData() {
+    try {
+        allTableData = await getAllWords();
+        populateLanguageFilter(allTableData);
+        if (dataTable) {
+            applyFiltersAndSearch();
+        }
+    } catch (err) {
+        console.error("Load Data Error:", err);
+    }
+}
+
+
+// ======================================================
+// LISTENERS
 // ======================================================
 
 if (showDataButton) {
     showDataButton.addEventListener("click", async function () {
-        try {
-            allTableData = await getAllWords();
-            populateLanguageFilter(allTableData);
-            applyFiltersAndSearch();
-            showNotification(`تم تحديث وعرض ${allTableData.length} سجل.`);
-        } catch (error) {
-            console.error("Show Data Error:", error);
-            showNotification("حدث خطأ أثناء عرض البيانات.");
-        }
+        await initializePageData();
+        showNotification(`تم تحديث وعرض ${allTableData.length} سجل.`);
     });
 }
 
@@ -480,7 +493,6 @@ if (languageFilter) {
     });
 }
 
-// دعم البحث الفوري المباشر أثناء الكتابة في خانة البحث الجديدة
 const liveSearchInput = document.querySelector("#search-input");
 if (liveSearchInput) {
     liveSearchInput.addEventListener("input", function () {
@@ -503,233 +515,7 @@ if (clearFilterButton) {
 
 
 // ======================================================
-// SEARCH FIREBASE (For Index Page / Search Button)
-// ======================================================
-
-async function searchFirebase(text) {
-    const snapshot = await getDocs(wordsCollection);
-    const rows = [];
-    snapshot.forEach(firebaseDoc => {
-        const data = firebaseDoc.data();
-        rows.push({
-            ...data,
-            _documentId: firebaseDoc.id
-        });
-    });
-
-    const target = normalize(text);
-
-    return rows.filter(item => {
-        return (
-            normalize(item.id).includes(target) ||
-            normalize(item.word).includes(target) ||
-            normalize(item.meaning).includes(target) ||
-            normalize(item.synonyms).includes(target) ||
-            normalize(item.language).includes(target) ||
-            normalize(item.userEmail).includes(target)
-        );
-    });
-}
-
-if (searchButton && searchInput && !document.querySelector("#search-input")) {
-    searchButton.addEventListener("click", async function () {
-        const text = searchInput.value.trim();
-
-        if (!text) {
-            showNotification("اكتب شيئًا للبحث.");
-            return;
-        }
-
-        try {
-            if (normalize(text) !== normalize(lastSearchText)) {
-                searchResults = await searchFirebase(text);
-                searchIndex = 0;
-                lastSearchText = text;
-            }
-
-            if (searchResults.length === 0) {
-                showNotification("لم يتم العثور على نتائج.");
-                if (searchResult) searchResult.textContent = "";
-                return;
-            }
-
-            const result = searchResults[searchIndex];
-            fillForm(result, result._documentId);
-
-            showNotification(`تم العثور على النتيجة رقم ${searchIndex + 1} من ${searchResults.length}`);
-            if (searchResult) searchResult.textContent = "";
-
-            searchIndex++;
-            if (searchIndex >= searchResults.length) {
-                searchIndex = 0;
-            }
-        } catch (error) {
-            console.error("Search Error:", error);
-            showNotification("حدث خطأ أثناء البحث.");
-        }
-    });
-}
-
-
-// ======================================================
-// REGISTER / UPDATE / DELETE
-// ======================================================
-
-if (registerButton) {
-    registerButton.addEventListener("click", async function () {
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
-        const word = wordInput ? wordInput.value.trim() : "";
-        const meaning = meaningInput ? meaningInput.value.trim() : "";
-        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
-        const language = languageSelect ? languageSelect.value.trim() : "";
-
-        if (!word || !meaning || !language) {
-            showNotification("يرجى إكمال البيانات الأساسية.");
-            return;
-        }
-
-        try {
-            const rows = await getAllWords();
-
-            const duplicate = rows.find(item => normalize(item.word) === normalize(word));
-
-            if (duplicate) {
-                showNotification(`الكلمة موجودة بالفعل - ID: ${duplicate.id}`);
-                fillForm(duplicate, duplicate._documentId);
-                return;
-            }
-
-            const newId = await getNextId();
-            const userEmail = currentUser.email || "";
-            const username = userEmail.includes("@") ? userEmail.split("@")[0] : "مستخدم";
-
-            await addDoc(wordsCollection, {
-                id: newId,
-                word: word,
-                meaning: meaning,
-                synonyms: synonyms,
-                language: language,
-                userId: currentUser.uid,
-                userEmail: userEmail,
-                username: username,
-                createdAt: serverTimestamp()
-            });
-
-            showNotification(`تم تسجيل الكلمة بنجاح - ID: ${newId}`);
-            
-            allTableData = await getAllWords();
-            populateLanguageFilter(allTableData);
-            if (dataTable) applyFiltersAndSearch();
-
-            await clearForm();
-        } catch (error) {
-            console.error("Register Error:", error);
-            showNotification("حدث خطأ أثناء حفظ البيانات.");
-        }
-    });
-}
-
-if (updateButton) {
-    updateButton.addEventListener("click", async function () {
-        if (!currentUser || !selectedDocumentId) {
-            showNotification("اختر الكلمة أولاً لتعديلها.");
-            return;
-        }
-
-        const rows = await getAllWords();
-        const isOwner = rows.some(item => item._documentId === selectedDocumentId);
-
-        if (!isOwner && !isCurrentUserAdmin()) {
-            showNotification("عذراً، لا يمكنك تعديل كلمة تخص مستخدم آخر!");
-            return;
-        }
-
-        const word = wordInput ? wordInput.value.trim() : "";
-        const meaning = meaningInput ? meaningInput.value.trim() : "";
-        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
-        const language = languageSelect ? languageSelect.value.trim() : "";
-
-        if (!word || !meaning || !language) {
-            showNotification("يرجى إكمال البيانات الأساسية.");
-            return;
-        }
-
-        try {
-            const wordRef = doc(db, "words", selectedDocumentId);
-
-            await updateDoc(wordRef, {
-                word: word,
-                meaning: meaning,
-                synonyms: synonyms,
-                language: language
-            });
-
-            showNotification("تم تحديث البيانات بنجاح.");
-            
-            allTableData = await getAllWords();
-            populateLanguageFilter(allTableData);
-            if (dataTable) applyFiltersAndSearch();
-
-            await clearForm();
-        } catch (error) {
-            console.error("Update Error:", error);
-            showNotification("حدث خطأ أثناء التحديث.");
-        }
-    });
-}
-
-if (deleteButton) {
-    deleteButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-
-        if (!currentUser || !selectedDocumentId) {
-            showNotification("اختر الكلمة أولاً لحذفها.");
-            return;
-        }
-
-        const rows = await getAllWords();
-        const isOwner = rows.some(item => item._documentId === selectedDocumentId);
-
-        if (!isOwner && !isCurrentUserAdmin()) {
-            showNotification("عذراً، لا يمكنك حذف كلمة تخص مستخدم آخر!");
-            return;
-        }
-
-        if (!confirm("هل أنت متأكد من حذف هذه الكلمة؟")) return;
-
-        try {
-            const wordRef = doc(db, "words", selectedDocumentId);
-            await deleteDoc(wordRef);
-
-            showNotification("تم حذف البيانات بنجاح.");
-            
-            allTableData = await getAllWords();
-            populateLanguageFilter(allTableData);
-            if (dataTable) applyFiltersAndSearch();
-
-            await clearForm();
-        } catch (error) {
-            console.error("Delete Error:", error);
-            showNotification("حدث خطأ أثناء الحذف.");
-        }
-    });
-}
-
-if (clearButton) {
-    clearButton.addEventListener("click", async function (event) {
-        event.preventDefault();
-        await clearForm();
-        showNotification("تم مسح البيانات.");
-    });
-}
-
-
-// ======================================================
-// DOWNLOAD PDF (Non-Blocking, Independent & Instant)
+// DOWNLOAD PDF
 // ======================================================
 
 if (downloadPdfButton) {
@@ -850,98 +636,7 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// UPLOAD EXCEL FILE (.xlsx) TO FIREBASE
-// ======================================================
-
-const uploadExcelButton = document.querySelector("#uploadExcelButton");
-const excelFileInput = document.querySelector("#excelFileInput");
-
-if (uploadExcelButton && excelFileInput) {
-    uploadExcelButton.addEventListener("click", async () => {
-        const file = excelFileInput.files[0];
-        if (!file) {
-            showNotification("من فضلك اختر ملف إكسيل أولاً!");
-            return;
-        }
-
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً!");
-            return;
-        }
-
-        if (typeof XLSX === "undefined") {
-            showNotification("خطأ: مكتبة قراءة الإكسيل غير مُحمّلة في الصفحة!");
-            console.error("XLSX library is missing. Please add SheetJS CDN in HTML.");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async function (e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
-                
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                if (rows.length === 0) {
-                    showNotification("الملف فارغ!");
-                    return;
-                }
-
-                showNotification("جاري رفع كلمات الإكسيل للفايربيز...");
-                let successCount = 0;
-                let baseId = await getNextId();
-
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row.length === 0) continue;
-
-                    const wordData = {
-                        id: baseId + successCount,
-                        word: String(row[0] || "").trim(),
-                        meaning: String(row[1] || "").trim(),
-                        synonyms: String(row[2] || "").trim(),
-                        language: String(row[3] || "عامة").trim(),
-                        userId: currentUser.uid,
-                        userEmail: currentUser.email || "",
-                        username: currentUser.email ? currentUser.email.split("@")[0] : "مستخدم",
-                        createdAt: serverTimestamp()
-                    };
-
-                    if (!wordData.word && !wordData.meaning) continue;
-
-                    try {
-                        await addDoc(wordsCollection, wordData);
-                        successCount++;
-                    } catch (err) {
-                        console.error("Error adding excel row:", err);
-                    }
-                }
-
-                showNotification(`تم رفع ${successCount} كلمة من الإكسيل بنجاح!`);
-                excelFileInput.value = "";
-
-                allTableData = await getAllWords();
-                populateLanguageFilter(allTableData);
-                if (dataTable) applyFiltersAndSearch();
-                await setNextId();
-
-            } catch (error) {
-                console.error("Excel read error:", error);
-                showNotification("حدث خطأ أثناء قراءة ملف الإكسيل.");
-            }
-        };
-
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-
-// ======================================================
-// AUTH STATE & ROUTE GUARD
+// AUTH STATE & INITIALIZATION
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
@@ -953,7 +648,6 @@ onAuthStateChanged(auth, async user => {
 
     currentUser = user;
     const isAdmin = isCurrentUserAdmin();
-
     const currentPage = window.location.pathname.split("/").pop();
 
     if (isAdmin && (currentPage === "index.html" || currentPage === "")) {
@@ -970,15 +664,13 @@ onAuthStateChanged(auth, async user => {
         await setNextId();
     }
 
-    try {
-        allTableData = await getAllWords();
-        populateLanguageFilter(allTableData);
-        
-        // جلب وعرض البيانات تلقائياً في الجدول حال توفره بالصفحة (مثل صفحة data.html)
-        if (dataTable) {
-            applyFiltersAndSearch();
-        }
-    } catch (err) {
-        console.error("Initial load error:", err);
+    await initializePageData();
+});
+
+// تشغيل احتياطي فوري فور تحميل الصفحة في حال تأخر الـ Auth State
+document.addEventListener("DOMContentLoaded", async () => {
+    if (auth.currentUser) {
+        currentUser = auth.currentUser;
+        await initializePageData();
     }
 });
