@@ -406,7 +406,7 @@ function applyFiltersAndSearch() {
     renderTable(filtered);
 }
 
-// تصدير PDF محدث ومضبوط بالكامل لعرض النصوص الطويلة والـ Padding
+// تصدير PDF بالمقاسات الصحيحة وظهور كافة الأعمدة بالكامل دون أي اختفاء
 async function exportUserPdf() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         showNotification("لا توجد بيانات لتصديرها.");
@@ -438,11 +438,11 @@ async function exportUserPdf() {
         doc.setTextColor(255, 255, 255);
         
         doc.text("ID", 14, y + 6);
-        doc.text("الكلمة (Word)", 32, y + 6);
-        doc.text("المعنى (Meaning)", 82, y + 6);
-        doc.text("المرادف (Synonyms)", 152, y + 6);
-        doc.text("اللغة (Lang)", 215, y + 6);
-        doc.text("تاريخ التسجيل", 245, y + 6);
+        doc.text("الكلمة (Word)", 35, y + 6);
+        doc.text("المعنى (Meaning)", 90, y + 6);
+        doc.text("المرادف (Synonyms)", 165, y + 6);
+        doc.text("اللغة (Lang)", 225, y + 6);
+        doc.text("تاريخ التسجيل", 252, y + 6);
 
         y += 12;
         doc.setTextColor(0, 0, 0);
@@ -456,9 +456,9 @@ async function exportUserPdf() {
             const langStr = String(item.language || "-");
             const dateStr = formatTimestamp(item.createdAt);
 
-            const splitMeaning = doc.splitTextToSize(meaningStr, 65);
-            const splitSynonyms = doc.splitTextToSize(synonymsStr, 58);
-            const splitWord = doc.splitTextToSize(wordStr, 45);
+            const splitMeaning = doc.splitTextToSize(meaningStr, 70);
+            const splitSynonyms = doc.splitTextToSize(synonymsStr, 55);
+            const splitWord = doc.splitTextToSize(wordStr, 50);
 
             const maxLines = Math.max(splitMeaning.length, splitSynonyms.length, splitWord.length, 1);
             const rowHeight = maxLines * 6 + 4;
@@ -469,11 +469,11 @@ async function exportUserPdf() {
             }
 
             doc.text(idStr, 14, y + 4);
-            doc.text(splitWord, 32, y + 4);
-            doc.text(splitMeaning, 82, y + 4);
-            doc.text(splitSynonyms, 152, y + 4);
-            doc.text(langStr, 215, y + 4, { maxWidth: 28 });
-            doc.text(dateStr, 245, y + 4);
+            doc.text(splitWord, 35, y + 4);
+            doc.text(splitMeaning, 90, y + 4);
+            doc.text(splitSynonyms, 165, y + 4);
+            doc.text(langStr, 225, y + 4, { maxWidth: 22 });
+            doc.text(dateStr, 252, y + 4);
 
             y += rowHeight + 2;
             doc.setDrawColor(220, 220, 220);
