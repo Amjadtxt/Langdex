@@ -28,13 +28,14 @@ export function applyDarkMode(enabled) {
             darkStyleEl.id = "langdex-dark-mode-style";
             darkStyleEl.textContent = `
                 body { background:#14181a !important; color:#e6e6e6 !important; }
-                header, nav.bar { background:#1c2124 !important; }
+                header, nav.bar, .user-bar { background:#1c2124 !important; }
                 .search-section, .data-section, .login-form, .settings-section { background:#33413a !important; }
                 .table-container table { background: rgba(255,255,255,0.05) !important; }
                 th { background: rgba(0,0,0,0.4) !important; }
                 input:not([type="checkbox"]), select, textarea {
                     background:#20262a !important; color:#e6e6e6 !important; border-color:#3a4247 !important;
                 }
+                #logout-btn { background:#20262a !important; color:#e6e6e6 !important; border-color:#3a4247 !important; }
             `;
             document.head.appendChild(darkStyleEl);
         }
