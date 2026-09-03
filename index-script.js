@@ -121,11 +121,22 @@ async function getAllWordsPublic() {
             });
         });
 
-        // ترتيب الكلمات حسب الأحدث تاريخاً (من الأحدث إلى الأقدم)
+        // 🌟 الترتيب الأساسي والنهائي: الأحدث من حيث تاريخ الإنشاء (createdAt) يظهر أولاً دائماً بدقة
         rows.sort((a, b) => {
-            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
-            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
-            return timeB - timeA;
+            let timeA = 0;
+            let timeB = 0;
+
+            if (a.createdAt) {
+                timeA = a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+            }
+            if (b.createdAt) {
+                timeB = b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+            }
+
+            if (timeB !== timeA) {
+                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً بدقة
+            }
+            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال تساوي الوقت تماماً
         });
 
         return rows;
@@ -238,7 +249,7 @@ function applyFiltersAndSearch() {
 }
 
 // ======================================================
-// EXPORT PDF WITH ALL DATA FIELDS & FILTER COMPATIBILITY
+// EXPORT PDF WITH ALL DATA FIELDS & FILTER COMPATIBILITY (Print Window Method)
 // ======================================================
 
 async function exportFilteredDataToPdf() {
@@ -248,68 +259,67 @@ async function exportFilteredDataToPdf() {
     }
 
     try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'landscape', // استخدام الوضع الأفقي عشان يستوعب كل الأعمدة براحته
-            unit: 'mm',
-            format: 'a4'
+        showNotification("جاري تجهيز تقرير الـ PDF للطباعة والحفظ...");
+
+        let rowsHtml = "";
+        currentFilteredData.forEach((item, index) => {
+            rowsHtml += `
+                <tr>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.id !== undefined ? item.id : (index + 1)}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${item.word || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${item.meaning || ''}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${item.synonyms || ''}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.language || ''}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${formatTimestamp(item.createdAt)}</td>
+                </tr>
+            `;
         });
 
-        doc.addFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf", "Roboto", "normal");
-        doc.setFont("Roboto");
-
-        doc.setFontSize(16);
-        doc.text("Langdex - Public Dictionary Report", 148, 12, { align: "center" });
-        
-        doc.setFontSize(10);
-        doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 148, 18, { align: "center" });
-
-        let y = 28;
-        doc.setFontSize(10);
-
-        // رأس الجدول في الـ PDF يطابق أعمدة الموقع تماماً (ID, الكلمة, المعنى, المرادف, اللغة, التاريخ)
-        doc.setFillColor(103, 128, 113);
-        doc.rect(10, y, 277, 8, "F");
-        doc.setTextColor(255, 255, 255);
-        
-        doc.text("ID", 15, y + 6);
-        doc.text("الكلمة (Word)", 35, y + 6);
-        doc.text("المعنى (Meaning)", 85, y + 6);
-        doc.text("المرادف (Synonyms)", 155, y + 6);
-        doc.text("اللغة (Lang)", 215, y + 6);
-        doc.text("تاريخ التسجيل", 245, y + 6);
-
-        y += 10;
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(9);
-
-        currentFilteredData.forEach((item) => {
-            if (y > 190) {
-                doc.addPage();
-                y = 20;
-            }
-
-            const idStr = String(item.id || "-");
-            const wordStr = String(item.word || "-");
-            const meaningStr = String(item.meaning || "-");
-            const synonymsStr = String(item.synonyms || "-");
-            const langStr = String(item.language || "-");
-            const dateStr = formatTimestamp(item.createdAt);
-
-            doc.text(idStr, 15, y);
-            doc.text(wordStr, 35, y, { maxWidth: 45 });
-            doc.text(meaningStr, 85, y, { maxWidth: 65 });
-            doc.text(synonymsStr, 155, y, { maxWidth: 55 });
-            doc.text(langStr, 215, y, { maxWidth: 25 });
-            doc.text(dateStr, 245, y);
-
-            y += 9;
-            doc.setDrawColor(220, 220, 220);
-            doc.line(10, y - 3, 287, y - 3);
-        });
-
-        doc.save("langdex-dictionary-report.pdf");
-        showNotification("تم تصدير ملف الـ PDF كاملاً بنجاح!");
+        const printWindow = window.open("", "_blank");
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>Langdex - تقرير القاموس العام</title>
+                <style>
+                    body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
+                    h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+                    p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th { background-color: #678071; color: white; padding: 10px; border: 1px solid #678071; font-size: 13px; }
+                    td { font-size: 12px; }
+                    tr:nth-child(even) { background-color: #f9f9f9; }
+                </style>
+            </head>
+            <body>
+                <h2>Langdex - تقرير القاموس العام والبيانات</h2>
+                <p>تاريخ التصدير: <b>${new Date().toLocaleString()}</b> | عدد السجلات المعروضة: <b>${currentFilteredData.length}</b></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">ID</th>
+                            <th style="width: 20%;">الكلمة (Word)</th>
+                            <th style="width: 25%;">المعنى (Meaning)</th>
+                            <th style="width: 22%;">المرادف (Synonyms)</th>
+                            <th style="width: 10%;">اللغة (Lang)</th>
+                            <th style="width: 15%;">تاريخ التسجيل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        showNotification("تم فتح نافذة التقرير، اختر حفظ كـ PDF (Save as PDF) من نافذة الطباعة!");
     } catch (error) {
         console.error("PDF Export Error:", error);
         showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
