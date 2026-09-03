@@ -57,7 +57,27 @@
       margin: 0;
     }
 
-    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) لتأخذ نفس السطر والعرض تماماً على الكمبيوتر */
+    /* تنسيق قسم البحث وقائمة الفلترة لتكون مضبوطة تماماً وعرضها متناسق */
+    .search-section {
+      box-sizing: border-box;
+    }
+    .search-section input.search-txt {
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .search-section select.filter-select {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      margin-top: 10px;
+      padding: 12px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) لتكون بنفس الحجم والعرض تماماً وبجانب بعض على الكمبيوتر */
     .inter1 {
       grid-column: 1 / -1;
       display: flex;
@@ -65,9 +85,10 @@
       flex-wrap: nowrap;
       margin-top: 10px;
       width: 100%;
+      box-sizing: border-box;
     }
     .inter1 button {
-      flex: 1; /* توزيع المساحة بالتساوي 100% بدون أي تفاوت */
+      flex: 1; /* توزيع المساحة بالتساوي 100% بدون أي تفاوت بين الأزرار */
       min-width: 0;
       padding: 12px 10px;
       border: none;
@@ -87,7 +108,6 @@
     .inter1 .upa { background: #2980b9; }
     .inter1 .upa:hover { background: #1f618d; }
 
-    /* تم توحيد مقاس وحجم زر مسح البيانات ليكون مطابق تماماً لزر الإضافة والتعديل */
     .inter1 .cel { background: #7f8c8d; }
     .inter1 .cel:hover { background: #626d6e; }
 
@@ -323,8 +343,8 @@
     <div class="search-section" style="width: 100%;">
       <h1>البحث</h1>
       <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
-      <select class="filter-select" id="languageFilterSearch" style="margin-top: 10px; width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; font-family: 'Cairo', sans-serif;">
-          <option value="all">إختر اللغة</option>
+      <select class="filter-select" id="languageFilterSearch">
+          <option value="all">كل اللغات (للبحث أو العرض)</option>
       </select>
     </div>
 
