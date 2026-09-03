@@ -235,7 +235,6 @@ async function fetchAllData() {
         await setNextIdAdmin();
     } catch (error) {
         console.error(error);
-        showNotification("حدث خطأ أثناء جلب البيانات.");
     }
 }
 
