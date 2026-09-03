@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - script.js (Safe & Unified Edition for Amjad)
+// LANGDEX - script.js (User Data Page Edition)
 // ======================================================
 
 import {
@@ -28,7 +28,7 @@ import {
 
 
 // ======================================================
-// FIREBASE CONFIG & ADMIN LIST
+// FIREBASE CONFIG
 // ======================================================
 
 const firebaseConfig = {
@@ -40,8 +40,6 @@ const firebaseConfig = {
     appId: "1:819838317933:web:cae7f4531ea32f958c5664",
     measurementId: "G-F60CC2CDCJ"
 };
-
-const ADMIN_EMAILS = ["amjadtxt@gmail.com"]; // إيميل الأدمن المعتمد
 
 
 // ======================================================
@@ -72,7 +70,7 @@ let lastSearchText = "";
 
 
 // ======================================================
-// FORM ELEMENTS (آمنة تماماً ولا تسبب أخطاء لو الصفحات لا تحتويهام)
+// FORM ELEMENTS
 // ======================================================
 
 const form = document.querySelector(".form");
@@ -131,12 +129,6 @@ function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
 }
 
-function isCurrentUserAdmin() {
-    if (!currentUser) return false;
-    const email = (currentUser.email || "").toLowerCase();
-    return ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email);
-}
-
 function showNotification(message) {
     let notification = document.querySelector(".langdex-notification");
 
@@ -183,7 +175,7 @@ function showNotification(message) {
 
 
 // ======================================================
-// GET WORDS
+// GET WORDS (بيانات المستخدم الحالي فقط بشكل دائم ومستقل)
 // ======================================================
 
 async function getAllWords() {
@@ -196,9 +188,11 @@ async function getAllWords() {
     }
 
     try {
-        const snapshot = await getDocs(wordsCollection);
-        const rows = [];
+        // جلب كلمات المستخدم الحالي فقط حصرياً
+        const userQuery = query(wordsCollection, where("userId", "==", currentUser.uid));
+        const snapshot = await getDocs(userQuery);
 
+        const rows = [];
         snapshot.forEach(firebaseDoc => {
             const data = firebaseDoc.data();
             rows.push({
@@ -210,7 +204,7 @@ async function getAllWords() {
         rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
         return rows;
     } catch (error) {
-        console.error("Error fetching words:", error);
+        console.error("Error fetching user words:", error);
         return [];
     }
 }
@@ -223,12 +217,12 @@ async function getAllWords() {
 async function getNextId() {
     if (!currentUser) return 1;
     try {
-        const rows = await getAllWords();
-        const userRows = rows.filter(item => item.userId === currentUser.uid);
+        const userQuery = query(wordsCollection, where("userId", "==", currentUser.uid));
+        const snapshot = await getDocs(userQuery);
         const usedIds = new Set();
 
-        userRows.forEach(item => {
-            const id = Number(item.id);
+        snapshot.forEach(item => {
+            const id = Number(item.data().id);
             if (Number.isInteger(id) && id > 0) {
                 usedIds.add(id);
             }
@@ -313,15 +307,8 @@ function fillForm(data, documentId) {
     if (synonymsInput) synonymsInput.value = data.synonyms ?? "";
     if (languageSelect) languageSelect.value = data.language ?? "";
 
-    const isOwner = currentUser && (data.userId === currentUser.uid || isCurrentUserAdmin());
-
-    if (isOwner) {
-        setFormAccess(true);
-        showNotification(`تم اختيار الكلمة: ${data.word}`);
-    } else {
-        setFormAccess(false);
-        showNotification(`تنبيه: هذه الكلمة تخص مستخدم آخر (للاطلاع فقط ولا يمكنك تعديلها)`);
-    }
+    setFormAccess(true);
+    showNotification(`تم اختيار الكلمة: ${data.word}`);
 }
 
 
@@ -374,29 +361,18 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE
+// RENDER TABLE (خاص بكلمات اليوزر فقط - 5 أعمدة تنظيمية)
 // ======================================================
 
 function renderTable(rows) {
     if (!dataTable) return;
 
     dataTable.innerHTML = "";
-    const isAdmin = isCurrentUserAdmin();
-
-    const thead = dataTable.closest('table')?.querySelector('thead tr');
-    if (thead) {
-        if (!thead.querySelector('.admin-user-th')) {
-            const userTh = document.createElement('th');
-            userTh.className = 'admin-user-th';
-            userTh.textContent = 'المستخدم';
-            thead.appendChild(userTh);
-        }
-    }
 
     if (rows.length === 0) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
-        emptyCell.colSpan = 6;
+        emptyCell.colSpan = 5;
         emptyCell.textContent = "لا توجد بيانات للعرض.";
         emptyCell.style.textAlign = "center";
         emptyRow.appendChild(emptyCell);
@@ -406,19 +382,13 @@ function renderTable(rows) {
 
     rows.forEach(data => {
         const row = document.createElement("tr");
-        const isOwner = currentUser && data.userId === currentUser.uid;
-
-        if (!isOwner && !isAdmin) {
-            row.style.background = "rgba(0, 0, 0, 0.03)";
-        }
 
         const values = [
             data.id,
             data.word,
             data.meaning,
             data.synonyms,
-            data.language,
-            data.userEmail || data.username || "مستخدم آخر"
+            data.language
         ];
 
         values.forEach(value => {
@@ -432,7 +402,6 @@ function renderTable(rows) {
 
         row.style.cursor = "pointer";
         row.addEventListener("click", () => {
-            // إذا كان المستخدم في صفحة العرض data.html ولم يكن هناك فورم، يمكنك توجيهه أو إشعاره
             if (!form) {
                 showNotification(`الكلمة: ${data.word} - المعنى: ${data.meaning}`);
                 return;
@@ -469,17 +438,8 @@ function applyFiltersAndSearch() {
                 normalize(item.word).includes(target) ||
                 normalize(item.meaning).includes(target) ||
                 normalize(item.synonyms).includes(target) ||
-                normalize(item.language).includes(target) ||
-                normalize(item.userEmail).includes(target)
+                normalize(item.language).includes(target)
             );
-        });
-    }
-
-    if (currentUser) {
-        filtered.sort((a, b) => {
-            const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
-            const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-            return bIsOwner - aIsOwner;
         });
     }
 
@@ -488,7 +448,7 @@ function applyFiltersAndSearch() {
 
 
 // ======================================================
-// SEARCH BUTTON HANDLER (خاص بصفحة Index)
+// SEARCH BUTTON HANDLER
 // ======================================================
 
 if (searchButton && searchInput) {
@@ -520,18 +480,9 @@ if (searchButton && searchInput) {
                 normalize(item.word).includes(target) ||
                 normalize(item.meaning).includes(target) ||
                 normalize(item.synonyms).includes(target) ||
-                normalize(item.language).includes(target) ||
-                normalize(item.userEmail).includes(target)
+                normalize(item.language).includes(target)
             );
         });
-
-        if (currentUser) {
-            matches.sort((a, b) => {
-                const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
-                const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-                return bIsOwner - aIsOwner;
-            });
-        }
 
         searchResults = matches;
         searchIndex = 0;
@@ -546,7 +497,7 @@ if (searchButton && searchInput) {
             }
         } else {
             selectedDocumentId = null;
-            if (searchResult) searchResult.textContent = "لم يتم العثور على نتائج مطابقة في أي خانة.";
+            if (searchResult) searchResult.textContent = "لم يتم العثور على نتائج مطابقة.";
             showNotification("لا توجد نتائج مطابقة.");
         }
     });
@@ -577,7 +528,7 @@ async function initializePageData() {
 if (showDataButton) {
     showDataButton.addEventListener("click", async function () {
         await initializePageData();
-        showNotification(`تم تحديث وعرض السجلات.`);
+        showNotification(`تم تحديث وعرض ${allTableData.length} سجل.`);
     });
 }
 
@@ -767,12 +718,11 @@ if (downloadPdfButton) {
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
                         <thead>
                             <tr style="background-color: #b5b5b5;">
-                                <th style="border: 1px solid #333; padding: 5px; width: 8%;">#</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 22%;">الكلمة</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 28%;">المعنى</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 18%;">المرادف</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 14%;">اللغة</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 10%;">#</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 25%;">الكلمة</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 30%;">المعنى</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 20%;">المرادف</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 15%;">اللغة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -783,7 +733,6 @@ if (downloadPdfButton) {
                                     <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
                                     <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
                                     <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -825,7 +774,7 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// AUTH STATE & INITIALIZATION
+// AUTH STATE & INITIALIZATION (بدون إعادة توجيه إجبارية للصفحات)
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
@@ -836,18 +785,6 @@ onAuthStateChanged(auth, async user => {
     }
 
     currentUser = user;
-    const isAdmin = isCurrentUserAdmin();
-    const currentPage = window.location.pathname.split("/").pop();
-
-    if (isAdmin && (currentPage === "index.html" || currentPage === "")) {
-        window.location.href = "admin.html";
-        return;
-    }
-
-    if (!isAdmin && currentPage === "admin.html") {
-        window.location.href = "index.html";
-        return;
-    }
 
     if (idInput) {
         await setNextId();
