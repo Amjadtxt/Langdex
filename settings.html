@@ -10,12 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 .content{padding:0 10px !important;box-sizing:border-box !important;}
-.content>div{width:100% !important;max-width:420px !important;margin:12px auto !important;box-sizing:border-box !important;}
+.content>div{width:100% !important;max-width:380px !important;margin:12px auto !important;box-sizing:border-box !important;}
 .settings-section{background:#678071 !important;padding:12px 15px !important;border-radius:8px !important;border:1px solid rgba(255,255,255,.2) !important;box-shadow:0 4px 12px rgba(0,0,0,.2);margin-bottom:12px !important;}
 .settings-section h1{text-align:center;color:#fff;margin-bottom:10px;font-size:17px;}
 .settings-section h2{color:#fff;font-size:14px;margin:0 0 8px;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:5px;}
 
-.field-row{display:flex;align-items:center;justify-content:space-between;margin:8px 0;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
+/* تحجيم وعزل الـ field-row عشان ميبقاش عريض أوي وملموم صح */
+.field-row{display:flex;align-items:center;justify-content:space-between;max-width:100%;margin:7px 0;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
 .field-row label:not(.switch){flex:1;text-align:right;}
 
 .settings-section input[type="text"],
@@ -28,13 +29,13 @@
   text-align: center !important; height: 35px !important;
 }
 
-/* تحجيم وتثبيت عرض زر السويتش تماماً بدون تمدد */
-.switch{position:relative !important;display:inline-block !important;width:36px !important;height:18px !important;min-width:36px !important;max-width:36px !important;flex:0 0 36px !important;flex-shrink:0 !important;direction:ltr !important;margin:0 !important;}
+/* زر السويتش صغير وصحيح تماماً */
+.switch{position:relative !important;display:inline-block !important;width:34px !important;height:18px !important;min-width:34px !important;max-width:34px !important;flex:0 0 34px !important;flex-shrink:0 !important;direction:ltr !important;margin:0 !important;}
 .switch input{opacity:0;width:0;height:0;}
 .slider{position:absolute;cursor:pointer;inset:0;background:#a9b6ae;border-radius:18px;transition:.2s;}
 .slider:before{position:absolute;content:"";height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
 .switch input:checked + .slider{background:#00bcd4;}
-.switch input:checked + .slider:before{transform:translateX(18px);}
+.switch input:checked + .slider:before{transform:translateX(16px);}
 
 .save-btn{display:block;width:100%;color:#fff;padding:8px;border:none;border-radius:6px;font-weight:bold;
   cursor:pointer;margin:6px auto 0;font-family:'Cairo',sans-serif;font-size:13px;transition:.2s;text-align:center;background:#00bcd4;}
@@ -53,11 +54,11 @@
   </div>
   <nav class="bar">
     <ul>
-      <a href="/Langdex/index.html"><li>الرئيسية</li></a> 
-        <a href="/Langdex/data.html"><li>الإدارة</li></a> 
-        <a href="/Langdex/settings.html"><li>الإعدادات</li></a>
-        <a href="#"><li>استكشاف</li></a>
-        <a href="#"><li>التواصل</li></a>
+      <a href="/Langdex/index.html"><li>الرئيسية</li></a>
+      <a href="/Langdex/data.html"><li>الإدارة</li></a>
+      <a href="/Langdex/settings.html"><li>الإعدادات</li></a>
+      <a href="#"><li>حول</li></a>
+      <a href="#"><li>التواصل</li></a>
     </ul>
   </nav>
 </header>
