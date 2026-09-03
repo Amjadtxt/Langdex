@@ -19,6 +19,14 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+import {
+    applyPrefsGlobally,
+    isNotifyEnabled,
+    getResultsPerPage,
+    getPdfOrientation,
+    getDefaultLang
+} from "/Langdex/prefs.js";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
@@ -48,11 +56,16 @@ const languageFilter = document.querySelector("#language-filter");
 const clearFilterButton = document.querySelector("#clear-filter");
 const downloadPdfBtn = document.querySelector("#download-pdf-btn");
 
+// تطبيق الوضع الداكن فورًا لو محفوظ في التفضيلات (قبل حتى ما نعرف حالة تسجيل الدخول)
+applyPrefsGlobally();
+
 function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
 }
 
 function showNotification(message) {
+    if (!isNotifyEnabled()) return; // 🌟 مرتبط بتفضيل الإشعارات في صفحة الإعدادات
+
     let notification = document.querySelector(".langdex-notification");
     if (!notification) {
         notification = document.createElement("div");
@@ -177,8 +190,10 @@ function populateLanguageFilter(rows) {
             languageFilter.appendChild(option);
         });
 
-    const exists = [...languageFilter.options].some(option => normalize(option.value) === normalize(currentValue));
-    languageFilter.value = (currentValue && exists) ? currentValue : "all";
+    // 🌟 لو مفيش قيمة مختارة حاليًا (أول تحميل)، استخدم اللغة الافتراضية من صفحة الإعدادات
+    const target = currentValue || getDefaultLang();
+    const exists = [...languageFilter.options].some(option => normalize(option.value) === normalize(target));
+    languageFilter.value = exists ? target : "all";
 }
 
 function renderTable(rows) {
@@ -246,6 +261,12 @@ function applyFiltersAndSearch() {
         });
     }
 
+    // 🌟 تطبيق "عدد النتائج في الصفحة" المحفوظ في الإعدادات
+    const limit = getResultsPerPage();
+    if (limit) {
+        filtered = filtered.slice(0, limit);
+    }
+
     renderTable(filtered);
 }
 
@@ -276,6 +297,9 @@ async function exportFilteredDataToPdf() {
             `;
         });
 
+        // 🌟 اتجاه الصفحة (طولي/عرضي) من صفحة الإعدادات
+        const orientation = getPdfOrientation();
+
         const printWindow = window.open("", "_blank");
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -284,6 +308,7 @@ async function exportFilteredDataToPdf() {
                 <meta charset="UTF-8">
                 <title>Langdex - التقرير العام</title>
                 <style>
+                    @page { size: A4 ${orientation}; margin: 15mm; }
                     body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
                     h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
                     p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
@@ -374,7 +399,7 @@ async function initializeIndexPage() {
     try {
         allTableData = await getAllWordsPublic();
         populateLanguageFilter(allTableData);
-        renderTable(allTableData);
+        applyFiltersAndSearch(); // 🌟 بدل renderTable(allTableData) مباشرة عشان يطبق حد "عدد النتائج"
     } catch (err) {
         console.error("Index Page Load Error:", err);
     }
