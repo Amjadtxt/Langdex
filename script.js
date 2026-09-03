@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - script.js (Optimized with Smart Priority & Security)
+// LANGDEX - script.js (Full & Complete Edition for Amjad)
 // ======================================================
 
 import {
@@ -41,16 +41,21 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
+const ADMIN_EMAILS = ["amjadtxt@gmail.com"]; // إيميل الأدمن المعتمد
 
 
 // ======================================================
 // INITIALIZE FIREBASE
 // ======================================================
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const app =
+    getApps().length > 0
+        ? getApp()
+        : initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 const auth = getAuth(app);
+
 const wordsCollection = collection(db, "words");
 
 
@@ -80,10 +85,12 @@ let languageSelect = null;
 
 if (form) {
     const inputs = form.querySelectorAll("input");
+
     idInput = inputs[0] || null;
     wordInput = inputs[1] || null;
     meaningInput = inputs[2] || null;
     synonymsInput = inputs[3] || null;
+
     languageSelect = form.querySelector("select") || null;
 }
 
@@ -123,7 +130,9 @@ const downloadPdfButton = document.querySelector("#download-pdf");
 // ======================================================
 
 function normalize(value) {
-    return String(value ?? "").trim().toLowerCase();
+    return String(value ?? "")
+        .trim()
+        .toLowerCase();
 }
 
 function isCurrentUserAdmin() {
@@ -165,26 +174,35 @@ function showNotification(message) {
     `;
 
     clearTimeout(notification._timer);
+
     notification._timer = setTimeout(() => {
         notification.style.transition = "opacity 0.3s";
         notification.style.opacity = "0";
-        setTimeout(() => { if (notification) notification.remove(); }, 300);
+
+        setTimeout(() => {
+            if (notification) {
+                notification.remove();
+            }
+        }, 300);
     }, 3000);
 }
 
 
 // ======================================================
-// GET WORDS (USER CAN SEE ALL, ADMIN SEES ALL)
+// GET WORDS (FULL FETCH FOR SEARCHING ALL WORDS)
 // ======================================================
 
 async function getAllWords() {
     if (!currentUser && auth.currentUser) {
         currentUser = auth.currentUser;
     }
-    if (!currentUser) return [];
+
+    if (!currentUser) {
+        return [];
+    }
 
     try {
-        // يجلب جميع الكلمات لكل المستخدمين عشان البحث وعرض الكل يشتغل بذكاء
+        // جلب جميع الكلمات لكي يتمكن المستخدم من البحث والاطلاع على الكلمات المتاحة
         const snapshot = await getDocs(wordsCollection);
         const rows = [];
         
@@ -212,28 +230,37 @@ async function getAllWords() {
 async function getNextId() {
     try {
         const rows = await getAllWords();
-        // تصفية أجهزة المستخدم الحالي فقط لاقتراح ID جديد لكلماته
         const userRows = rows.filter(item => item.userId === currentUser.uid);
         const usedIds = new Set();
 
         userRows.forEach(item => {
             const id = Number(item.id);
-            if (Number.isInteger(id) && id > 0) usedIds.add(id);
+            if (Number.isInteger(id) && id > 0) {
+                usedIds.add(id);
+            }
         });
 
         let nextId = 1;
-        while (usedIds.has(nextId)) nextId++;
+        while (usedIds.has(nextId)) {
+            nextId++;
+        }
+
         return nextId;
     } catch (error) {
+        console.error("Get Next ID Error:", error);
         return 1;
     }
 }
 
 async function setNextId() {
     if (!idInput) return;
+
     try {
-        idInput.value = await getNextId();
-    } catch (error) {}
+        const nextId = await getNextId();
+        idInput.value = nextId;
+    } catch (error) {
+        console.error("Set Next ID Error:", error);
+    }
 }
 
 
@@ -289,12 +316,12 @@ function fillForm(data, documentId) {
     if (synonymsInput) synonymsInput.value = data.synonyms ?? "";
     if (languageSelect) languageSelect.value = data.language ?? "";
 
-    // التحقق هل الكلمة تخص المستخدم الحالي أم لا، أو إذا كان أدمن
+    // التحقق هل الكلمة ملك للمستخدم الحالي أو أدمن؟
     const isOwner = currentUser && (data.userId === currentUser.uid || isCurrentUserAdmin());
 
     if (isOwner) {
         setFormAccess(true);
-        showNotification(`تم اختيار كلمتك: ${data.word}`);
+        showNotification(`تم اختيار الكلمة: ${data.word}`);
     } else {
         setFormAccess(false);
         showNotification(`تنبيه: هذه الكلمة تخص مستخدم آخر (للاطلاع فقط ولا يمكنك تعديلها)`);
@@ -318,19 +345,35 @@ function populateLanguageFilter(rows) {
     languageFilter.appendChild(allOption);
 
     const languages = new Map();
+
     rows.forEach(item => {
         const language = String(item.language ?? "").trim();
-        if (language) languages.set(normalize(language), language);
+        if (!language) return;
+
+        const key = normalize(language);
+        if (!languages.has(key)) {
+            languages.set(key, language);
+        }
     });
 
-    [...languages.values()].sort((a, b) => a.localeCompare(b, "ar")).forEach(language => {
-        const option = document.createElement("option");
-        option.value = language;
-        option.textContent = language;
-        languageFilter.appendChild(option);
+    [...languages.values()]
+        .sort((a, b) => a.localeCompare(b, "ar"))
+        .forEach(language => {
+            const option = document.createElement("option");
+            option.value = language;
+            option.textContent = language;
+            languageFilter.appendChild(option);
+        });
+
+    const exists = [...languageFilter.options].some(option => {
+        return normalize(option.value) === normalize(currentValue);
     });
 
-    languageFilter.value = [...languageFilter.options].some(o => normalize(o.value) === normalize(currentValue)) ? currentValue : "all";
+    if (currentValue && exists) {
+        languageFilter.value = currentValue;
+    } else {
+        languageFilter.value = "all";
+    }
 }
 
 
@@ -369,9 +412,8 @@ function renderTable(rows) {
         const row = document.createElement("tr");
         const isOwner = currentUser && data.userId === currentUser.uid;
 
-        // تلوين خفيف للصفوف التي لا تخص المستخدم لتوضيح أنها للقراءة فقط
         if (!isOwner && !isAdmin) {
-            row.style.background = "rgba(0, 0, 0, 0.08)";
+            row.style.background = "rgba(0, 0, 0, 0.05)";
         }
 
         const values = [
@@ -385,7 +427,10 @@ function renderTable(rows) {
 
         values.forEach(value => {
             const cell = document.createElement("td");
-            cell.textContent = (value !== undefined && value !== null && String(value).trim() !== "") ? value : "-";
+            cell.textContent =
+                value !== undefined && value !== null && String(value).trim() !== ""
+                    ? value
+                    : "-";
             row.appendChild(cell);
         });
 
@@ -400,7 +445,7 @@ function renderTable(rows) {
 
 
 // ======================================================
-// APPLY FILTERS & SEARCH (WITH USER PRIORITY)
+// APPLY FILTERS & LIVE SEARCH (ALL COLUMNS + USER PRIORITY)
 // ======================================================
 
 function applyFiltersAndSearch() {
@@ -417,6 +462,7 @@ function applyFiltersAndSearch() {
 
     if (searchQuery !== "") {
         const target = normalize(searchQuery);
+        // ⭐ البحث الشامل في جميع الخانات (ID، الكلمة، المعنى، المرادف، اللغة، وإيميل المستخدم)
         filtered = filtered.filter(item => {
             return (
                 normalize(item.id).includes(target) ||
@@ -429,12 +475,12 @@ function applyFiltersAndSearch() {
         });
     }
 
-    // ⭐ إعطاء الأولوية القصوى لكلمات المستخدم الحالي لتكون في المقدمة دائماً
+    // ⭐ ترتيب النتائج لتكون كلمات المستخدم الحالي في المقدمة دائماً
     if (currentUser) {
         filtered.sort((a, b) => {
             const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
             const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-            return bIsOwner - aIsOwner; // الكلمات الخاصة بالمستخدم تأتي أولاً
+            return bIsOwner - aIsOwner;
         });
     }
 
@@ -443,7 +489,7 @@ function applyFiltersAndSearch() {
 
 
 // ======================================================
-// INITIAL DATA LOADER
+// INITIAL DATA LOADER FUNCTION
 // ======================================================
 
 async function initializePageData() {
@@ -460,7 +506,99 @@ async function initializePageData() {
 
 
 // ======================================================
-// CRUD OPERATIONS (REGISTER, UPDATE, DELETE)
+// LISTENERS
+// ======================================================
+
+if (showDataButton) {
+    showDataButton.addEventListener("click", async function () {
+        await initializePageData();
+        showNotification(`تم تحديث وعرض السجلات.`);
+    });
+}
+
+if (languageFilter) {
+    languageFilter.addEventListener("change", function () {
+        applyFiltersAndSearch();
+    });
+}
+
+const liveSearchInput = document.querySelector("#search-input");
+if (liveSearchInput) {
+    liveSearchInput.addEventListener("input", function () {
+        applyFiltersAndSearch();
+    });
+}
+
+if (clearFilterButton) {
+    clearFilterButton.addEventListener("click", function () {
+        if (languageFilter) {
+            languageFilter.value = "all";
+        }
+        if (liveSearchInput) {
+            liveSearchInput.value = "";
+        }
+        applyFiltersAndSearch();
+        showNotification("تم إلغاء الفلتر والبحث.");
+    });
+}
+
+
+// ======================================================
+// SEARCH BUTTON HANDLER (INDEX PAGE)
+// ======================================================
+
+if (searchButton && searchInput) {
+    searchButton.addEventListener("click", async () => {
+        const queryText = searchInput.value.trim();
+        if (!queryText) {
+            if (searchResult) searchResult.textContent = "الرجاء كتابة كلمة للبحث.";
+            return;
+        }
+
+        allTableData = await getAllWords();
+        const target = normalize(queryText);
+
+        // ⭐ البحث الشامل في جميع الخانات
+        let matches = allTableData.filter(item => {
+            return (
+                normalize(item.id).includes(target) ||
+                normalize(item.word).includes(target) ||
+                normalize(item.meaning).includes(target) ||
+                normalize(item.synonyms).includes(target) ||
+                normalize(item.language).includes(target) ||
+                normalize(item.userEmail).includes(target)
+            );
+        });
+
+        // ⭐ ترتيب النتائج لوضع كلمات المستخدم أولاً
+        if (currentUser) {
+            matches.sort((a, b) => {
+                const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
+                const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
+                return bIsOwner - aIsOwner;
+            });
+        }
+
+        searchResults = matches;
+        searchIndex = 0;
+
+        if (searchResults.length > 0) {
+            const matchedItem = searchResults[0];
+            fillForm(matchedItem, matchedItem._documentId);
+            if (searchResult) {
+                searchResult.textContent = `تم العثور على ${searchResults.length} نتيجة مطابقة.`;
+            }
+        } else {
+            selectedDocumentId = null;
+            if (searchResult) searchResult.textContent = "لم يتم العثور على نتائج مطابقة في أي خانة.";
+            showNotification("لا توجد نتائج مطابقة.");
+        }
+    });
+}
+
+
+// ======================================================
+// CRUD OPERATIONS
 // ======================================================
 
 if (registerButton) {
@@ -516,12 +654,7 @@ if (updateButton) {
 
         try {
             const docRef = doc(db, "words", selectedDocumentId);
-            await updateDoc(docRef, {
-                word,
-                meaning,
-                synonyms,
-                language
-            });
+            await updateDoc(docRef, { word, meaning, synonyms, language });
 
             showNotification("تم تحديث الكلمة بنجاح!");
             await clearForm();
@@ -561,80 +694,123 @@ if (clearButton) {
 
 
 // ======================================================
-// SEARCH BAR HANDLER (ON INDEX PAGE)
+// DOWNLOAD PDF
 // ======================================================
 
-if (searchButton && searchInput) {
-    searchButton.addEventListener("click", async () => {
-        const queryText = searchInput.value.trim();
-        if (!queryText) {
-            if (searchResult) searchResult.textContent = "الرجاء كتابة كلمة للبحث.";
+if (downloadPdfButton) {
+    downloadPdfButton.addEventListener("click", async function () {
+        if (!currentUser) {
+            showNotification("يجب تسجيل الدخول أولاً.");
             return;
         }
 
-        allTableData = await getAllWords();
-        const target = normalize(queryText);
+        try {
+            showNotification("جاري جلب البيانات وتجهيز ملف الـ PDF...");
 
-        // ترتيب النتائج وتطبيق أولوية كلمات المستخدم أولاً
-        let matches = allTableData.filter(item => {
-            return (
-                normalize(item.word).includes(target) ||
-                normalize(item.meaning).includes(target) ||
-                normalize(item.synonyms).includes(target)
-            );
-        });
+            const freshRows = await getAllWords();
+            let selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
+            let rows = freshRows;
 
-        if (currentUser) {
-            matches.sort((a, b) => {
-                const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
-                const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-                return bIsOwner - aIsOwner;
-            });
-        }
-
-        searchResults = matches;
-        searchIndex = 0;
-
-        if (searchResults.length > 0) {
-            const matchedItem = searchResults[0];
-            fillForm(matchedItem, matchedItem._documentId);
-            if (searchResult) {
-                searchResult.textContent = `تم العثور على ${searchResults.length} نتيجة (عرض النتيجة 1).`;
+            if (selectedLanguage !== "all" && selectedLanguage !== "") {
+                rows = freshRows.filter(item => normalize(item.language) === normalize(selectedLanguage));
             }
-        } else {
-            if (searchResult) searchResult.textContent = "لم يتم العثور على نتائج.";
-            showNotification("لا توجد نتائج مطابقة.");
+
+            if (rows.length === 0) {
+                showNotification("لا توجد بيانات لتحميلها.");
+                return;
+            }
+
+            const isAdmin = isCurrentUserAdmin();
+            const selectedLanguageText = (languageFilter && languageFilter.options[languageFilter.selectedIndex])
+                ? languageFilter.options[languageFilter.selectedIndex].textContent
+                : "جميع اللغات";
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "mm", "a4");
+
+            const chunkSize = 30;
+            const totalChunks = Math.ceil(rows.length / chunkSize);
+
+            const printArea = document.createElement("div");
+            printArea.style.cssText = `
+                position: fixed;
+                top: -9999px;
+                left: -9999px;
+                width: 800px;
+                background: #ffffff;
+                color: #000000;
+                padding: 20px;
+                font-family: Cairo, Arial, sans-serif;
+                direction: rtl;
+                z-index: -9999;
+            `;
+            document.body.appendChild(printArea);
+
+            for (let i = 0; i < totalChunks; i++) {
+                const chunkRows = rows.slice(i * chunkSize, (i + 1) * chunkSize);
+
+                printArea.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report</h2>
+                        <p style="margin:3px 0; font-size: 13px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
+                        <thead>
+                            <tr style="background-color: #b5b5b5;">
+                                <th style="border: 1px solid #333; padding: 5px; width: 8%;">#</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 22%;">الكلمة</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 28%;">المعنى</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 18%;">المرادف</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 14%;">اللغة</th>
+                                <th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${chunkRows.map((item, idx) => `
+                                <tr>
+                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.word || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
+                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                await new Promise(resolve => setTimeout(resolve, 0));
+
+                const canvas = await html2canvas(printArea, {
+                    scale: 1,
+                    backgroundColor: "#ffffff",
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL("image/jpeg", 0.75);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                if (i > 0) {
+                    pdf.addPage();
+                }
+
+                pdf.addImage(imgData, "JPEG", 0, 10, pdfWidth, pdfHeight);
+            }
+            
+            printAddress?.remove?.();
+            printArea.remove();
+
+            const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
+            pdf.save(`Langdex-${safeLanguage}.pdf`);
+
+            showNotification("تم تحميل ملف الـ PDF بنجاح وسرعة بدون تعليق!");
+        } catch (error) {
+            console.error("PDF Export Error:", error);
+            showNotification("حدث خطأ أثناء تصدير الـ PDF.");
         }
-    });
-}
-
-
-// ======================================================
-// DATA PAGE LISTENERS
-// ======================================================
-
-if (showDataButton) {
-    showDataButton.addEventListener("click", async () => {
-        await initializePageData();
-        showNotification(`تم تحديث وعرض السجلات.`);
-    });
-}
-
-if (languageFilter) {
-    languageFilter.addEventListener("change", applyFiltersAndSearch);
-}
-
-const liveSearchInput = document.querySelector("#search-input");
-if (liveSearchInput) {
-    liveSearchInput.addEventListener("input", applyFiltersAndSearch);
-}
-
-if (clearFilterButton) {
-    clearFilterButton.addEventListener("click", () => {
-        if (languageFilter) languageFilter.value = "all";
-        if (liveSearchInput) liveSearchInput.value = "";
-        applyFiltersAndSearch();
-        showNotification("تم إلغاء الفلتر والبحث.");
     });
 }
 
@@ -651,9 +827,23 @@ onAuthStateChanged(auth, async user => {
     }
 
     currentUser = user;
+    const isAdmin = isCurrentUserAdmin();
+    const currentPage = window.location.pathname.split("/").pop();
+
+    if (isAdmin && (currentPage === "index.html" || currentPage === "")) {
+        window.location.href = "admin.html";
+        return;
+    }
+
+    if (!isAdmin && currentPage === "admin.html") {
+        window.location.href = "index.html";
+        return;
+    }
+
     if (idInput) {
         await setNextId();
     }
+
     await initializePageData();
 });
 
