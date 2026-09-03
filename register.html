@@ -3,47 +3,37 @@
 
 <head>
   <meta charset="UTF-8">
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
 
-  <link rel="stylesheet"
-        href="/Langdex/style.css">
+  <link rel="stylesheet" href="/Langdex/style.css">
 
-  <link rel="preconnect"
-        href="https://fonts.googleapis.com">
-
-  <link rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة - تصغير عرض الفورم لتبدو مظبوطة */
-    .content > div {
-      width: 90% !important;
-      max-width: 450px !important; /* تم التصغير عشان متكونش عريضة أوفر */
-      margin: 40px auto !important; /* مسافة أعلى وأسفل عشان تظبوط في نص الشاشة */
+    .content {
+      padding: 0 15px !important;
       box-sizing: border-box !important;
     }
 
-    /* تثبيت اللون الموحد #678071 لفورم إنشاء الحساب */
+    .content > div {
+      width: 100% !important;
+      max-width: 420px !important;
+      margin: 40px auto !important;
+      box-sizing: border-box !important;
+    }
+
     .login-form {
       background: #678071 !important;
-      padding: 25px !important;
-      border-radius: 8px !important;
+      padding: 25px 20px !important; /* مساحة داخلية آمنة تمنع التصاق العناصر بالبوردر */
+      border-radius: 10px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       box-sizing: border-box !important;
-      width: 100% !important;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* إضافة ظل خفيف لشكل احترافي */
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* تنسيق عنوان الفورم */
     .login-form h1 {
       text-align: center;
       color: #ffffff;
@@ -51,13 +41,12 @@
       font-size: 24px;
     }
 
-    /* تنسيق حقول الإدخال والزر */
     .login-form input.loginput {
       width: 100% !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
-      padding: 12px !important;
+      padding: 12px 14px !important;
       background: #ffffff !important;
       border: 1px solid #ccc !important;
       color: #000 !important;
@@ -85,7 +74,6 @@
       background: #219653 !important;
     }
 
-    /* تنسيق الروابط والرسائل أسفل الفورم */
     .login-links {
       text-align: center;
       margin-top: 15px;
@@ -113,113 +101,46 @@
       font-size: 13px;
     }
 
-    /* تعديلات الموبايل للتجاوب السلس */
     @media (max-width: 768px) {
-      .content > div {
-        width: 94% !important;
-        margin: 20px auto !important;
-        padding: 5px !important;
+      .content {
+        padding: 0 10px !important;
       }
       .login-form {
-        padding: 18px !important;
+        padding: 20px 15px !important; /* مساحة مظبوطة جداً على الموبايل عشان مفيش حاجة تلزق في الحواف */
       }
     }
   </style>
 </head>
 
-
 <body>
 
   <header>
-
     <nav class="bar">
-
       <ul>
-
-        <a href="/Langdex/index.html">
-          <li>الرئيسية</li>
-        </a>
-
-        <a href="/Langdex/data.html">
-          <li>البيانات</li>
-        </a>
-
-        <a href="#">
-          <li>حول</li>
-        </a>
-
-        <a href="#">
-          <li>استكشاف</li>
-        </a>
-
-        <a href="#">
-          <li>التواصل</li>
-        </a>
-
+        <a href="/Langdex/index.html"><li>الرئيسية</li></a>
+        <a href="/Langdex/data.html"><li>البيانات</li></a>
+        <a href="#"><li>حول</li></a>
+        <a href="#"><li>استكشاف</li></a>
+        <a href="#"><li>التواصل</li></a>
       </ul>
-
     </nav>
-
   </header>
 
-
   <div class="content">
-
     <div class="login-form">
-
       <h1>إنشاء حساب</h1>
-
-      <input
-        class="loginput"
-        type="email"
-        id="register-email"
-        placeholder="البريد الإلكتروني"
-        autocomplete="email">
-
-      <input
-        class="loginput"
-        type="password"
-        id="register-password"
-        placeholder="كلمة المرور"
-        autocomplete="new-password">
-
-      <input
-        class="loginput"
-        type="password"
-        id="register-confirm-password"
-        placeholder="تأكيد كلمة المرور"
-        autocomplete="new-password">
-
-      <button
-        class="loginbut"
-        type="button"
-        id="register-btn">
-        إنشاء الحساب
-      </button>
-
+      <input class="loginput" type="email" id="register-email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input class="loginput" type="password" id="register-password" placeholder="كلمة المرور" autocomplete="new-password">
+      <input class="loginput" type="password" id="register-confirm-password" placeholder="تأكيد كلمة المرور" autocomplete="new-password">
+      <button class="loginbut" type="button" id="register-btn">إنشاء الحساب</button>
       <p id="register-message"></p>
-
       <div class="login-links">
-
-        <p>
-          لديك حساب بالفعل؟
-          <a href="/Langdex/login.html">
-            تسجيل الدخول
-          </a>
-        </p>
-
+        <p>لديك حساب بالفعل؟ <a href="/Langdex/login.html">تسجيل الدخول</a></p>
       </div>
-
     </div>
-
   </div>
 
-
-  <script
-    type="module"
-    src="/Langdex/register.js">
-  </script>
+  <script type="module" src="/Langdex/register.js"></script>
 
 </body>
-
 </html>
