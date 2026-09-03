@@ -10,34 +10,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 .content{padding:0 15px !important;box-sizing:border-box !important;}
-.content>div{width:100% !important;max-width:600px !important;margin:20px auto !important;box-sizing:border-box !important;}
-.settings-section{background:#678071 !important;padding:20px !important;border-radius:10px !important;border:1px solid rgba(255,255,255,.2) !important;box-shadow:0 4px 15px rgba(0,0,0,.2);margin-bottom:20px !important;}
-.settings-section h1{text-align:center;color:#fff;margin-bottom:15px;font-size:20px;}
-.settings-section h2{color:#fff;font-size:16px;margin:0 0 12px;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:8px;}
-.field-row{display:flex;align-items:center;justify-content:space-between;margin:10px 0;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;}
+.content>div{width:100% !important;max-width:600px !important;margin:15px auto !important;box-sizing:border-box !important;}
+.settings-section{background:#678071 !important;padding:15px !important;border-radius:10px !important;border:1px solid rgba(255,255,255,.2) !important;box-shadow:0 4px 15px rgba(0,0,0,.2);margin-bottom:15px !important;}
+.settings-section h1{text-align:center;color:#fff;margin-bottom:12px;font-size:18px;}
+.settings-section h2{color:#fff;font-size:15px;margin:0 0 10px;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:6px;}
+.field-row{display:flex;align-items:center;justify-content:space-between;margin:8px 0;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;}
 .field-row label{flex:1;}
 .settings-section input[type="text"],
 .settings-section input[type="email"],
 .settings-section input[type="password"],
 .settings-section select{
-  width:100% !important;box-sizing:border-box !important;font-family:'Cairo',sans-serif !important;
-  border-radius:8px !important;padding:12px !important;font-size:14px !important;background:#fff !important;
-  border:1px solid #ccc !important;color:#000 !important;margin:8px 0 !important;
-  text-align: center !important; /* تم ضبط النص في منتصف حقول الإدخال */
+  width:100% !important; box-sizing:border-box !important; font-family:'Cairo',sans-serif !important;
+  border-radius:6px !important; padding:8px 12px !important; font-size:13px !important; background:#fff !important;
+  border:1px solid #ccc !important; color:#000 !important; margin:6px 0 !important;
+  text-align: center !important; height: 38px !important; /* تقليل ارتفاع وصناديق الإدخال لتكون أصغر وأرتب */
 }
-.switch{position:relative;display:inline-block;width:46px;height:24px;flex-shrink:0;direction: ltr !important;} /* ضبط اتجاه الزر ليعمل بشكل صحيح */
+.switch{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0;direction: ltr !important;}
 .switch input{opacity:0;width:0;height:0;}
-.slider{position:absolute;cursor:pointer;inset:0;background:#a9b6ae;border-radius:24px;transition:.2s;}
-.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.slider{position:absolute;cursor:pointer;inset:0;background:#a9b6ae;border-radius:22px;transition:.2s;}
+.slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
 .switch input:checked + .slider{background:#00bcd4;}
-.switch input:checked + .slider:before{transform:translateX(22px);} /* تعديل اتجاه حركة الأيقونة ليناسب اللغة العربية */
-.save-btn{display:block;width:100%;color:#fff;padding:12px;border:none;border-radius:8px;font-weight:bold;
-  cursor:pointer;margin:10px auto 0;font-family:'Cairo',sans-serif;font-size:14px;transition:.2s;text-align:center;background:#00bcd4;}
+.switch input:checked + .slider:before{transform:translateX(20px);}
+.save-btn{display:block;width:100%;color:#fff;padding:9px;border:none;border-radius:6px;font-weight:bold;
+  cursor:pointer;margin:8px auto 0;font-family:'Cairo',sans-serif;font-size:13px;transition:.2s;text-align:center;background:#00bcd4;}
 .save-btn:hover{background:#008ba3;}
 .danger-btn{background:#e74c3c !important;}
 .danger-btn:hover{background:#c0392b !important;}
-.settings-msg{text-align:center;margin-top:10px;color:#fff;font-size:13px;min-height:18px;}
-@media (max-width:768px){.content{padding:0 10px !important;}.content>div{margin:12px auto !important;padding:0 !important;}}
+.settings-msg{text-align:center;margin-top:8px;color:#fff;font-size:12px;min-height:16px;}
+@media (max-width:768px){.content{padding:0 8px !important;}.content>div{margin:10px auto !important;padding:0 !important;}}
 </style>
 </head>
 <body>
@@ -59,14 +59,14 @@
 
 <div class="content">
   <div class="settings-section">
-    <h1> الإعدادات</h1>
+    <h1>الإعدادات</h1>
 
     <h2>الحساب</h2>
-    <input type="text" id="display-name" placeholder="الاسم المستخدم">
+    <input type="text" id="display-name" placeholder="اسم المستخدم">
     <input type="email" id="account-email" placeholder="البريد الإلكتروني" disabled>
     <button type="button" class="save-btn" id="save-profile-btn">حفظ بيانات الحساب</button>
 
-    <h2 style="margin-top:20px;">كلمة المرور</h2>
+    <h2 style="margin-top:15px;">كلمة المرور</h2>
     <input type="password" id="current-password" placeholder="كلمة المرور الحالية" autocomplete="current-password">
     <input type="password" id="new-password" placeholder="كلمة المرور الجديدة" autocomplete="new-password">
     <button type="button" class="save-btn" id="change-password-btn">تغيير كلمة المرور</button>
