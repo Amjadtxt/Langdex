@@ -30,8 +30,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
+    databaseURL: "https://langdex-default-rtdb.firebaseio.com",
     projectId: "langdex",
     storageBucket: "langdex.firebasestorage.app",
     messagingSenderId: "819838317933",
@@ -136,6 +137,8 @@ async function writeLog({ action, collectionName, targetDocId = null, oldData = 
 }
 
 // التحقق من صلاحيات الأدمن أمنياً
+// 🌟 مهم: لازم يدور بالـ uid (مش الإيميل) عشان يتطابق مع دالة isAdmin() في Firestore Rules
+// اللي بتفحص /users/{request.auth.uid}
 async function verifyAdminPermission(user) {
     if (!user || !user.email) return false;
     const email = user.email.toLowerCase();
@@ -145,8 +148,7 @@ async function verifyAdminPermission(user) {
     }
 
     try {
-        const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-        const userDocRef = doc(db, "users", customDocId);
+        const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
@@ -173,7 +175,8 @@ async function loadUsersData() {
             const email = data.email || "";
             if (email) {
                 usersMap.set(email.toLowerCase(), {
-                    docId: docSnap.id,
+                    docId: docSnap.id, // 🌟 هنا الـ docId ده هو الـ uid الفعلي (لو اتضاف بالطريقة الجديدة)
+                    uid: docSnap.id,
                     email: email,
                     role: data.role || "user",
                     wordsCount: 0,
@@ -186,11 +189,13 @@ async function loadUsersData() {
             const data = docSnap.data();
             const email = (data.userEmail || "").toLowerCase();
             const lang = data.language || data.lang || "أخرى";
+            const wordUid = data.uid || data.userId || null; // 🌟 لالتقاط uid صاحب الكلمة
 
             if (email) {
                 if (!usersMap.has(email)) {
                     usersMap.set(email, {
                         docId: null,
+                        uid: wordUid,
                         email: data.userEmail,
                         role: "user",
                         wordsCount: 0,
@@ -198,6 +203,7 @@ async function loadUsersData() {
                     });
                 }
                 const userObj = usersMap.get(email);
+                if (!userObj.uid && wordUid) userObj.uid = wordUid; // 🌟 نكمّل الـ uid لو كان ناقص
                 userObj.wordsCount++;
                 
                 if (!userObj.languagesMap[lang]) {
@@ -258,7 +264,7 @@ function renderUsersTable(usersList) {
                         <option value="user" ${user.role === 'user' ? 'selected' : ''}>مستخدم عادي (user)</option>
                         <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>مشرف (admin)</option>
                     </select>
-                    <button class="upa btn-update-role" data-email="${user.email}" data-docid="${user.docId || ''}" data-index="${index}" style="padding: 4px; font-size: 11px; width: 35%;">تحديث الرول</button>
+                    <button class="upa btn-update-role" data-email="${user.email}" data-docid="${user.docId || ''}" data-uid="${user.uid || ''}" data-index="${index}" style="padding: 4px; font-size: 11px; width: 35%;">تحديث الرول</button>
                 </div>
 
                 <button class="upa btn-pdf-full" data-email="${user.email}" style="padding: 5px 10px; font-size: 11px; width: 100%;">تحميل PDF شامل (كل اللغات)</button>
@@ -286,6 +292,7 @@ function setupActionEvents() {
         btn.addEventListener("click", async function () {
             const email = this.getAttribute("data-email");
             let docId = this.getAttribute("data-docid");
+            const uidAttr = this.getAttribute("data-uid");
             const index = this.getAttribute("data-index");
             const selectEl = document.querySelector(`.role-select-${index}`);
             const newRole = selectEl ? selectEl.value : "";
@@ -294,9 +301,15 @@ function setupActionEvents() {
 
             try {
                 showNotification("جاري تحديث الرول للمستخدم...");
-                
+
+                // 🌟 لازم نستخدم الـ uid الحقيقي بتاع اليوزر (مش إيميل معدّل)
+                // عشان يتطابق مع دالة isAdmin() في Firestore Rules اللي بتدور على /users/{uid}
                 if (!docId || docId === "null" || docId === "") {
-                    docId = email.replace(/[^a-zA-Z0-9]/g, "_");
+                    if (!uidAttr || uidAttr === "null" || uidAttr === "") {
+                        showNotification("تعذّر تحديد المستخدم بدقة (لا يوجد uid مسجل له من قبل). لازم يكون له كلمة واحدة على الأقل أو مستند مسبق.");
+                        return;
+                    }
+                    docId = uidAttr;
                 }
 
                 // 🌟 نجيب الرول القديم قبل التحديث عشان نقدر نرجعه
@@ -493,19 +506,19 @@ function setupActionEvents() {
                 let userDocIdUsed = null;
                 let userDocOldData = null;
 
-                if (userObj && userObj.docId) {
-                    userDocIdUsed = userObj.docId;
-                    const userDocRef = doc(db, "users", userObj.docId);
+                // 🌟 نحدد الـ doc المطلوب حذفه: أولوية للـ docId الموجود فعلاً، وإلا الـ uid المعروف من كلماته
+                const targetId = (userObj && userObj.docId) ? userObj.docId : (userObj && userObj.uid ? userObj.uid : null);
+
+                if (targetId) {
+                    userDocIdUsed = targetId;
+                    const userDocRef = doc(db, "users", targetId);
                     const snap = await getDoc(userDocRef);
-                    if (snap.exists()) userDocOldData = { ...snap.data() };
-                    await deleteDoc(userDocRef);
+                    if (snap.exists()) {
+                        userDocOldData = { ...snap.data() };
+                        await deleteDoc(userDocRef);
+                    }
                 } else {
-                    const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-                    userDocIdUsed = customDocId;
-                    const userDocRef = doc(db, "users", customDocId);
-                    const snap = await getDoc(userDocRef);
-                    if (snap.exists()) userDocOldData = { ...snap.data() };
-                    await deleteDoc(userDocRef);
+                    showNotification("تنبيه: لا يوجد مستند صلاحيات مسجل لهذا المستخدم في users، هيتم حذف كلماته فقط.");
                 }
 
                 const q = query(wordsCollection, where("userEmail", "==", email));
@@ -561,23 +574,27 @@ if (addUserBtn) {
 
         try {
             showNotification("جاري إنشاء وإضافة المستخدم...");
-            await createUserWithEmailAndPassword(auth, email, password);
+            // 🌟 استخدام createUserWithEmailAndPassword بيسجل الأدمن خروج تلقائياً ويدخل بحساب اليوزر الجديد
+            // (سلوك معروف في Firebase Auth SDK على الـ client). لو ده بيسبب مشكلة، الحل الصح هو
+            // استخدام Cloud Function بصلاحيات Admin SDK بدل ما ننشئ الحساب من المتصفح مباشرة.
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const newUid = userCredential.user.uid;
 
-            const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
             const newUserData = {
                 email: email,
                 role: role,
                 createdAt: serverTimestamp()
             };
-            
-            await setDoc(doc(db, "users", customDocId), newUserData);
+
+            // 🌟 التخزين بالـ uid الحقيقي بدل الإيميل المعدّل عشان يتوافق مع isAdmin() في الـ Rules
+            await setDoc(doc(db, "users", newUid), newUserData);
 
             // 🌟 تسجيل حدث إضافة مستخدم جديد
             // ملحوظة: التراجع هيقدر يمسح وثيقة الـ Firestore بس، مش حساب الـ Auth (يحتاج صلاحيات سيرفر)
             await writeLog({
                 action: "add",
                 collectionName: "users",
-                targetDocId: customDocId,
+                targetDocId: newUid,
                 oldData: null,
                 newData: { ...newUserData, createdAt: null },
                 details: `إضافة مستخدم جديد (${email}) بصلاحية (${role}) — تنبيه: التراجع لا يحذف حساب Auth`
