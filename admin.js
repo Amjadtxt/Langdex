@@ -154,12 +154,6 @@ function showNotification(message) {
 // ======================================================
 // 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
 // ======================================================
-// action:         "add" | "update" | "delete" | "bulk_update" | "bulk_delete"
-// collectionName: اسم الكوليكشن المتأثر ("words")
-// targetDocId:    الـ document id بتاع العنصر (لو عملية مفردة)
-// oldData:        نسخة من البيانات *قبل* التعديل/الحذف (عنصر واحد أو مصفوفة في الجماعي)
-// newData:        نسخة من البيانات *بعد* الإضافة/التعديل (عنصر واحد أو مصفوفة في الجماعي)
-// details:        نص وصفي مختصر يظهر في جدول اللوج
 async function writeLog({ action, collectionName, targetDocId = null, oldData = null, newData = null, details = "" }) {
     try {
         await addDoc(logsCollection, {
@@ -172,7 +166,7 @@ async function writeLog({ action, collectionName, targetDocId = null, oldData = 
             newData,
             details,
             role: "admin",
-            undone: false, // 🌟 يتحول true بعد التراجع عنه
+            undone: false,
             timestamp: serverTimestamp()
         });
     } catch (error) {
@@ -226,9 +220,9 @@ async function fetchAllData() {
             }
 
             if (timeB !== timeA) {
-                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً بدقة
+                return timeB - timeA;
             }
-            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال تساوي الوقت تماماً
+            return Number(b.id || 0) - Number(a.id || 0);
         });
 
         updateLanguageFilterDropdown(allTableData);
@@ -236,7 +230,7 @@ async function fetchAllData() {
         await setNextIdAdmin();
     } catch (error) {
         console.error(error);
-        showNotification("حدث خطأ أثناء جلب البيانات.");
+        // تم إزالة إشعار الخطأ بناءً على طلبك
     }
 }
 
@@ -322,7 +316,6 @@ function renderTableLog(rows) {
         deleteBtn.addEventListener("click", async () => {
             if (!confirm(`هل أنت متأكد من حذف الكلمة "${data.word}"؟`)) return;
             try {
-                // 🌟 نجهز نسخة من البيانات قبل الحذف عشان التراجع
                 const oldData = {
                     id: data.id ?? null,
                     word: data.word ?? "",
@@ -409,9 +402,8 @@ if (languageFilterSearch) {
 }
 
 // ==========================================================
-// تصدير تقرير PDF للبيانات المعروضة (بطريقة الطباعة الآمنة والداعمة لكل اللغات)
+// تصدير تقرير PDF للبيانات المعروضة
 // ==========================================================
-
 if (downloadPdfBtn) {
     downloadPdfBtn.addEventListener("click", () => {
         const currentRows = performSearchAndFilter();
@@ -504,7 +496,7 @@ if (renameLangBtn) {
         try {
             let updatedCount = 0;
             let batchPromises = [];
-            let affectedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
+            let affectedDocIds = [];
 
             allTableData.forEach(item => {
                 if (item.language && item.language.trim().toLowerCase() === oldLang.trim().toLowerCase()) {
@@ -520,7 +512,6 @@ if (renameLangBtn) {
 
             await Promise.all(batchPromises);
 
-            // 🌟 تسجيل حدث جماعي — التراجع عنه = إرجاع اللغة القديمة لكل الـ docIds دي
             await writeLog({
                 action: "bulk_update",
                 collectionName: "words",
@@ -548,7 +539,7 @@ if (deleteDuplicatesBtn) {
         try {
             let seenWords = new Set();
             let duplicatesIds = [];
-            let duplicatesOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
+            let duplicatesOldData = [];
 
             const querySnapshot = await getDocs(wordsCollection);
             querySnapshot.forEach(d => {
@@ -574,7 +565,6 @@ if (deleteDuplicatesBtn) {
             let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
 
-            // 🌟 تسجيل حدث الحذف الجماعي — التراجع عنه = إعادة إضافة كل الكلمات دي من oldData
             await writeLog({
                 action: "bulk_delete",
                 collectionName: "words",
@@ -612,7 +602,7 @@ if (deleteRangeBtn) {
 
         try {
             let targetDocsIds = [];
-            let targetOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
+            let targetOldData = [];
 
             allTableData.forEach(item => {
                 const currentIdNum = Number(item.id);
@@ -630,7 +620,6 @@ if (deleteRangeBtn) {
             let deletePromises = targetDocsIds.map(id => deleteDoc(doc(db, "words", id)));
             await Promise.all(deletePromises);
 
-            // 🌟 تسجيل حدث الحذف الجماعي بالنطاق — التراجع عنه = إعادة إضافة كل الكلمات دي
             await writeLog({
                 action: "bulk_delete",
                 collectionName: "words",
@@ -685,7 +674,6 @@ if (registerButton) {
 
             const newDocRef = await addDoc(wordsCollection, newWordData);
 
-            // 🌟 تسجيل حدث الإضافة — التراجع عنه = حذف الـ doc ده
             await writeLog({
                 action: "add",
                 collectionName: "words",
@@ -722,7 +710,6 @@ if (updateButton) {
         }
 
         try {
-            // 🌟 نجيب النسخة الحالية (قبل التعديل) من البيانات المحلية عشان نسجلها كـ oldData
             const beforeEdit = allTableData.find(item => item._documentId === selectedDocumentId);
             const oldData = beforeEdit
                 ? {
@@ -738,7 +725,6 @@ if (updateButton) {
             const updatedFields = { word, meaning, synonyms, language };
             await updateDoc(docRef, updatedFields);
 
-            // 🌟 تسجيل حدث التعديل — التراجع عنه = رجّع oldData على نفس الـ doc
             await writeLog({
                 action: "update",
                 collectionName: "words",
@@ -806,7 +792,6 @@ if (excelFileInput) {
 
                 showNotification("جاري معالجة ورفع الكلمات من الإكسيل...");
 
-                // حساب الـ IDs الموجودة حالياً لتوليد أرقام تسلسلية صحيحة بدون تكرار
                 const usedIds = new Set();
                 allTableData.forEach(item => {
                     const idNum = Number(item.id);
@@ -820,16 +805,15 @@ if (excelFileInput) {
                 const finalUser = extractUsername(adminEmail);
 
                 let importedCount = 0;
-                let importedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
+                let importedDocIds = [];
 
-                // نبدأ من الصف 1 (تخطي الصف 0 الهيدر)
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row.length > 0) {
-                        const word = String(row[0] || "").trim();      // العمود الأول: الكلمة
-                        const meaning = String(row[1] || "").trim();   // العمود الثاني: المعنى
-                        const synonyms = String(row[2] || "").trim();  // العمود الثالث: المرادف
-                        const language = String(row[3] || "").trim();  // العمود الرابع: اللغة
+                        const word = String(row[0] || "").trim();
+                        const meaning = String(row[1] || "").trim();
+                        const synonyms = String(row[2] || "").trim();
+                        const language = String(row[3] || "").trim();
 
                         if (word && meaning && language) {
                             const newDocRef = await addDoc(wordsCollection, {
@@ -850,7 +834,6 @@ if (excelFileInput) {
                     }
                 }
 
-                // 🌟 تسجيل حدث استيراد جماعي — التراجع عنه = حذف كل الـ docIds دي
                 if (importedCount > 0) {
                     await writeLog({
                         action: "bulk_add",
