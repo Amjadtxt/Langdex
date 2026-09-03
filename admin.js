@@ -903,56 +903,5 @@ onAuthStateChanged(auth, async user => {
     
     await fetchAllData();
 });
-
-                // تأكد من استيراد الدوال دي فوق في ملف الـ JS بتاعك من فايربيز
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
-
-const db = getFirestore();
-
-// مسك الزرار والتأكد من وجوده
-const sendNotificationBtn = document.querySelector("#sendNotificationBtn");
-const notifTitleInput = document.querySelector("#notifTitleInput");
-const notifBodyInput = document.querySelector("#notifBodyInput");
-
-if (sendNotificationBtn) {
-    console.log("تم العثور على زر الإرسال بنجاح! 🟢");
-
-    sendNotificationBtn.addEventListener("click", async () => {
-        console.log("تم ضغط الزر بنجاح...");
-        
-        const title = notifTitleInput ? notifTitleInput.value.trim() : "";
-        const body = notifBodyInput ? notifBodyInput.value.trim() : "";
-
-        if (!title || !body) {
-            alert("يرجى كتابة عنوان ونص الإشعار أولاً!");
-            return;
-        }
-
-        try {
-            sendNotificationBtn.disabled = true;
-            sendNotificationBtn.textContent = "جاري الإرسال...";
-
-            // إضافة الإشعار للفايربيز
-            await addDoc(collection(db, "notifications"), {
-                title: title,
-                body: body,
-                createdAt: serverTimestamp()
-            });
-
-            alert("تم إرسال الإشعار بنجاح!");
+ 
             
-            // تفريغ الحقول
-            if (notifTitleInput) notifTitleInput.value = "";
-            if (notifBodyInput) notifBodyInput.value = "";
-
-        } catch (error) {
-            console.error("خطأ أثناء إرسال الإشعار:", error);
-            alert("حدث خطأ، افتح الـ Console لتفاصيل الخطأ.");
-        } finally {
-            sendNotificationBtn.disabled = false;
-            sendNotificationBtn.textContent = "إرسال الإشعار الآن";
-        }
-    });
-} else {
-    console.error("⚠️ تحذير: زرار #sendNotificationBtn غير مشهور أو مش موجود في ملف الـ HTML!");
-}
