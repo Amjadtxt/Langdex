@@ -15,49 +15,63 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
+    /* الإعدادات العامة للكونتينر لتناسب الأقسام والجدول براحتهم */
     .content {
       padding: 0 15px !important;
       box-sizing: border-box !important;
-      max-width: 500px !important;
-      margin: 25px auto !important;
     }
 
-    /* تثبيت اللون الموحد #678071 لقسم البحث العام */
-    .search-section {
+    /* الأقسام العامة تأخذ عرض مريح ومرن */
+    .content > div,
+    .search-section,
+    .data-section {
+      width: 100% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* تثبيت لون الخلفية #678071 للأقسام الرئيسية */
+    .search-section,
+    .data-section {
       background: #678071 !important;
       padding: 20px !important;
       border-radius: 10px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      box-sizing: border-box !important;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* عنوان القسم */
-    .search-section h1 {
+    /* العناوين الداخلية */
+    .search-section h1,
+    .data-section h1 {
       text-align: center;
       color: #ffffff;
       margin-bottom: 15px;
-      font-size: 22px;
+      font-size: 20px;
     }
 
-    /* تنسيق حقول الإدخال والقوائم المنسدلة للبحث */
+    /* تحجيم حقول الإدخال والـ Inputs لتكون ملمومة وفي المنتصف */
     .search-section input.search-txt,
-    .search-section select {
+    .search-section select.filter-select {
+      display: block !important;
       width: 100% !important;
+      max-width: 450px !important;
+      margin: 10px auto !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
+      padding: 12px !important;
       font-size: 14px !important;
-      padding: 12px;
-      background: #ffffff;
-      border: 1px solid #ccc;
-      color: #000;
-      margin-top: 10px;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
     }
 
+    /* أزرار البحث وإلغاء الفلتر */
     .search-btn {
-      width: 100%;
+      display: block !important;
+      width: 100% !important;
+      max-width: 450px !important;
       background: #00bcd4;
       color: white;
       padding: 12px;
@@ -65,62 +79,100 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 10px;
+      margin: 10px auto 0 auto !important;
       font-family: 'Cairo', sans-serif;
       font-size: 14px;
+      transition: 0.2s;
     }
     .search-btn:hover { background: #008ba3; }
+
+    .clear-btn {
+      background: #7f8c8d !important;
+    }
+    .clear-btn:hover {
+      background: #626d6e !important;
+    }
 
     .search-result {
       color: #fff;
       margin-top: 10px;
       text-align: center;
-    }
-
-    /* تنسيق جدول عرض النتائج العامة الشامل */
-    .table-container {
-      width: 100% !important;
-      max-width: 1000px !important;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      overflow-x: auto;
-      margin: 30px auto !important;
-      box-sizing: border-box;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      text-align: right;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
       font-size: 14px;
     }
 
+    /* جدول عرض سجل البيانات (يأخذ راحته بالعرض المطلوب) */
+    .table-container {
+      width: 100% !important;
+      margin: 0 auto !important;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
     th {
-      background-color: #678071;
-      color: white;
+      background: rgba(0, 0, 0, 0.25);
+      font-weight: bold;
     }
 
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    /* تعديلات الموبايل */
+    /* تعديلات الموبايل للتجاوب السلس */
     @media (max-width: 768px) {
       .content {
         padding: 0 10px !important;
       }
-      .content, .table-container {
+      .content > div,
+      .search-section,
+      .data-section {
         width: 100% !important;
-        margin: 15px auto !important;
+        margin: 10px auto !important;
         padding: 15px !important;
+      }
+
+      .search-section input.search-txt,
+      .search-section select.filter-select,
+      .search-btn {
+        max-width: 100% !important;
+      }
+
+      /* تحويل الجدول إلى كاردز منفصلة على الشاشات الصغيرة لسهولة التصفح */
+      .table-container table, 
+      .table-container thead, 
+      .table-container tbody, 
+      .table-container th, 
+      .table-container td, 
+      .table-container tr {
+        display: block !important;
+        width: 100% !important;
+      }
+      .table-container thead { display: none !important; }
+      .table-container tr {
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 12px;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      .table-container td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .table-container td:last-child {
+        border-bottom: none !important;
       }
     }
   </style>
@@ -159,35 +211,40 @@
       <h1>القاموس العام والبحث</h1>
       <input type="text" id="search-input" placeholder="اكتب للبحث في كل الكلمات..." class="search-txt">
       
-      <select id="language-filter">
+      <select id="language-filter" class="filter-select">
         <option value="all">جميع اللغات</option>
       </select>
 
       <button type="button" class="search-btn">بحث</button>
-      <button type="button" id="clear-filter" class="search-btn" style="background: #7f8c8d; margin-top: 5px;">إلغاء الفلتر</button>
+      <button type="button" id="clear-filter" class="search-btn clear-btn" style="margin-top: 5px;">إلغاء الفلتر</button>
       <div class="search-result"></div>
     </div>
 
   </div>
 
-  <!-- جدول عرض كل الكلمات (القاموس العام مع الـ ID وتاريخ التسجيل) -->
-  <div class="table-container">
-    <h3 style="margin-top: 0; color: #333;">كل كلمات المنصة (القاموس العام)</h3>
-    <table>
-      <thead>
-        <tr>
-          <th># ID</th>
-          <th>الكلمة</th>
-          <th>المعنى</th>
-          <th>المرادف</th>
-          <th>اللغة</th>
-          <th>تاريخ التسجيل</th>
-        </tr>
-      </thead>
-      <tbody id="data-table">
-        <!-- البيانات ستعرض هنا ديناميكياً بواسطة index-script.js -->
-      </tbody>
-    </table>
+  <!-- جدول عرض كل الكلمات (القاموس العام مع الـ ID وتاريخ التسجيل وبواسطة مين) -->
+  <div class="content">
+    <div class="data-section">
+      <h1>كل كلمات المنصة (القاموس العام)</h1>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th># ID</th>
+              <th>بواسطة</th>
+              <th>الكلمة</th>
+              <th>المعنى</th>
+              <th>المرادف</th>
+              <th>اللغة</th>
+              <th>تاريخ التسجيل</th>
+            </tr>
+          </thead>
+          <tbody id="data-table">
+            <tr><td colspan="7" style="text-align: center;">جاري تحميل البيانات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
 
