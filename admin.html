@@ -101,7 +101,45 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول والجوا الفريم */
+    /* قسم رفع الإكسيل المنفصل والمستقل تماماً */
+    .excel-upload-box {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .excel-upload-box h2 {
+      font-size: 18px;
+      color: #00bcd4;
+      margin: 0;
+    }
+    .excel-upload-btn {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .excel-upload-btn:hover { background: #0056b3; }
+
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
     .range-delete-box {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
@@ -183,11 +221,14 @@
         padding: 12px !important;
       }
 
-      .actions-top-bar {
+      .actions-top-bar, .excel-upload-box {
         flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
       }
-      .actions-top-bar button {
+      .actions-top-bar button, .excel-upload-box button, .excel-upload-box label {
         width: 100% !important;
+        justify-content: center !important;
       }
 
       .range-delete-box {
@@ -307,81 +348,76 @@
       </select>
     </div>
 
-    <!-- 3. فورم إدارة الكلمات (المدمج والمنسق بالكامل مع زرار الإكسيل) -->
-    <div class="form-container" style="direction: rtl; font-family: 'Cairo', Arial, sans-serif; width: 100%; box-sizing: border-box;">
-      <h1 style="margin-bottom: 15px; font-size: 22px;">إدارة الكلمات</h1>
-      
-      <div class="form" style="display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box;">
-          <!-- صف الحقول النصية (متجاوب تلقائياً) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; box-sizing: border-box;">
-              <input type="number" placeholder="ID الكلمة" readonly style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #aaa; font-size: 14px; box-sizing: border-box; width: 100%;">
-              <input type="text" placeholder="اسم اليوزر (قبل @)" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
-              <input type="text" placeholder="الكلمة" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
-              <input type="text" placeholder="المعنى" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
-              <input type="text" placeholder="المرادف" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
-              
-              <select id="formLanguageSelect" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; cursor: pointer; box-sizing: border-box; width: 100%; font-family: 'Cairo', sans-serif;">
-                  <option hidden>English</option>
-                  <option hidden>Hindi</option>
-                  <option hidden>Urdu</option>
-                  <option hidden>Persian</option>
-                  <option hidden>Chinese</option>
-                  <option hidden>Bengali</option>
-                  <option hidden>Turkish</option>
-                  <option hidden>French</option>
-                  <option hidden>Spanish</option>
-                  <option hidden>German</option>
-                  <option hidden>Japanese</option>
-                  <option hidden>Korean</option>
-                  <option hidden>Dutch</option>
-                  <option hidden>Hebrew</option>
-                  <option>الإنجليزية</option>
-                  <option>الهندية</option>
-                  <option>الأردية</option>
-                  <option>الفارسية</option>
-                  <option>الصينية</option>
-                  <option>البنغالية</option>
-                  <option>التركية</option>
-                  <option>الفرنسية</option>
-                  <option>الإسبانية</option>
-                  <option>الألمانية</option>
-                  <option>اليابانية</option>
-                  <option>الكورية</option>
-                  <option>الهولندية</option>
-                  <option>العبرية</option>
-              </select>
-          </div>
+    <!-- 3. قسم رفع ملفات الإكسيل (منفصل ومستقل تماماً) -->
+    <div class="excel-upload-box" style="width: 100%;">
+      <h2>رفع الكلمات دفعة واحدة (Excel)</h2>
+      <label for="excelFileInput" class="excel-upload-btn">
+        <span>📊 اختيار ملف إكسيل ورفع</span>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+      </label>
+    </div>
 
-          <!-- 🌟 الأزرار الأربعة متساوية تماماً (إضافة، تعديل، مسح، رفع إكسيل) وتتطابق مع الموبايل والكمبيوتر -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-top: 5px; width: 100%; box-sizing: border-box;">
-              <button type="button" class="reg" style="background: #27ae60; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">إضافة كلمة جديدة</button>
-              <button type="button" class="upa" style="background: #2980b9; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">تعديل الكلمة المحددة</button>
-              <button type="button" class="cel" style="background: #7f8c8d; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">مسح البيانات</button>
-              
-              <!-- زر رفع الإكسيل بتصميم شيك متناسق مع الأزرار -->
-              <label for="excelFileInput" style="background: #007bff; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; margin: 0; font-family: 'Cairo', sans-serif; box-sizing: border-box;">
-                  <span>📊 رفع إكسيل</span>
-                  <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
-              </label>
-          </div>
+    <!-- 4. فورم إدارة الكلمات (الحقول الأساسية والأزرار الـ 3 المعتادة) -->
+    <div class="form" style="width: 100%;">
+      <h1>إدارة الكلمات</h1>
+      <input type="number" placeholder="ID الكلمة" readonly>
+      <input type="text" placeholder="اسم اليوزر (قبل @)">
+      <input type="text" placeholder="الكلمة">
+      <input type="text" placeholder="المعنى">
+      <input type="text" placeholder="المرادف">
+      <select id="formLanguageSelect">
+          <option hidden>English</option>
+          <option hidden>Hindi</option>
+          <option hidden>Urdu</option>
+          <option hidden>Persian</option>
+          <option hidden>Chinese</option>
+          <option hidden>Bengali</option>
+          <option hidden>Turkish</option>
+          <option hidden>French</option>
+          <option hidden>Spanish</option>
+          <option hidden>German</option>
+          <option hidden>Japanese</option>
+          <option hidden>Korean</option>
+          <option hidden>Dutch</option>
+          <option hidden>Hebrew</option>
+          <option>الإنجليزية</option>
+          <option>الهندية</option>
+          <option>الأردية</option>
+          <option>الفارسية</option>
+          <option>الصينية</option>
+          <option>البنغالية</option>
+          <option>التركية</option>
+          <option>الفرنسية</option>
+          <option>الإسبانية</option>
+          <option>الألمانية</option>
+          <option>اليابانية</option>
+          <option>الكورية</option>
+          <option>الهولندية</option>
+          <option>العبرية</option>
+      </select>
+      
+      <div class="inter1">
+        <button type="button" class="reg">إضافة كلمة جديدة</button>
+        <button type="button" class="upa">تعديل الكلمة المحددة</button>
+        <button type="button" class="cel">مسح البيانات</button>
       </div>
     </div>
 
-    <!-- 4. ديف الأزرار الإضافية -->
+    <!-- 5. ديف الأزرار الإضافية -->
     <div class="actions-top-bar" style="width: 100%;">
       <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
       <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
       <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
-    <!-- 5. ديف حذف نطاق الـ ID -->
+    <!-- 6. ديف حذف نطاق الـ ID -->
     <div class="range-delete-box" style="width: 100%;">
       <input type="number" id="startIdInput" placeholder="من ID رقم...">
       <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
       <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
     </div>
 
-    <!-- 6. جدول عرض سجل الكلمات والبيانات -->
+    <!-- 7. جدول عرض سجل الكلمات والبيانات -->
     <div class="data-section" style="width: 100%;">
       <h1>سجل البيانات</h1>
       <div class="table-container" style="width: 95%; margin: 15px auto;">
