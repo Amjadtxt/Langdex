@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Admin Management</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/Langdex/style.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS للإكسيل -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    .content {
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+    }
+
+    .form,
+    .excel-upload-section,
+    .actions-top-bar {
+      width: 100% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+      background: #678071 !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .form h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .form input,
+    .form select {
+      display: block !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 10px auto !important;
+      box-sizing: border-box !important;
+      font-family: 'Cairo', sans-serif !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      font-size: 14px !important;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
+    }
+
+    .inter1 {
+      display: flex !important;
+      gap: 10px !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 15px auto 0 auto !important;
+      box-sizing: border-box !important;
+    }
+
+    .inter1 button {
+      flex: 1 !important;
+      padding: 12px 5px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      transition: 0.2s !important;
+    }
+
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+    
+    .inter1 .upa { background: #2980b9; }
+    .inter1 .upa:hover { background: #1f618d; }
+
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
+
+    .actions-top-bar {
+      display: flex !important;
+      gap: 10px !important;
+      align-items: center !important;
+    }
+
+    .actions-top-bar button {
+      flex: 1 !important;
+      padding: 12px 10px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      transition: 0.2s !important;
+    }
+
+    .fix-lang-btn { background: #8e44ad; }
+    .fix-lang-btn:hover { background: #732d91; }
+
+    .delete-edited-btn { background: #c0392b; }
+    .delete-edited-btn:hover { background: #962d22; }
+
+    .excel-upload-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .excel-upload-section h3 {
+      color: #ffffff;
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .excel-upload-label {
+      background: #27ae60;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .excel-upload-label:hover { background: #219653; }
+
+    @media (max-width: 768px) {
+      .content { padding: 0 10px !important; }
+      .form,
+      .excel-upload-section,
+      .actions-top-bar {
+        width: 100% !important;
+        margin: 10px auto !important;
+        padding: 15px !important;
+      }
+      .excel-upload-section {
+        flex-direction: column !important;
+        text-align: center !important;
+      }
+      .excel-upload-section label {
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .inter1, 
+      .actions-top-bar {
+        flex-direction: column !important;
+        gap: 8px !important;
+        max-width: 100% !important;
+      }
+      .inter1 button, 
+      .actions-top-bar button {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="user-bar">
+      <span id="username">مرحباً، User</span>
+      <button id="logout-btn">تسجيل الخروج</button>
+    </div>
+
+    <nav class="bar">
+      <ul>
+        <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
+        <a href="#"><li>الإدارة</li></a>
+        <a href="/Langdex/users.html"><li>المستخدمين</li></a>
+        <a href="#"><li>الإعدادات</li></a>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="content">
+
+    <!-- 1. فورم إدارة الكلمات -->
+    <div class="form">
+      <h1>إدارة الكلمات</h1>
+      <input type="number" placeholder="ID الكلمة" readonly>
+      <input type="text" placeholder="اسم اليوزر (قبل @)">
+      <input type="text" placeholder="الكلمة">
+      <input type="text" placeholder="المعنى">
+      <input type="text" placeholder="المرادف">
+      <select id="formLanguageSelect">
+          <option hidden>إختر اللغة</option>
+          <option hidden>Hindi</option>
+          <option hidden>Urdu</option>
+          <option hidden>Persian</option>
+          <option hidden>Chinese</option>
+          <option hidden>Bengali</option>
+          <option hidden>Turkish</option>
+          <option hidden>French</option>
+          <option hidden>Spanish</option>
+          <option hidden>German</option>
+          <option hidden>Japanese</option>
+          <option hidden>Korean</option>
+          <option hidden>Dutch</option>
+          <option hidden>Hebrew</option>
+          <option>الإنجليزية</option>
+          <option>الهندية</option>
+          <option>الأردية</option>
+          <option>الفارسية</option>
+          <option>الصينية</option>
+          <option>البنغالية</option>
+          <option>التركية</option>
+          <option>الفرنسية</option>
+          <option>الإسبانية</option>
+          <option>الألمانية</option>
+          <option>اليابانية</option>
+          <option>الكورية</option>
+          <option>الهولندية</option>
+          <option>العبرية</option>
+      </select>
+      
+      <div class="inter1">
+        <button type="button" class="reg">إضافة كلمة جديدة</button>
+        <button type="button" class="upa">تعديل الكلمة المحددة</button>
+        <button type="button" class="cel">مسح البيانات</button>
+      </div>
+    </div>
+
+    <!-- 2. قسم رفع ملف الإكسيل -->
+    <div class="excel-upload-section">
+      <h3>رفع الكلمات بإستخدام ملف إكسيل</h3>
+      <label for="excelFileInput" class="excel-upload-label">
+        <span>رفع الملف</span>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+      </label>
+    </div>
+
+    <!-- 3. أدوات التحكم بالتصنيف والمكرر -->
+    <div class="actions-top-bar">
+      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
+      <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
+    </div>
+
+  </div>
+
+  <script type="module" src="/Langdex/auth-guard.js"></script>
+  <script type="module" src="/Langdex/user-bar.js"></script>
+  <script type="module" src="admin.js"></script>
+
+</body>
+
+</html>
