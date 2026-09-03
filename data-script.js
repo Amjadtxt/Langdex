@@ -406,7 +406,7 @@ function applyFiltersAndSearch() {
     renderTable(filtered);
 }
 
-// تصدير PDF بالمقاسات الصحيحة وظهور كافة الأعمدة بالكامل دون أي اختفاء
+// تصدير PDF احترافي باستخدام مكتبة AutoTable لضمان ظهور كافة البيانات بوضوح تام
 async function exportUserPdf() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         showNotification("لا توجد بيانات لتصديرها.");
@@ -421,8 +421,19 @@ async function exportUserPdf() {
             format: 'a4'
         });
 
-        doc.addFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf", "Roboto", "normal");
-        doc.setFont("Roboto");
+        if (typeof doc.autoTable !== 'function') {
+            showNotification("مكتبة الجداول غير متوفرة، تأكد من إضافتها في الـ HTML.");
+            return;
+        }
+
+        const tableRows = currentFilteredData.map((item, index) => [
+            String(item.id !== undefined ? item.id : index + 1),
+            String(item.word || "-"),
+            String(item.meaning || "-"),
+            String(item.synonyms || "-"),
+            String(item.language || "-"),
+            formatTimestamp(item.createdAt)
+        ]);
 
         doc.setFontSize(16);
         doc.text("Langdex - My Personal Words Report", 148, 12, { align: "center" });
@@ -430,54 +441,35 @@ async function exportUserPdf() {
         doc.setFontSize(10);
         doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 148, 18, { align: "center" });
 
-        let y = 28;
-        doc.setFontSize(10);
-
-        doc.setFillColor(103, 128, 113);
-        doc.rect(10, y, 277, 9, "F");
-        doc.setTextColor(255, 255, 255);
-        
-        doc.text("ID", 14, y + 6);
-        doc.text("الكلمة (Word)", 35, y + 6);
-        doc.text("المعنى (Meaning)", 90, y + 6);
-        doc.text("المرادف (Synonyms)", 165, y + 6);
-        doc.text("اللغة (Lang)", 225, y + 6);
-        doc.text("تاريخ التسجيل", 252, y + 6);
-
-        y += 12;
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(9);
-
-        currentFilteredData.forEach((item) => {
-            const idStr = String(item.id || "-");
-            const wordStr = String(item.word || "-");
-            const meaningStr = String(item.meaning || "-");
-            const synonymsStr = String(item.synonyms || "-");
-            const langStr = String(item.language || "-");
-            const dateStr = formatTimestamp(item.createdAt);
-
-            const splitMeaning = doc.splitTextToSize(meaningStr, 70);
-            const splitSynonyms = doc.splitTextToSize(synonymsStr, 55);
-            const splitWord = doc.splitTextToSize(wordStr, 50);
-
-            const maxLines = Math.max(splitMeaning.length, splitSynonyms.length, splitWord.length, 1);
-            const rowHeight = maxLines * 6 + 4;
-
-            if (y + rowHeight > 190) {
-                doc.addPage();
-                y = 20;
+        doc.autoTable({
+            startY: 24,
+            head: [["ID", "الكلمة (Word)", "المعنى (Meaning)", "المرادف (Synonyms)", "اللغة (Lang)", "تاريخ التسجيل"]],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [103, 128, 113],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                halign: 'center',
+                textColor: [0, 0, 0],
+                cellPadding: 4
+            },
+            columnStyles: {
+                0: { cellWidth: 15 },
+                1: { cellWidth: 45 },
+                2: { cellWidth: 80 },
+                3: { cellWidth: 65 },
+                4: { cellWidth: 30 },
+                5: { cellWidth: 42 }
+            },
+            styles: {
+                font: 'helvetica',
+                fontSize: 9,
+                overflow: 'linebreak'
             }
-
-            doc.text(idStr, 14, y + 4);
-            doc.text(splitWord, 35, y + 4);
-            doc.text(splitMeaning, 90, y + 4);
-            doc.text(splitSynonyms, 165, y + 4);
-            doc.text(langStr, 225, y + 4, { maxWidth: 22 });
-            doc.text(dateStr, 252, y + 4);
-
-            y += rowHeight + 2;
-            doc.setDrawColor(220, 220, 220);
-            doc.line(10, y - 2, 287, y - 2);
         });
 
         doc.save("my-langdex-words.pdf");
