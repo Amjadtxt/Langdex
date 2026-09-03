@@ -21,7 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة (تم تركها سليمة تماماً) */
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
     .content > div {
       width: 85% !important;
       max-width: 850px !important;
@@ -29,7 +29,74 @@
       box-sizing: border-box !important;
     }
 
-    /* تعديلات الموبايل لمنع أي لخبطة في الجدول والمحتوى فقط */
+    /* تثبيت اللون #678071 لكل الديفات في صفحة المستخدمين */
+    .search-section,
+    .form,
+    .data-section {
+      background: #678071 !important;
+      padding: 15px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      margin-bottom: 15px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    /* تنسيق عناصر الفورم والبحث */
+    .search-section input.search-txt,
+    .form input,
+    .form select {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      font-family: 'Cairo', sans-serif !important;
+    }
+
+    .form select {
+      padding: 12px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: white;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .form input {
+      padding: 12px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      color: #000;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    /* تنسيق زر الإضافة */
+    .inter1 {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .inter1 button {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
+      font-size: 14px;
+    }
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+
+    /* تعديلات الموبايل لمنع أي لخبطة في الجدول والمحتوى */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
@@ -37,7 +104,7 @@
         padding: 12px !important;
       }
 
-      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
+      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة بلون الخلفية الموحد */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -92,7 +159,7 @@
 <body>
 
   <!-- ==================================================
-       HEADER (تم الاعتماد على ملفات الـ JS لتنسيق القائمة والبار من الـ CSS الأساسي)
+       HEADER
   ================================================== -->
   <header>
     <div class="user-bar">
