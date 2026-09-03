@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- SheetJS للإكسيل -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -114,7 +114,8 @@
       justify-content: center;
     }
 
-    .range-delete-inputs input {
+    .range-delete-inputs input,
+    .range-delete-inputs select {
       flex: 1;
       min-width: 140px;
       max-width: 250px !important;
@@ -128,6 +129,18 @@
       background: #ffffff !important;
       border: 1px solid #ccc !important;
       color: #000000 !important;
+    }
+
+    #notifyMessage {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      resize: vertical;
     }
 
     .range-delete-btn {
@@ -149,6 +162,9 @@
     }
 
     .range-delete-btn:hover { background: #a93232; }
+
+    #sendNotifyBtn { background: #00838f; }
+    #sendNotifyBtn:hover { background: #006670; }
 
     /* جدول البيانات للتوضيح */
     .table-container {
@@ -208,6 +224,7 @@
 
       .actions-top-bar button, 
       .range-delete-inputs input,
+      .range-delete-inputs select,
       .range-delete-btn {
         width: 100% !important;
         max-width: none !important;
@@ -291,7 +308,23 @@
         <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
       </div>
       <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
+    </div>
 
+    <!-- 4. إرسال إشعار للمستخدمين -->
+    <div class="range-delete-box" id="notifySection">
+      <h1>إرسال إشعار للمستخدمين</h1>
+      <div class="range-delete-inputs" style="margin-bottom:10px;">
+        <select id="notifyTargetType">
+          <option value="all">كل المستخدمين</option>
+          <option value="specific">مستخدم معين (بالإيميل)</option>
+        </select>
+        <input type="email" id="notifyTargetEmail" placeholder="إيميل المستخدم (لو محدد)">
+      </div>
+      <textarea id="notifyMessage" placeholder="اكتب نص الإشعار هنا..." rows="3"></textarea>
+      <button type="button" class="range-delete-btn" id="sendNotifyBtn">إرسال الإشعار</button>
+    </div>
+
+  </div>
 
   <script type="module" src="/Langdex/auth-guard.js"></script>
   <script type="module" src="/Langdex/user-bar.js"></script>
