@@ -26,6 +26,14 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+import {
+    applyPrefsGlobally,
+    isNotifyEnabled,
+    getResultsPerPage,
+    getPdfOrientation,
+    getDefaultLang
+} from "/Langdex/prefs.js";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
@@ -65,11 +73,16 @@ const updateBtn = document.querySelector("#update-btn");
 const clearBtn = document.querySelector("#clear-btn");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
 
+// تطبيق الوضع الداكن فورًا لو محفوظ في التفضيلات
+applyPrefsGlobally();
+
 function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
 }
 
 function showNotification(message) {
+    if (!isNotifyEnabled()) return; // 🌟 مرتبط بتفضيل الإشعارات في صفحة الإعدادات
+
     let notification = document.querySelector(".langdex-notification");
     if (!notification) {
         notification = document.createElement("div");
@@ -127,31 +140,24 @@ function formatTimestamp(timestamp) {
 }
 
 // ======================================================
-// 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
+// 🌟 تسجيل الأحداث في اللوج (Logs)
 // ======================================================
-// action:      نوع العملية: "add" | "update" | "delete"
-// collectionName: اسم الكوليكشن اللي اتعدلت فيه البيانات (words هنا)
-// targetDocId: الـ document id بتاع العنصر المتأثر
-// oldData:     نسخة من البيانات *قبل* التعديل/الحذف (null لو إضافة)
-// newData:     نسخة من البيانات *بعد* الإضافة/التعديل (null لو حذف)
-// details:     نص وصفي مختصر يظهر في جدول اللوج
 async function writeLog({ action, collectionName, targetDocId, oldData = null, newData = null, details = "" }) {
     try {
         await addDoc(logsCollection, {
             userName: currentUser?.email || currentUser?.displayName || "مستخدم",
             uid: currentUser?.uid || null,
-            action,               // "add" | "update" | "delete"
-            collectionName,       // "words"
-            targetDocId,          // document id في كوليكشن words
-            oldData,               // null لو add
-            newData,               // null لو delete
+            action,
+            collectionName,
+            targetDocId,
+            oldData,
+            newData,
             details,
             role: "user",
-            undone: false,          // 🌟 يتحول true بعد التراجع عنه
+            undone: false,
             timestamp: serverTimestamp()
         });
     } catch (error) {
-        // فشل تسجيل اللوج ما ينفعش يوقف العملية الأساسية، بس نسجله في الكونسول
         console.error("فشل تسجيل الحدث في اللوج:", error);
     }
 }
@@ -223,8 +229,10 @@ function populateLanguageFilter(rows) {
             languageFilter.appendChild(option);
         });
 
-    const exists = [...languageFilter.options].some(option => normalize(option.value) === normalize(currentValue));
-    languageFilter.value = (currentValue && exists) ? currentValue : "all";
+    // 🌟 لو مفيش قيمة مختارة حاليًا، استخدم اللغة الافتراضية من صفحة الإعدادات
+    const target = currentValue || getDefaultLang();
+    const exists = [...languageFilter.options].some(option => normalize(option.value) === normalize(target));
+    languageFilter.value = exists ? target : "all";
 }
 
 function renderTable(rows) {
@@ -342,13 +350,12 @@ if (addBtn) {
 
             const newDocRef = await addDoc(wordsCollection, newWordData);
 
-            // 🌟 تسجيل حدث الإضافة — التراجع عنه = حذف الـ doc ده
             await writeLog({
                 action: "add",
                 collectionName: "words",
                 targetDocId: newDocRef.id,
                 oldData: null,
-                newData: { ...newWordData, createdAt: null }, // createdAt سيرفر تايم استامب، منسجلش القيمة الفعلية
+                newData: { ...newWordData, createdAt: null },
                 details: `إضافة كلمة "${word}"`
             });
 
@@ -381,7 +388,6 @@ if (updateBtn) {
         }
 
         try {
-            // 🌟 نجيب النسخة الحالية (قبل التعديل) من البيانات اللي عندنا محلياً عشان نسجلها كـ oldData
             const beforeEdit = allUserTableData.find(item => item._documentId === editingDocId);
             const oldData = beforeEdit
                 ? {
@@ -397,7 +403,6 @@ if (updateBtn) {
             const updatedFields = { word, meaning, synonyms, language };
             await updateDoc(docRef, updatedFields);
 
-            // 🌟 تسجيل حدث التعديل — التراجع عنه = رجّع oldData على نفس الـ doc
             await writeLog({
                 action: "update",
                 collectionName: "words",
@@ -426,7 +431,6 @@ if (clearBtn) {
 
 async function deleteWord(docId) {
     try {
-        // 🌟 نجيب نسخة كاملة من بيانات الكلمة قبل ما نحذفها عشان نقدر نرجعها لو حصل تراجع
         const beforeDelete = allUserTableData.find(item => item._documentId === docId);
         const oldData = beforeDelete
             ? {
@@ -442,11 +446,10 @@ async function deleteWord(docId) {
 
         await deleteDoc(doc(db, "words", docId));
 
-        // 🌟 تسجيل حدث الحذف — التراجع عنه = إعادة إضافة oldData بكل بياناته
         await writeLog({
             action: "delete",
             collectionName: "words",
-            targetDocId: docId, // الـ doc القديم اتمسح، بنحتفظ بالـ id بس للتوثيق فقط
+            targetDocId: docId,
             oldData,
             newData: null,
             details: `حذف كلمة "${oldData?.word || ""}"`
@@ -490,10 +493,16 @@ function applyFiltersAndSearch() {
         });
     }
 
+    // 🌟 تطبيق "عدد النتائج في الصفحة" المحفوظ في الإعدادات
+    const limit = getResultsPerPage();
+    if (limit) {
+        filtered = filtered.slice(0, limit);
+    }
+
     renderTable(filtered);
 }
 
-// تصدير تقرير PDF شامل ودقيق يدعم كل اللغات والحروف بدون أي طلاسم (بنفس طريقة الأدمن)
+// تصدير تقرير PDF شامل
 async function exportUserPdf() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         showNotification("لا توجد بيانات لتصديرها.");
@@ -522,6 +531,9 @@ async function exportUserPdf() {
             `;
         });
 
+        // 🌟 اتجاه الصفحة (طولي/عرضي) من صفحة الإعدادات
+        const orientation = getPdfOrientation();
+
         const printWindow = window.open("", "_blank");
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -530,6 +542,7 @@ async function exportUserPdf() {
                 <meta charset="UTF-8">
                 <title>Langdex - التقرير الشخصي</title>
                 <style>
+                    @page { size: A4 ${orientation}; margin: 15mm; }
                     body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
                     h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
                     p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
