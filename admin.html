@@ -77,40 +77,6 @@
       font-family: 'Cairo', sans-serif;
     }
 
-    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) لتكون بنفس الحجم والعرض تماماً وبجانب بعض على الكمبيوتر */
-    .inter1 {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      flex-wrap: nowrap;
-      margin-top: 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .inter1 button {
-      flex: 1; /* توزيع المساحة بالتساوي 100% بدون أي تفاوت بين الأزرار */
-      min-width: 0;
-      padding: 12px 10px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: 'Cairo', sans-serif;
-      transition: 0.2s;
-      box-sizing: border-box;
-      color: white;
-      text-align: center;
-      font-size: 14px;
-    }
-    .inter1 .reg { background: #27ae60; }
-    .inter1 .reg:hover { background: #219653; }
-    
-    .inter1 .upa { background: #2980b9; }
-    .inter1 .upa:hover { background: #1f618d; }
-
-    .inter1 .cel { background: #7f8c8d; }
-    .inter1 .cel:hover { background: #626d6e; }
-
     /* ديف الأزرار العلوية المستقل */
     .actions-top-bar {
       background: rgba(255, 255, 255, 0.03);
@@ -135,7 +101,7 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول والجوا الفريم */
     .range-delete-box {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
@@ -221,13 +187,6 @@
         flex-direction: column !important;
       }
       .actions-top-bar button {
-        width: 100% !important;
-      }
-
-      .inter1 {
-        flex-direction: column !important;
-      }
-      .inter1 button {
         width: 100% !important;
       }
 
@@ -348,49 +307,63 @@
       </select>
     </div>
 
-    <!-- 3. فورم إدارة الكلمات -->
-    <div class="form" style="width: 100%;">
-      <h1>إدارة الكلمات</h1>
-      <input type="number" placeholder="ID الكلمة" readonly>
-      <input type="text" placeholder="اسم اليوزر (قبل @)">
-      <input type="text" placeholder="الكلمة">
-      <input type="text" placeholder="المعنى">
-      <input type="text" placeholder="المرادف">
-      <select id="formLanguageSelect">
-          <option hidden>English</option>
-          <option hidden>Hindi</option>
-          <option hidden>Urdu</option>
-          <option hidden>Persian</option>
-          <option hidden>Chinese</option>
-          <option hidden>Bengali</option>
-          <option hidden>Turkish</option>
-          <option hidden>French</option>
-          <option hidden>Spanish</option>
-          <option hidden>German</option>
-          <option hidden>Japanese</option>
-          <option hidden>Korean</option>
-          <option hidden>Dutch</option>
-          <option hidden>Hebrew</option>
-          <option>الإنجليزية</option>
-          <option>الهندية</option>
-          <option>الأردية</option>
-          <option>الفارسية</option>
-          <option>الصينية</option>
-          <option>البنغالية</option>
-          <option>التركية</option>
-          <option>الفرنسية</option>
-          <option>الإسبانية</option>
-          <option>الألمانية</option>
-          <option>اليابانية</option>
-          <option>الكورية</option>
-          <option>الهولندية</option>
-          <option>العبرية</option>
-      </select>
+    <!-- 3. فورم إدارة الكلمات (المدمج والمنسق بالكامل مع زرار الإكسيل) -->
+    <div class="form-container" style="direction: rtl; font-family: 'Cairo', Arial, sans-serif; width: 100%; box-sizing: border-box;">
+      <h1 style="margin-bottom: 15px; font-size: 22px;">إدارة الكلمات</h1>
       
-      <div class="inter1">
-        <button type="button" class="reg">إضافة كلمة جديدة</button>
-        <button type="button" class="upa">تعديل الكلمة المحددة</button>
-        <button type="button" class="cel">مسح البيانات</button>
+      <div class="form" style="display: flex; flex-direction: column; gap: 15px; width: 100%; box-sizing: border-box;">
+          <!-- صف الحقول النصية (متجاوب تلقائياً) -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; box-sizing: border-box;">
+              <input type="number" placeholder="ID الكلمة" readonly style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #aaa; font-size: 14px; box-sizing: border-box; width: 100%;">
+              <input type="text" placeholder="اسم اليوزر (قبل @)" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
+              <input type="text" placeholder="الكلمة" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
+              <input type="text" placeholder="المعنى" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
+              <input type="text" placeholder="المرادف" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box; width: 100%;">
+              
+              <select id="formLanguageSelect" style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; font-size: 14px; cursor: pointer; box-sizing: border-box; width: 100%; font-family: 'Cairo', sans-serif;">
+                  <option hidden>English</option>
+                  <option hidden>Hindi</option>
+                  <option hidden>Urdu</option>
+                  <option hidden>Persian</option>
+                  <option hidden>Chinese</option>
+                  <option hidden>Bengali</option>
+                  <option hidden>Turkish</option>
+                  <option hidden>French</option>
+                  <option hidden>Spanish</option>
+                  <option hidden>German</option>
+                  <option hidden>Japanese</option>
+                  <option hidden>Korean</option>
+                  <option hidden>Dutch</option>
+                  <option hidden>Hebrew</option>
+                  <option>الإنجليزية</option>
+                  <option>الهندية</option>
+                  <option>الأردية</option>
+                  <option>الفارسية</option>
+                  <option>الصينية</option>
+                  <option>البنغالية</option>
+                  <option>التركية</option>
+                  <option>الفرنسية</option>
+                  <option>الإسبانية</option>
+                  <option>الألمانية</option>
+                  <option>اليابانية</option>
+                  <option>الكورية</option>
+                  <option>الهولندية</option>
+                  <option>العبرية</option>
+              </select>
+          </div>
+
+          <!-- 🌟 الأزرار الأربعة متساوية تماماً (إضافة، تعديل، مسح، رفع إكسيل) وتتطابق مع الموبايل والكمبيوتر -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-top: 5px; width: 100%; box-sizing: border-box;">
+              <button type="button" class="reg" style="background: #27ae60; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">إضافة كلمة جديدة</button>
+              <button type="button" class="upa" style="background: #2980b9; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">تعديل الكلمة المحددة</button>
+              <button type="button" class="cel" style="background: #7f8c8d; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; font-family: 'Cairo', sans-serif;">مسح البيانات</button>
+              
+              <!-- زر رفع الإكسيل بتصميم شيك متناسق مع الأزرار -->
+              <label for="excelFileInput" style="background: #007bff; color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.3s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; margin: 0; font-family: 'Cairo', sans-serif; box-sizing: border-box;">
+                  <span>📊 رفع إكسيل</span>
+                  <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+              </label>
+          </div>
       </div>
     </div>
 
