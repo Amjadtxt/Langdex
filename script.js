@@ -1,3 +1,4 @@
+
 // ======================================================
 // LANGDEX - script.js (Full & Complete Edition for Amjad)
 // ======================================================
@@ -189,10 +190,11 @@ function showNotification(message) {
 
 
 // ======================================================
-// GET WORDS (FULL FETCH FOR SEARCHING ALL WORDS)
+// GET WORDS (USER DATA VS ADMIN ALL LOGS)
 // ======================================================
 
 async function getAllWords() {
+    // إذا كان المستخدم لم يتم تعيينه بعد ولكن الـ auth جاهز، نحاول أخذه مباشرة
     if (!currentUser && auth.currentUser) {
         currentUser = auth.currentUser;
     }
@@ -201,11 +203,21 @@ async function getAllWords() {
         return [];
     }
 
+    let snapshot;
+    const isAdmin = isCurrentUserAdmin();
+
     try {
-        // جلب جميع الكلمات لكي يتمكن المستخدم من البحث والاطلاع على الكلمات المتاحة
-        const snapshot = await getDocs(wordsCollection);
+        if (isAdmin) {
+            snapshot = await getDocs(wordsCollection);
+        } else {
+            const userWordsQuery = query(
+                wordsCollection,
+                where("userId", "==", currentUser.uid)
+            );
+            snapshot = await getDocs(userWordsQuery);
+        }
+
         const rows = [];
-        
         snapshot.forEach(firebaseDoc => {
             const data = firebaseDoc.data();
             rows.push({
@@ -230,10 +242,9 @@ async function getAllWords() {
 async function getNextId() {
     try {
         const rows = await getAllWords();
-        const userRows = rows.filter(item => item.userId === currentUser.uid);
         const usedIds = new Set();
 
-        userRows.forEach(item => {
+        rows.forEach(item => {
             const id = Number(item.id);
             if (Number.isInteger(id) && id > 0) {
                 usedIds.add(id);
@@ -265,27 +276,6 @@ async function setNextId() {
 
 
 // ======================================================
-// FORM SECURITY & PERMISSIONS (LOCK/UNLOCK)
-// ======================================================
-
-function setFormAccess(isEditable) {
-    const elementsToToggle = [wordInput, meaningInput, synonymsInput, languageSelect];
-    
-    elementsToToggle.forEach(el => {
-        if (el) {
-            el.disabled = !isEditable;
-            el.style.opacity = isEditable ? "1" : "0.7";
-            el.style.cursor = isEditable ? "text" : "not-allowed";
-        }
-    });
-
-    if (updateButton) updateButton.style.display = isEditable ? "block" : "none";
-    if (deleteButton) deleteButton.style.display = isEditable ? "block" : "none";
-    if (registerButton) registerButton.style.display = isEditable ? "block" : "none";
-}
-
-
-// ======================================================
 // CLEAR & FILL FORM
 // ======================================================
 
@@ -300,10 +290,9 @@ async function clearForm() {
     searchIndex = 0;
     lastSearchText = "";
 
-    if (searchInput) searchInput.value = "";
+    if (searchInput && !document.querySelector("#search-input")) searchInput.value = "";
     if (searchResult) searchResult.textContent = "";
 
-    setFormAccess(true);
     await setNextId();
 }
 
@@ -315,17 +304,6 @@ function fillForm(data, documentId) {
     if (meaningInput) meaningInput.value = data.meaning ?? "";
     if (synonymsInput) synonymsInput.value = data.synonyms ?? "";
     if (languageSelect) languageSelect.value = data.language ?? "";
-
-    // التحقق هل الكلمة ملك للمستخدم الحالي أو أدمن؟
-    const isOwner = currentUser && (data.userId === currentUser.uid || isCurrentUserAdmin());
-
-    if (isOwner) {
-        setFormAccess(true);
-        showNotification(`تم اختيار الكلمة: ${data.word}`);
-    } else {
-        setFormAccess(false);
-        showNotification(`تنبيه: هذه الكلمة تخص مستخدم آخر (للاطلاع فقط ولا يمكنك تعديلها)`);
-    }
 }
 
 
@@ -389,18 +367,23 @@ function renderTable(rows) {
 
     const thead = dataTable.closest('table')?.querySelector('thead tr');
     if (thead) {
-        if (!thead.querySelector('.admin-user-th')) {
-            const userTh = document.createElement('th');
-            userTh.className = 'admin-user-th';
-            userTh.textContent = 'المستخدم';
-            thead.appendChild(userTh);
+        if (isAdmin) {
+            if (!thead.querySelector('.admin-user-th')) {
+                const userTh = document.createElement('th');
+                userTh.className = 'admin-user-th';
+                userTh.textContent = 'المستخدم';
+                thead.appendChild(userTh);
+            }
+        } else {
+            const userTh = thead.querySelector('.admin-user-th');
+            if (userTh) userTh.remove();
         }
     }
 
     if (rows.length === 0) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
-        emptyCell.colSpan = 6;
+        emptyCell.colSpan = isAdmin ? 6 : 5;
         emptyCell.textContent = "لا توجد بيانات للعرض.";
         emptyCell.style.textAlign = "center";
         emptyRow.appendChild(emptyCell);
@@ -410,20 +393,18 @@ function renderTable(rows) {
 
     rows.forEach(data => {
         const row = document.createElement("tr");
-        const isOwner = currentUser && data.userId === currentUser.uid;
-
-        if (!isOwner && !isAdmin) {
-            row.style.background = "rgba(0, 0, 0, 0.05)";
-        }
 
         const values = [
             data.id,
             data.word,
             data.meaning,
             data.synonyms,
-            data.language,
-            data.userEmail || data.username || "مستخدم آخر"
+            data.language
         ];
+
+        if (isAdmin) {
+            values.push(data.userEmail || data.username || "غير معروف");
+        }
 
         values.forEach(value => {
             const cell = document.createElement("td");
@@ -437,6 +418,7 @@ function renderTable(rows) {
         row.style.cursor = "pointer";
         row.addEventListener("click", () => {
             fillForm(data, data._documentId);
+            showNotification(`تم اختيار الكلمة: ${data.word}`);
         });
 
         dataTable.appendChild(row);
@@ -445,7 +427,7 @@ function renderTable(rows) {
 
 
 // ======================================================
-// APPLY FILTERS & LIVE SEARCH (ALL COLUMNS + USER PRIORITY)
+// APPLY FILTERS & LIVE SEARCH
 // ======================================================
 
 function applyFiltersAndSearch() {
@@ -454,7 +436,7 @@ function applyFiltersAndSearch() {
     const selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
     const searchQuery = document.querySelector("#search-input") ? document.querySelector("#search-input").value.trim() : "";
 
-    let filtered = [...allTableData];
+    let filtered = allTableData;
 
     if (selectedLanguage !== "" && selectedLanguage !== "all") {
         filtered = filtered.filter(item => normalize(item.language) === normalize(selectedLanguage));
@@ -462,7 +444,6 @@ function applyFiltersAndSearch() {
 
     if (searchQuery !== "") {
         const target = normalize(searchQuery);
-        // ⭐ البحث الشامل في جميع الخانات (ID، الكلمة، المعنى، المرادف، اللغة، وإيميل المستخدم)
         filtered = filtered.filter(item => {
             return (
                 normalize(item.id).includes(target) ||
@@ -472,15 +453,6 @@ function applyFiltersAndSearch() {
                 normalize(item.language).includes(target) ||
                 normalize(item.userEmail).includes(target)
             );
-        });
-    }
-
-    // ⭐ ترتيب النتائج لتكون كلمات المستخدم الحالي في المقدمة دائماً
-    if (currentUser) {
-        filtered.sort((a, b) => {
-            const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
-            const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-            return bIsOwner - aIsOwner;
         });
     }
 
@@ -512,7 +484,7 @@ async function initializePageData() {
 if (showDataButton) {
     showDataButton.addEventListener("click", async function () {
         await initializePageData();
-        showNotification(`تم تحديث وعرض السجلات.`);
+        showNotification(`تم تحديث وعرض ${allTableData.length} سجل.`);
     });
 }
 
@@ -539,156 +511,6 @@ if (clearFilterButton) {
         }
         applyFiltersAndSearch();
         showNotification("تم إلغاء الفلتر والبحث.");
-    });
-}
-
-
-// ======================================================
-// SEARCH BUTTON HANDLER (INDEX PAGE)
-// ======================================================
-
-if (searchButton && searchInput) {
-    searchButton.addEventListener("click", async () => {
-        const queryText = searchInput.value.trim();
-        if (!queryText) {
-            if (searchResult) searchResult.textContent = "الرجاء كتابة كلمة للبحث.";
-            return;
-        }
-
-        allTableData = await getAllWords();
-        const target = normalize(queryText);
-
-        // ⭐ البحث الشامل في جميع الخانات
-        let matches = allTableData.filter(item => {
-            return (
-                normalize(item.id).includes(target) ||
-                normalize(item.word).includes(target) ||
-                normalize(item.meaning).includes(target) ||
-                normalize(item.synonyms).includes(target) ||
-                normalize(item.language).includes(target) ||
-                normalize(item.userEmail).includes(target)
-            );
-        });
-
-        // ⭐ ترتيب النتائج لوضع كلمات المستخدم أولاً
-        if (currentUser) {
-            matches.sort((a, b) => {
-                const aIsOwner = a.userId === currentUser.uid ? 1 : 0;
-                const bIsOwner = b.userId === currentUser.uid ? 1 : 0;
-                return bIsOwner - aIsOwner;
-            });
-        }
-
-        searchResults = matches;
-        searchIndex = 0;
-
-        if (searchResults.length > 0) {
-            const matchedItem = searchResults[0];
-            fillForm(matchedItem, matchedItem._documentId);
-            if (searchResult) {
-                searchResult.textContent = `تم العثور على ${searchResults.length} نتيجة مطابقة.`;
-            }
-        } else {
-            selectedDocumentId = null;
-            if (searchResult) searchResult.textContent = "لم يتم العثور على نتائج مطابقة في أي خانة.";
-            showNotification("لا توجد نتائج مطابقة.");
-        }
-    });
-}
-
-
-// ======================================================
-// CRUD OPERATIONS
-// ======================================================
-
-if (registerButton) {
-    registerButton.addEventListener("click", async () => {
-        if (!currentUser) {
-            showNotification("يجب تسجيل الدخول أولاً.");
-            return;
-        }
-
-        const word = wordInput ? wordInput.value.trim() : "";
-        const meaning = meaningInput ? meaningInput.value.trim() : "";
-        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
-        const language = languageSelect ? languageSelect.value : "";
-        const id = idInput ? Number(idInput.value) : 1;
-
-        if (!word || !meaning || !language) {
-            showNotification("يرجى إدخال الكلمة والمعنى واختيار اللغة.");
-            return;
-        }
-
-        try {
-            await addDoc(wordsCollection, {
-                id,
-                word,
-                meaning,
-                synonyms,
-                language,
-                userId: currentUser.uid,
-                userEmail: currentUser.email || "",
-                createdAt: serverTimestamp()
-            });
-
-            showNotification("تم تسجيل الكلمة بنجاح!");
-            await clearForm();
-            await initializePageData();
-        } catch (error) {
-            showNotification("حدث خطأ أثناء الحفظ.");
-        }
-    });
-}
-
-if (updateButton) {
-    updateButton.addEventListener("click", async () => {
-        if (!selectedDocumentId) {
-            showNotification("اختر كلمة أولاً لتحديثها.");
-            return;
-        }
-
-        const word = wordInput ? wordInput.value.trim() : "";
-        const meaning = meaningInput ? meaningInput.value.trim() : "";
-        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
-        const language = languageSelect ? languageSelect.value : "";
-
-        try {
-            const docRef = doc(db, "words", selectedDocumentId);
-            await updateDoc(docRef, { word, meaning, synonyms, language });
-
-            showNotification("تم تحديث الكلمة بنجاح!");
-            await clearForm();
-            await initializePageData();
-        } catch (error) {
-            showNotification("حدث خطأ أثناء التحديث.");
-        }
-    });
-}
-
-if (deleteButton) {
-    deleteButton.addEventListener("click", async () => {
-        if (!selectedDocumentId) {
-            showNotification("اختر كلمة أولاً لحذفها.");
-            return;
-        }
-
-        try {
-            const docRef = doc(db, "words", selectedDocumentId);
-            await deleteDoc(docRef);
-
-            showNotification("تم حذف الكلمة بنجاح!");
-            await clearForm();
-            await initializePageData();
-        } catch (error) {
-            showNotification("حدث خطأ أثناء الحذف.");
-        }
-    });
-}
-
-if (clearButton) {
-    clearButton.addEventListener("click", async () => {
-        await clearForm();
-        showNotification("تم مسح الفورم.");
     });
 }
 
@@ -751,7 +573,7 @@ if (downloadPdfButton) {
 
                 printArea.innerHTML = `
                     <div style="text-align: center; margin-bottom: 15px;">
-                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report</h2>
+                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report ${isAdmin ? '(Admin All Data)' : ''}</h2>
                         <p style="margin:3px 0; font-size: 13px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
@@ -762,7 +584,7 @@ if (downloadPdfButton) {
                                 <th style="border: 1px solid #333; padding: 5px; width: 28%;">المعنى</th>
                                 <th style="border: 1px solid #333; padding: 5px; width: 18%;">المرادف</th>
                                 <th style="border: 1px solid #333; padding: 5px; width: 14%;">اللغة</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>
+                                ${isAdmin ? '<th style="border: 1px solid #333; padding: 5px; width: 10%;">المستخدم</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
@@ -773,7 +595,7 @@ if (downloadPdfButton) {
                                     <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
                                     <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
                                     <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>
+                                    ${isAdmin ? `<td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.userEmail || item.username || '-'}</td>` : ''}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -800,7 +622,6 @@ if (downloadPdfButton) {
                 pdf.addImage(imgData, "JPEG", 0, 10, pdfWidth, pdfHeight);
             }
             
-            printAddress?.remove?.();
             printArea.remove();
 
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
@@ -847,9 +668,11 @@ onAuthStateChanged(auth, async user => {
     await initializePageData();
 });
 
+// تشغيل احتياطي فوري فور تحميل الصفحة في حال تأخر الـ Auth State
 document.addEventListener("DOMContentLoaded", async () => {
     if (auth.currentUser) {
         currentUser = auth.currentUser;
         await initializePageData();
     }
 });
+
