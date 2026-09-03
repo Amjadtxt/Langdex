@@ -175,7 +175,7 @@ function showNotification(message) {
 
 
 // ======================================================
-// GET WORDS (بيانات المستخدم الحالي فقط بشكل دائم ومستقل)
+// GET WORDS (فلترة آمنة ومزدوجة لمستخدم واحد حصرياً)
 // ======================================================
 
 async function getAllWords() {
@@ -188,17 +188,18 @@ async function getAllWords() {
     }
 
     try {
-        // جلب كلمات المستخدم الحالي فقط حصرياً
         const userQuery = query(wordsCollection, where("userId", "==", currentUser.uid));
         const snapshot = await getDocs(userQuery);
 
         const rows = [];
         snapshot.forEach(firebaseDoc => {
             const data = firebaseDoc.data();
-            rows.push({
-                ...data,
-                _documentId: firebaseDoc.id
-            });
+            if (data.userId === currentUser.uid) {
+                rows.push({
+                    ...data,
+                    _documentId: firebaseDoc.id
+                });
+            }
         });
 
         rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
@@ -222,9 +223,12 @@ async function getNextId() {
         const usedIds = new Set();
 
         snapshot.forEach(item => {
-            const id = Number(item.data().id);
-            if (Number.isInteger(id) && id > 0) {
-                usedIds.add(id);
+            const data = item.data();
+            if (data.userId === currentUser.uid) {
+                const id = Number(data.id);
+                if (Number.isInteger(id) && id > 0) {
+                    usedIds.add(id);
+                }
             }
         });
 
@@ -361,7 +365,7 @@ function populateLanguageFilter(rows) {
 
 
 // ======================================================
-// RENDER TABLE (خاص بكلمات اليوزر فقط - 5 أعمدة تنظيمية)
+// RENDER TABLE
 // ======================================================
 
 function renderTable(rows) {
@@ -560,7 +564,7 @@ if (clearFilterButton) {
 
 
 // ======================================================
-// CRUD OPERATIONS
+// CRUD OPERATIONS (مع التأكيد قبل التعديل والحذف)
 // ======================================================
 
 if (registerButton) {
@@ -593,7 +597,7 @@ if (registerButton) {
                 createdAt: serverTimestamp()
             });
 
-            showNotification("تم تسجيل الكلمة بنجاح!");
+            showNotification("تم تسجيل الكلمة بنجاح.");
             await clearForm();
             await initializePageData();
         } catch (error) {
@@ -605,9 +609,13 @@ if (registerButton) {
 if (updateButton) {
     updateButton.addEventListener("click", async () => {
         if (!selectedDocumentId) {
-            showNotification("اختر كلمة أولاً لتحديثها.");
+            showNotification("الرجاء اختيار كلمة أولاً لتحديثها.");
             return;
         }
+
+        // سؤال المستخدم قبل التعديل
+        const confirmUpdate = confirm("هل أنت متأكد من تعديل هذه الكلمة؟");
+        if (!confirmUpdate) return;
 
         const word = wordInput ? wordInput.value.trim() : "";
         const meaning = meaningInput ? meaningInput.value.trim() : "";
@@ -618,7 +626,7 @@ if (updateButton) {
             const docRef = doc(db, "words", selectedDocumentId);
             await updateDoc(docRef, { word, meaning, synonyms, language });
 
-            showNotification("تم تحديث الكلمة بنجاح!");
+            showNotification("تم تحديث الكلمة بنجاح.");
             await clearForm();
             await initializePageData();
         } catch (error) {
@@ -630,15 +638,19 @@ if (updateButton) {
 if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
         if (!selectedDocumentId) {
-            showNotification("اختر كلمة أولاً لحذفها.");
+            showNotification("الرجاء اختيار كلمة أولاً لحذفها.");
             return;
         }
+
+        // سؤال المستخدم قبل الحذف
+        const confirmDelete = confirm("هل أنت متأكد من حذف هذه الكلمة نهائياً؟");
+        if (!confirmDelete) return;
 
         try {
             const docRef = doc(db, "words", selectedDocumentId);
             await deleteDoc(docRef);
 
-            showNotification("تم حذف الكلمة بنجاح!");
+            showNotification("تم حذف الكلمة بنجاح.");
             await clearForm();
             await initializePageData();
         } catch (error) {
@@ -650,13 +662,13 @@ if (deleteButton) {
 if (clearButton) {
     clearButton.addEventListener("click", async () => {
         await clearForm();
-        showNotification("تم مسح الفورم.");
+        showNotification("تم مسح الحقول.");
     });
 }
 
 
 // ======================================================
-// DOWNLOAD PDF
+// DOWNLOAD PDF (مع ضبط الألوان وخلفية بيضاء صريحة)
 // ======================================================
 
 if (downloadPdfButton) {
@@ -667,7 +679,7 @@ if (downloadPdfButton) {
         }
 
         try {
-            showNotification("جاري جلب البيانات وتجهيز ملف الـ PDF...");
+            showNotification("جاري تجهيز ملف الـ PDF...");
 
             const freshRows = await getAllWords();
             let selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
@@ -692,14 +704,15 @@ if (downloadPdfButton) {
             const chunkSize = 30;
             const totalChunks = Math.ceil(rows.length / chunkSize);
 
+            // تم إصلاح مشكلة الخلفية البيضاء والخانات الغير ظاهرة
             const printArea = document.createElement("div");
             printArea.style.cssText = `
                 position: fixed;
                 top: -9999px;
                 left: -9999px;
                 width: 800px;
-                background: #ffffff;
-                color: #000000;
+                background-color: #ffffff !important;
+                color: #000000 !important;
                 padding: 20px;
                 font-family: Cairo, Arial, sans-serif;
                 direction: rtl;
@@ -711,28 +724,28 @@ if (downloadPdfButton) {
                 const chunkRows = rows.slice(i * chunkSize, (i + 1) * chunkSize);
 
                 printArea.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <h2 style="margin:0; font-size: 20px; color: #000;">Langdex Report</h2>
-                        <p style="margin:3px 0; font-size: 13px; color: #333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
+                    <div style="text-align: center; margin-bottom: 15px; background: #ffffff;">
+                        <h2 style="margin:0; font-size: 20px; color: #000000;">Langdex Report</h2>
+                        <p style="margin:3px 0; font-size: 13px; color: #333333;">اللغة: ${selectedLanguageText} (صفحة ${i + 1} من ${totalChunks})</p>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000; background: #ffffff;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000000; background-color: #ffffff;">
                         <thead>
-                            <tr style="background-color: #b5b5b5;">
-                                <th style="border: 1px solid #333; padding: 5px; width: 10%;">#</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 25%;">الكلمة</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 30%;">المعنى</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 20%;">المرادف</th>
-                                <th style="border: 1px solid #333; padding: 5px; width: 15%;">اللغة</th>
+                            <tr style="background-color: #e0e0e0; color: #000000;">
+                                <th style="border: 1px solid #000000; padding: 6px; width: 10%;">#</th>
+                                <th style="border: 1px solid #000000; padding: 6px; width: 25%;">الكلمة</th>
+                                <th style="border: 1px solid #000000; padding: 6px; width: 30%;">المعنى</th>
+                                <th style="border: 1px solid #000000; padding: 6px; width: 20%;">المرادف</th>
+                                <th style="border: 1px solid #000000; padding: 6px; width: 15%;">اللغة</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${chunkRows.map((item, idx) => `
-                                <tr>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${(i * chunkSize) + idx + 1}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.word || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.meaning || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px;">${item.synonyms || '-'}</td>
-                                    <td style="border: 1px solid #333; padding: 4px; text-align: center;">${item.language || '-'}</td>
+                                <tr style="background-color: #ffffff;">
+                                    <td style="border: 1px solid #000000; padding: 5px; text-align: center; color: #000000;">${(i * chunkSize) + idx + 1}</td>
+                                    <td style="border: 1px solid #000000; padding: 5px; color: #000000;">${item.word || '-'}</td>
+                                    <td style="border: 1px solid #000000; padding: 5px; color: #000000;">${item.meaning || '-'}</td>
+                                    <td style="border: 1px solid #000000; padding: 5px; color: #000000;">${item.synonyms || '-'}</td>
+                                    <td style="border: 1px solid #000000; padding: 5px; text-align: center; color: #000000;">${item.language || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -742,13 +755,13 @@ if (downloadPdfButton) {
                 await new Promise(resolve => setTimeout(resolve, 0));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 1,
+                    scale: 2,
                     backgroundColor: "#ffffff",
                     useCORS: true,
                     logging: false
                 });
 
-                const imgData = canvas.toDataURL("image/jpeg", 0.75);
+                const imgData = canvas.toDataURL("image/jpeg", 0.95);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
@@ -764,7 +777,7 @@ if (downloadPdfButton) {
             const safeLanguage = selectedLanguageText.replace(/[\\/:*?"<>|]/g, "-");
             pdf.save(`Langdex-${safeLanguage}.pdf`);
 
-            showNotification("تم تحميل ملف الـ PDF بنجاح وسرعة بدون تعليق!");
+            showNotification("تم تحميل ملف الـ PDF بنجاح.");
         } catch (error) {
             console.error("PDF Export Error:", error);
             showNotification("حدث خطأ أثناء تصدير الـ PDF.");
@@ -774,7 +787,7 @@ if (downloadPdfButton) {
 
 
 // ======================================================
-// AUTH STATE & INITIALIZATION (بدون إعادة توجيه إجبارية للصفحات)
+// AUTH STATE & INITIALIZATION
 // ======================================================
 
 onAuthStateChanged(auth, async user => {
