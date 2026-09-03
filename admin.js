@@ -1,6 +1,8 @@
 // ======================================================
 // LANGDEX - admin.js (محدث ومنظم بالكامل مع دعم رفع الإكسيل والطباعة الشاملة)
 // ======================================================
+import { applyPrefsGlobally } from "/Langdex/prefs.js";
+applyPrefsGlobally();
 
 import {
     initializeApp,
