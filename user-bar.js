@@ -1,6 +1,6 @@
 // ======================================================
 // LANGDEX - user-bar.js
-// Username + Logout + جرس إشعارات الأدمن (مع تشخيص Console)
+// Username + Logout + جرس إشعارات الأدمن (نسخة قوية ضد مشاكل الـ CSS/التوقيت)
 // ======================================================
 
 import {
@@ -67,7 +67,7 @@ const logoutButton =
 
 
 // ======================================================
-// 🔔 حقن أيقونة الجرس جنب زر الخروج
+// 🔔 حقن أيقونة الجرس (بمحاولات متكررة لضمان ظهورها)
 // ======================================================
 
 let bellBtn = null;
@@ -75,30 +75,46 @@ let bellBadge = null;
 let currentNotifs = [];
 
 function injectBellIcon() {
+    // لو موجودة بالفعل، متعملش حقن تاني
+    if (document.querySelector("#notifyBellBtn")) {
+        bellBtn = document.querySelector("#notifyBellBtn");
+        bellBadge = document.querySelector("#notifyBellBadge");
+        return true;
+    }
+
     const userBar = document.querySelector(".user-bar");
-    if (!userBar || document.querySelector("#notifyBellBtn")) return;
+    if (!userBar) {
+        console.warn("[Langdex Notify] .user-bar مش موجود في الصفحة دي لسه.");
+        return false;
+    }
 
     bellBtn = document.createElement("button");
     bellBtn.id = "notifyBellBtn";
     bellBtn.type = "button";
-    bellBtn.style.cssText = `
-        position: relative; background: transparent; border: none; cursor: pointer;
-        font-size: 20px; color: #fff; margin: 0 6px; padding: 4px 6px; line-height: 1;
-    `;
+    bellBtn.setAttribute(
+        "style",
+        "position:relative !important; display:inline-flex !important; align-items:center !important; " +
+        "justify-content:center !important; background:transparent !important; border:none !important; " +
+        "cursor:pointer !important; font-size:20px !important; color:#fff !important; " +
+        "margin:0 8px !important; padding:4px 8px !important; line-height:1 !important; " +
+        "z-index:999999 !important; opacity:1 !important; visibility:visible !important; " +
+        "width:auto !important; height:auto !important;"
+    );
     bellBtn.textContent = "🔔";
 
     bellBadge = document.createElement("span");
     bellBadge.id = "notifyBellBadge";
-    bellBadge.style.cssText = `
-        position: absolute; top: -2px; left: -2px; background: #e74c3c; color: #fff;
-        border-radius: 50%; min-width: 16px; height: 16px; font-size: 10px;
-        display: none; align-items: center; justify-content: center; padding: 0 3px;
-        font-family: Arial, sans-serif;
-    `;
+    bellBadge.setAttribute(
+        "style",
+        "position:absolute !important; top:-4px !important; left:-4px !important; " +
+        "background:#e74c3c !important; color:#fff !important; border-radius:50% !important; " +
+        "min-width:16px !important; height:16px !important; font-size:10px !important; " +
+        "display:none !important; align-items:center !important; justify-content:center !important; " +
+        "padding:0 3px !important; font-family:Arial, sans-serif !important; z-index:1000000 !important;"
+    );
     bellBtn.appendChild(bellBadge);
 
-    // نحطه قبل زرار تسجيل الخروج لو موجود، وإلا في آخر الـ user-bar
-    if (logoutButton) {
+    if (logoutButton && logoutButton.parentNode === userBar) {
         userBar.insertBefore(bellBtn, logoutButton);
     } else {
         userBar.appendChild(bellBtn);
@@ -109,16 +125,25 @@ function injectBellIcon() {
         showNotificationsPopup(currentNotifs);
     });
 
-    console.log("[Langdex Notify] تم حقن أيقونة الجرس بنجاح.");
+    console.log("[Langdex Notify] تم حقن أيقونة الجرس بنجاح داخل:", userBar);
+    return true;
+}
+
+// نحاول نحقن الجرس فورًا، ولو .user-bar لسه مش جاهز نعيد المحاولة كل نص ثانية لحد 10 مرات
+function ensureBellInjected(attempt = 0) {
+    const success = injectBellIcon();
+    if (!success && attempt < 20) {
+        setTimeout(() => ensureBellInjected(attempt + 1), 500);
+    }
 }
 
 function updateBellBadge(count) {
     if (!bellBadge) return;
     if (count > 0) {
         bellBadge.textContent = count > 9 ? "9+" : String(count);
-        bellBadge.style.display = "flex";
+        bellBadge.style.setProperty("display", "flex", "important");
     } else {
-        bellBadge.style.display = "none";
+        bellBadge.style.setProperty("display", "none", "important");
     }
 }
 
@@ -126,6 +151,9 @@ function updateBellBadge(count) {
 // ======================================================
 // USERNAME + تشغيل نظام الإشعارات
 // ======================================================
+
+// نحاول نحقن الجرس بمجرد تحميل الملف كمان (مش بس بعد تسجيل الدخول) عشان يبان بأسرع وقت ممكن
+ensureBellInjected();
 
 onAuthStateChanged(auth, (user) => {
 
@@ -148,7 +176,7 @@ onAuthStateChanged(auth, (user) => {
 
     console.log("[Langdex Notify] مستخدم مسجل دخول:", email);
 
-    injectBellIcon();
+    ensureBellInjected();
     checkAndShowNotifications(user);
 });
 
@@ -212,13 +240,11 @@ async function checkAndShowNotifications(user) {
 
         snapAll.forEach(d => {
             const data = d.data();
-            console.log("[Langdex Notify] مستند (all):", d.id, data);
             if (data.read !== true) notifs.push({ id: d.id, ...data });
         });
 
         snapSpecific.forEach(d => {
             const data = d.data();
-            console.log("[Langdex Notify] مستند (specific):", d.id, data);
             if (data.read !== true) notifs.push({ id: d.id, ...data });
         });
 
@@ -244,7 +270,6 @@ async function checkAndShowNotifications(user) {
 }
 
 function showNotificationsPopup(notifs) {
-    // امنع فتح أكتر من بوب أب في نفس الوقت
     const existing = document.querySelector("#langdex-notify-overlay");
     if (existing) existing.remove();
 
