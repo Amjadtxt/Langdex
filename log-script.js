@@ -1,5 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -12,12 +12,23 @@ import {
   setDoc,
   updateDoc,
   addDoc
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
-// استيراد إعدادات فايربيس (تأكد من مسار الملف لديك)
-import { firebaseConfig } from "./firebase-config.js";
+// 🌟 نفس الإعدادات المكتوبة مباشرة زي باقي الملفات (admin.js / data-script.js / admin-users.js)
+// بدل الاستيراد من firebase-config.js — تجنباً لأي فشل صامت لو الملف ده مش موجود أو مساره غلط
+const firebaseConfig = {
+    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    authDomain: "langdex.firebaseapp.com",
+    projectId: "langdex",
+    storageBucket: "langdex.firebasestorage.app",
+    messagingSenderId: "819838317933",
+    appId: "1:819838317933:web:cae7f4531ea32f958c5664",
+    measurementId: "G-F60CC2CDCJ"
+};
 
-const app = initializeApp(firebaseConfig);
+// 🌟 نفس نسخة SDK (12.18.0) ونفس منطق التهيئة المستخدم في admin.js / data-script.js / admin-users.js
+// عشان نتجنب أي تضارب في instance الـ Firebase App لو أكتر من سكريبت بيحمّل في نفس الصفحة
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -71,6 +82,7 @@ onAuthStateChanged(auth, async (user) => {
     fetchLogs();
   } catch (error) {
     console.error("خطأ في التحقق من الصلاحيات:", error);
+    alert("خطأ أثناء التحقق من الصلاحيات: " + ((error && error.message) ? error.message : String(error)));
     window.location.href = "/Langdex/index.html";
   }
 });
@@ -92,7 +104,8 @@ async function fetchLogs() {
     filterAndRenderLogs();
   } catch (error) {
     console.error("خطأ في جلب السجلات:", error);
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ff6b6b;">فشل في تحميل السجلات.</td></tr>`;
+    // 🌟 نظهر تفاصيل الخطأ الفعلية في الصفحة نفسها (مفيد للتشخيص من الموبايل بدون Console)
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ff6b6b; direction: ltr; font-size: 12px; word-break: break-all;">فشل في تحميل السجلات:<br>${(error && error.message) ? error.message : String(error)}</td></tr>`;
   }
 }
 
