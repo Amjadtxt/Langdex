@@ -23,6 +23,34 @@ const db = getFirestore(app);
 
 let allLogs = []; // لتخزين السجلات لجلبها مرة واحدة وتسهيل الفلترة والبحث
 
+const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
+
+// التحقق من صلاحيات الأدمن — بنفس منطق باقي صفحات الأدمن (admin.js / admin-users.js)
+// مهم: مستند اليوزر في users مخزن بـ ID مبني على الإيميل (مش uid)، فلازم ندور بنفس الطريقة
+async function verifyAdminPermission(user) {
+  if (!user || !user.email) return false;
+  const email = user.email.toLowerCase().trim();
+
+  if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
+    return true;
+  }
+
+  try {
+    const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
+    const userDocRef = doc(db, "users", customDocId);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const role = String(userDocSnap.data().role || "").toLowerCase().trim();
+      if (role === "admin") return true;
+    }
+  } catch (err) {
+    console.error("Admin role check error:", err);
+  }
+
+  return false;
+}
+
 // 1. حماية الصفحة والتحقق من صلاحية الأدمن
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -31,10 +59,9 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
-    const userDocRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userDocRef);
+    const isAdmin = await verifyAdminPermission(user);
 
-    if (!userDoc.exists() || userDoc.data().role !== "admin") {
+    if (!isAdmin) {
       alert("عذراً، هذه الصفحة خاصة بالمشرفين فقط.");
       window.location.href = "/Langdex/index.html";
       return;
