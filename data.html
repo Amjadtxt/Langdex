@@ -1,178 +1,286 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
 
 <head>
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-  <meta http-equiv="CONTENT-TYPE"
-        content="text/html; charset=UTF-8">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
   <title>Langdex Data</title>
 
-
   <!-- CSS -->
-
-  <link rel="stylesheet"
-        href="/Langdex/style.css">
-
+  <link rel="stylesheet" href="/Langdex/style.css">
 
   <!-- Google Fonts -->
-
-  <link rel="preconnect"
-        href="https://fonts.googleapis.com">
-
-  <link rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
-<style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
     html {
-        visibility: hidden;
+        visibility: visible !important; /* إلغاء الإخفاء لضمان ظهور الصفحة فوراً */
     }
-</style>
+
+    body {
+      background-color: #3b4d43;
+    }
+
+    /* الإعدادات الأساسية للكونتينر */
+    .content2 {
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* قسم عرض البيانات باللون الموحد والبوردر المميز */
+    .data-section {
+      width: 100% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      background: #678071 !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-sizing: border-box !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* عنوان القسم */
+    .data-section h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    /* تحجيم وتوسيط قائمة اختيار اللغة داخل التحكمات */
+    .data-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .language-filter {
+      display: block !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 10px auto !important;
+      box-sizing: border-box !important;
+      font-family: 'Cairo', sans-serif !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      font-size: 14px !important;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
+    }
+
+    /* تنسيق أزرار التحكم (عرض البيانات، إلغاء الفلتر، تحميل PDF) لتكون ملمومة ومتساوية */
+    .cntrl {
+      display: flex !important;
+      gap: 10px !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 10px auto 15px auto !important;
+      box-sizing: border-box !important;
+      flex-wrap: nowrap;
+    }
+
+    .cntrl button {
+      flex: 1 !important;
+      padding: 12px 5px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 13px !important;
+      transition: 0.2s !important;
+      box-sizing: border-box !important;
+    }
+
+    /* ألوان الأزرار المخصصة */
+    .show-data { background: #27ae60 !important; }
+    .show-data:hover { background: #219653 !important; }
+
+    .clear-filter { background: #c0392b !important; }
+    .clear-filter:hover { background: #962d22 !important; }
+
+    .download-pdf { background: #e67e22 !important; }
+    .download-pdf:hover { background: #d35400 !important; }
+
+    /* جدول عرض البيانات */
+    .table-container {
+      width: 100% !important;
+      margin: 0 auto !important;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.25);
+      font-weight: bold;
+    }
+
+    /* تعديلات التجاوب للشاشات الصغيرة والموبايل */
+    @media (max-width: 768px) {
+      .content2 {
+        padding: 0 10px !important;
+      }
+
+      .data-section {
+        width: 100% !important;
+        margin: 10px auto !important;
+        padding: 15px !important;
+      }
+
+      .language-filter,
+      .cntrl {
+        max-width: 100% !important;
+      }
+
+      .cntrl {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+
+      .cntrl button {
+        width: 100% !important;
+        font-size: 14px !important;
+      }
+
+      /* تحويل الجدول إلى كاردز مرتبة على الموبايل لمنع أي مط أو لخبطة */
+      .table-container table, 
+      .table-container thead, 
+      .table-container tbody, 
+      .table-container th, 
+      .table-container td, 
+      .table-container tr {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      .table-container thead {
+        display: none !important;
+      }
+
+      .table-container tr {
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 12px;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+
+      .table-container td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .table-container td:last-child {
+        border-bottom: none !important;
+      }
+    }
+  </style>
 
 </head>
 
-
 <body>
-
 
   <!-- ==================================================
        HEADER
   ================================================== -->
-
   <header>
-<div class="user-bar">
-    <span id="username">مرحباً، User</span>
-
-    <button id="logout-btn">تسجيل الخروج</button>
-</div>
+    <div class="user-bar">
+      <span id="username">مرحباً، User</span>
+      <button id="logout-btn">تسجيل الخروج</button>
+    </div>
+    
     <nav class="bar">
-
       <ul>
-
-        <a href="/Langdex/index.html">
-          <li>الرئيسية</li>
-        </a>
-
-        <a href="/Langdex/data.html">
-          <li>البيانات</li>
-        </a>
-
-        <a href="#">
-          <li>حول</li>
-        </a>
-
-        <a href="#">
-          <li>استكشاف</li>
-        </a>
-
-        <a href="#">
-          <li>التواصل</li>
-        </a>
-
+        <a href="/Langdex/index.html"><li>الرئيسية</li></a>
+        <a href="/Langdex/data.html"><li>البيانات</li></a>
+        <a href="#"><li>حول</li></a>
+        <a href="#"><li>استكشاف</li></a>
+        <a href="#"><li>التواصل</li></a>
       </ul>
-
     </nav>
-
   </header>
+
   <div class="content2">
     <section class="data-section">
-      <h1>
-        جميع البيانات
-      </h1>
+      <h1>جميع البيانات</h1>
+      
       <div class="data-controls">
         <!-- LANGUAGE FILTER -->
         <select id="language-filter" class="language-filter">
-          <option value="all">
-            جميع اللغات
-          </option>
+          <option value="all">جميع اللغات</option>
         </select>
-            <div class="cntrl">
-                  <button
-        type="button"
-        class="show-data">
-        عرض البيانات
-      </button>
-        <button
-          type="button"
-          id="clear-filter" class="clear-filter">
-          إلغاء الفلتر
-        </button>
-        <button
-          type="button"
-          id="download-pdf" class="download-pdf">
-          تحميل PDF
-        </button>
-                  </div>
+        
+        <div class="cntrl">
+          <button type="button" class="show-data">عرض البيانات</button>
+          <button type="button" id="clear-filter" class="clear-filter">إلغاء الفلتر</button>
+          <button type="button" id="download-pdf" class="download-pdf">تحميل PDF</button>
+        </div>
       </div>
-
 
       <!-- ==================================================
            TABLE
       ================================================== -->
-
       <div class="table-container">
-
         <table id="words-table">
-
           <thead>
-
             <tr>
-
               <th>ID</th>
-
               <th>الكلمة</th>
-
               <th>المعنى</th>
-
               <th>المرادف</th>
-
               <th>اللغة</th>
-
             </tr>
-
           </thead>
-
-
           <tbody id="data-table">
-
+            <tr><td colspan="5" style="text-align: center;">جاري تحميل البيانات...</td></tr>
           </tbody>
-
         </table>
-
       </div>
 
-
     </section>
-
   </div>
 
-
   <!-- ==================================================
-       PDF LIBRARIES (FIXED FOR FULL COMPATIBILITY)
+       PDF LIBRARIES
   ================================================== -->
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-
   <!-- ==================================================
        JAVASCRIPT
   ================================================== -->
-<script type="module" src="auth-guard.js"></script>
-<script type="module" src="user-bar.js"></script>
-  <script
-    type="module"
-    src="/Langdex/script.js">
-  </script>
+  <script type="module" src="auth-guard.js"></script>
+  <script type="module" src="user-bar.js"></script>
+  <script type="module" src="/Langdex/script.js"></script>
 
 </body>
 
