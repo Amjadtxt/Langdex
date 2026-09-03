@@ -18,23 +18,31 @@
     rel="stylesheet">
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة - تصغير عرض الفورم لتكون متناسقة وملمومة */
     .content > div {
-      width: 85% !important;
-      max-width: 850px !important;
-      margin: 15px auto !important;
+      width: 90% !important;
+      max-width: 450px !important; /* تم التصغير عشان متكونش عريضة أوفر */
+      margin: 40px auto !important; /* مسافة أعلى وأسفل عشان تظبط في نص الشاشة */
       box-sizing: border-box !important;
     }
 
     /* تثبيت اللون الموحد #678071 لفورم تسجيل الدخول */
     .login-form {
       background: #678071 !important;
-      padding: 20px !important;
+      padding: 25px !important;
       border-radius: 8px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      margin-bottom: 15px !important;
       box-sizing: border-box !important;
       width: 100% !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* إضافة ظل خفيف لشكل احترافي */
+    }
+
+    /* تنسيق عنوان الفورم */
+    .login-form h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 20px;
+      font-size: 24px;
     }
 
     /* تنسيق حقول الإدخال والزر */
@@ -47,13 +55,14 @@
       background: #ffffff !important;
       border: 1px solid #ccc !important;
       color: #000 !important;
-      margin-top: 10px !important;
+      margin-top: 12px !important;
+      font-size: 14px !important;
     }
 
     .login-form .loginbut {
       width: 100% !important;
       box-sizing: border-box !important;
-      margin-top: 15px !important;
+      margin-top: 20px !important;
       padding: 12px 10px !important;
       border: none !important;
       border-radius: 8px !important;
@@ -62,7 +71,7 @@
       font-family: 'Cairo', sans-serif !important;
       color: white !important;
       background: #27ae60 !important;
-      font-size: 14px !important;
+      font-size: 15px !important;
       transition: 0.2s !important;
     }
 
@@ -70,15 +79,43 @@
       background: #219653 !important;
     }
 
+    /* تنسيق الروابط والرسائل أسفل الفورم */
+    .login-links {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .login-links p {
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .login-links a {
+      color: #f1c40f;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .login-links a:hover {
+      text-decoration: underline;
+    }
+
+    #login-message {
+      text-align: center;
+      margin-top: 10px;
+      color: #fff;
+      font-size: 13px;
+    }
+
     /* تعديلات الموبايل للتجاوب السلس */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
-        margin: 10px auto !important;
-        padding: 12px !important;
+        margin: 20px auto !important;
+        padding: 5px !important;
       }
       .login-form {
-        padding: 15px !important;
+        padding: 18px !important;
       }
     }
   </style>
