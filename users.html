@@ -57,14 +57,14 @@
       font-size: 20px;
     }
 
-    /* --- تقييم وتوسيط حقول الإدخال والبحث لتكون ملمومة واحترافية --- */
+    /* --- تقييد وتوسيط حقول الإدخال والبحث لتكون ملمومة واحترافية --- */
     .search-section input.search-txt,
     .form input,
     .form select {
       display: block !important;
       width: 100% !important;
-      max-width: 450px !important; /* تقييد العرض لتبقى ملمومة */
-      margin: 10px auto !important; /* توسيط الحقل داخل القسم */
+      max-width: 450px !important;
+      margin: 10px auto !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
@@ -162,7 +162,7 @@
         max-width: 100% !important;
       }
 
-      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
+      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة ومتوسطة */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -171,6 +171,7 @@
       .table-container tr {
         display: block !important;
         width: 100% !important;
+        box-sizing: border-box !important;
       }
 
       .table-container thead {
@@ -181,7 +182,7 @@
         background: rgba(255, 255, 255, 0.05);
         margin-bottom: 12px;
         border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
         border: 1px solid rgba(255, 255, 255, 0.15);
         box-sizing: border-box;
       }
@@ -190,8 +191,9 @@
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        text-align: left !important;
-        padding: 6px 4px !important;
+        text-align: right !important; /* ضبط المحاذاة لليمين لتتطابق مع اللغة العربية */
+        direction: rtl !important;
+        padding: 8px 4px !important;
         font-size: 13px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
@@ -200,7 +202,7 @@
         border-bottom: none !important;
         flex-direction: column !important;
         gap: 8px !important;
-        padding-top: 10px !important;
+        padding-top: 12px !important;
       }
 
       .table-container td button,
