@@ -106,10 +106,10 @@ const clearButton = document.querySelector(".cel");
 
 
 // ======================================================
-// SEARCH ELEMENTS
+// SEARCH ELEMENTS (Index & Data Page Support)
 // ======================================================
 
-const searchInput = document.querySelector(".search-txt");
+const searchInput = document.querySelector(".search-txt") || document.querySelector("#search-input");
 const searchButton = document.querySelector(".search-btn");
 const searchResult = document.querySelector(".search-result");
 
@@ -284,7 +284,7 @@ async function clearForm() {
     searchIndex = 0;
     lastSearchText = "";
 
-    if (searchInput) searchInput.value = "";
+    if (searchInput && !document.querySelector("#search-input")) searchInput.value = "";
     if (searchResult) searchResult.textContent = "";
 
     await setNextId();
@@ -421,29 +421,43 @@ function renderTable(rows) {
 
 
 // ======================================================
-// APPLY LANGUAGE FILTER
+// APPLY FILTERS & LIVE SEARCH
 // ======================================================
 
-function applyLanguageFilter() {
+function applyFiltersAndSearch() {
     if (!dataTable) return;
 
     const selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
+    const searchQuery = document.querySelector("#search-input") ? document.querySelector("#search-input").value.trim() : "";
 
-    if (selectedLanguage === "" || selectedLanguage === "all") {
-        renderTable(allTableData);
-        return;
+    let filtered = allTableData;
+
+    // فلترة باللغة
+    if (selectedLanguage !== "" && selectedLanguage !== "all") {
+        filtered = filtered.filter(item => normalize(item.language) === normalize(selectedLanguage));
     }
 
-    const filteredData = allTableData.filter(item => {
-        return normalize(item.language) === normalize(selectedLanguage);
-    });
+    // فلترة بالبحث (شامل الكلمة، المعنى، المرادف، أو اللغة)
+    if (searchQuery !== "") {
+        const target = normalize(searchQuery);
+        filtered = filtered.filter(item => {
+            return (
+                normalize(item.id).includes(target) ||
+                normalize(item.word).includes(target) ||
+                normalize(item.meaning).includes(target) ||
+                normalize(item.synonyms).includes(target) ||
+                normalize(item.language).includes(target) ||
+                normalize(item.userEmail).includes(target)
+            );
+        });
+    }
 
-    renderTable(filteredData);
+    renderTable(filtered);
 }
 
 
 // ======================================================
-// SHOW DATA & FILTER LISTENERS
+// LISTENERS (Show Data, Filter, Live Search & Clear)
 // ======================================================
 
 if (showDataButton) {
@@ -451,8 +465,8 @@ if (showDataButton) {
         try {
             allTableData = await getAllWords();
             populateLanguageFilter(allTableData);
-            applyLanguageFilter();
-            showNotification(`تم عرض ${dataTable.children.length} سجل.`);
+            applyFiltersAndSearch();
+            showNotification(`تم تحديث وعرض ${allTableData.length} سجل.`);
         } catch (error) {
             console.error("Show Data Error:", error);
             showNotification("حدث خطأ أثناء عرض البيانات.");
@@ -461,16 +475,16 @@ if (showDataButton) {
 }
 
 if (languageFilter) {
-    languageFilter.addEventListener("change", async function () {
-        try {
-            if (allTableData.length === 0) {
-                allTableData = await getAllWords();
-            }
-            applyLanguageFilter();
-        } catch (error) {
-            console.error("Filter Error:", error);
-            showNotification("حدث خطأ أثناء تطبيق الفلتر.");
-        }
+    languageFilter.addEventListener("change", function () {
+        applyFiltersAndSearch();
+    });
+}
+
+// دعم البحث الفوري المباشر أثناء الكتابة في خانة البحث الجديدة
+const liveSearchInput = document.querySelector("#search-input");
+if (liveSearchInput) {
+    liveSearchInput.addEventListener("input", function () {
+        applyFiltersAndSearch();
     });
 }
 
@@ -479,18 +493,17 @@ if (clearFilterButton) {
         if (languageFilter) {
             languageFilter.value = "all";
         }
-
-        if (dataTable) {
-            dataTable.innerHTML = "";
+        if (liveSearchInput) {
+            liveSearchInput.value = "";
         }
-
-        showNotification("تم إخفاء عرض البيانات.");
+        applyFiltersAndSearch();
+        showNotification("تم إلغاء الفلتر والبحث.");
     });
 }
 
 
 // ======================================================
-// SEARCH FIREBASE (Updated to search all records for index.html)
+// SEARCH FIREBASE (For Index Page / Search Button)
 // ======================================================
 
 async function searchFirebase(text) {
@@ -518,7 +531,7 @@ async function searchFirebase(text) {
     });
 }
 
-if (searchButton && searchInput) {
+if (searchButton && searchInput && !document.querySelector("#search-input")) {
     searchButton.addEventListener("click", async function () {
         const text = searchInput.value.trim();
 
@@ -610,6 +623,7 @@ if (registerButton) {
             
             allTableData = await getAllWords();
             populateLanguageFilter(allTableData);
+            if (dataTable) applyFiltersAndSearch();
 
             await clearForm();
         } catch (error) {
@@ -658,7 +672,7 @@ if (updateButton) {
             
             allTableData = await getAllWords();
             populateLanguageFilter(allTableData);
-            if (dataTable && dataTable.children.length > 0) applyLanguageFilter();
+            if (dataTable) applyFiltersAndSearch();
 
             await clearForm();
         } catch (error) {
@@ -695,7 +709,7 @@ if (deleteButton) {
             
             allTableData = await getAllWords();
             populateLanguageFilter(allTableData);
-            if (dataTable && dataTable.children.length > 0) applyLanguageFilter();
+            if (dataTable) applyFiltersAndSearch();
 
             await clearForm();
         } catch (error) {
@@ -728,7 +742,6 @@ if (downloadPdfButton) {
         try {
             showNotification("جاري جلب البيانات وتجهيز ملف الـ PDF...");
 
-            // جلب البيانات من المصدر فوراً ودون الاعتماد على العرض الحالي بالجدول
             const freshRows = await getAllWords();
             let selectedLanguage = languageFilter ? languageFilter.value.trim() : "all";
             let rows = freshRows;
@@ -750,7 +763,7 @@ if (downloadPdfButton) {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const chunkSize = 30; // 30 كلمة في كل صفحة بالضبط
+            const chunkSize = 30;
             const totalChunks = Math.ceil(rows.length / chunkSize);
 
             const printArea = document.createElement("div");
@@ -802,17 +815,16 @@ if (downloadPdfButton) {
                     </table>
                 `;
 
-                // تحرير خيط المعالجة بالكامل لمنع التعليق (Non-blocking yield) لكل 5 صفحات أو فوراً بـ 0 ثانية انتظار
                 await new Promise(resolve => setTimeout(resolve, 0));
 
                 const canvas = await html2canvas(printArea, {
-                    scale: 1, // مقياس دقة مثالي وخفيف جداً لعدم استهلاك الذاكرة مع الأعداد الهائلة
+                    scale: 1,
                     backgroundColor: "#ffffff",
                     useCORS: true,
                     logging: false
                 });
 
-                const imgData = canvas.toDataURL("image/jpeg", 0.75); // ضغط خفيف وسريع
+                const imgData = canvas.toDataURL("image/jpeg", 0.75);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
@@ -914,6 +926,7 @@ if (uploadExcelButton && excelFileInput) {
 
                 allTableData = await getAllWords();
                 populateLanguageFilter(allTableData);
+                if (dataTable) applyFiltersAndSearch();
                 await setNextId();
 
             } catch (error) {
@@ -960,8 +973,12 @@ onAuthStateChanged(auth, async user => {
     try {
         allTableData = await getAllWords();
         populateLanguageFilter(allTableData);
+        
+        // جلب وعرض البيانات تلقائياً في الجدول حال توفره بالصفحة (مثل صفحة data.html)
+        if (dataTable) {
+            applyFiltersAndSearch();
+        }
     } catch (err) {
         console.error("Initial load error:", err);
     }
 });
-
