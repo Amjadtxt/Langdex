@@ -121,7 +121,13 @@ async function getAllWordsPublic() {
             });
         });
 
-        rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+        // ترتيب الكلمات حسب الأحدث تاريخاً (من الأحدث إلى الأقدم)
+        rows.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+            return timeB - timeA;
+        });
+
         return rows;
     } catch (error) {
         console.error("Error fetching public words:", error);
@@ -249,7 +255,6 @@ async function exportFilteredDataToPdf() {
             format: 'a4'
         });
 
-        // إضافة خط يدعم العربية (نستخدم الخطوط القياسية المتاحة أو نكتب بترميز سليم)
         doc.addFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf", "Roboto", "normal");
         doc.setFont("Roboto");
 
@@ -262,7 +267,6 @@ async function exportFilteredDataToPdf() {
         let y = 35;
         doc.setFontSize(11);
 
-        // رأس الجدول البسيط داخل الـ PDF
         doc.setFillColor(103, 128, 113);
         doc.rect(15, y, 180, 8, "F");
         doc.setTextColor(255, 255, 255);
