@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - index-script.js (Public Dictionary & Search)
+// LANGDEX - index-script.js (Public Dictionary & PDF Export)
 // ======================================================
 
 import {
@@ -20,10 +20,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 
-// ======================================================
-// FIREBASE CONFIG
-// ======================================================
-
 const firebaseConfig = {
     apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
@@ -39,18 +35,9 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
 
-
-// ======================================================
-// VARIABLES
-// ======================================================
-
 let currentUser = null;
 let allTableData = [];
-
-
-// ======================================================
-// ELEMENTS
-// ======================================================
+let currentFilteredData = []; // لتخزين البيانات المعروضة حالياً وتصديرها للـ PDF
 
 const searchInput = document.querySelector("#search-input");
 const searchButton = document.querySelector(".search-btn");
@@ -58,11 +45,7 @@ const searchResult = document.querySelector(".search-result");
 const dataTable = document.querySelector("#data-table");
 const languageFilter = document.querySelector("#language-filter");
 const clearFilterButton = document.querySelector("#clear-filter");
-
-
-// ======================================================
-// HELPER FUNCTIONS
-// ======================================================
+const downloadPdfBtn = document.querySelector("#download-pdf-btn");
 
 function normalize(value) {
     return String(value ?? "").trim().toLowerCase();
@@ -107,18 +90,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// استخراج اسم المستخدم من البريد الإلكتروني (ما قبل @)
-function getUsernameFromEmail(email, userEmailField) {
-    if (userEmailField && !userEmailField.includes("@")) {
-        return userEmailField; // لو متخزن الاسم جاهز
-    }
-    if (email && email.includes("@")) {
-        return email.split("@")[0];
-    }
-    return "مستخدم";
-}
-
-// تنسيق التاريخ والوقت
 function formatTimestamp(timestamp) {
     if (!timestamp) return "-";
     try {
@@ -137,11 +108,6 @@ function formatTimestamp(timestamp) {
     }
 }
 
-
-// ======================================================
-// GET ALL WORDS (جلب كل الكلمات للقاموس العام)
-// ======================================================
-
 async function getAllWordsPublic() {
     try {
         const querySnapshot = await getDocs(wordsCollection);
@@ -155,7 +121,6 @@ async function getAllWordsPublic() {
             });
         });
 
-        // ترتيب الكلمات حسب الـ ID تصاعدياً
         rows.sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
         return rows;
     } catch (error) {
@@ -163,11 +128,6 @@ async function getAllWordsPublic() {
         return [];
     }
 }
-
-
-// ======================================================
-// POPULATE LANGUAGE FILTER
-// ======================================================
 
 function populateLanguageFilter(rows) {
     if (!languageFilter) return;
@@ -203,19 +163,16 @@ function populateLanguageFilter(rows) {
     languageFilter.value = (currentValue && exists) ? currentValue : "all";
 }
 
-
-// ======================================================
-// RENDER TABLE (عرض البيانات في الجدول)
-// ======================================================
-
 function renderTable(rows) {
     if (!dataTable) return;
     dataTable.innerHTML = "";
 
+    currentFilteredData = rows; // تحديث البيانات المعروضة حالياً للـ PDF
+
     if (rows.length === 0) {
         const emptyRow = document.createElement("tr");
         const emptyCell = document.createElement("td");
-        emptyCell.colSpan = 7;
+        emptyCell.colSpan = 6;
         emptyCell.textContent = "لا توجد بيانات مطابقة للبحث.";
         emptyCell.style.textAlign = "center";
         emptyRow.appendChild(emptyCell);
@@ -227,7 +184,6 @@ function renderTable(rows) {
         const row = document.createElement("tr");
 
         const idVal = data.id !== undefined ? data.id : "-";
-        const usernameVal = getUsernameFromEmail(data.userEmail, data.userName);
         const wordVal = data.word || "-";
         const meaningVal = data.meaning || "-";
         const synonymsVal = data.synonyms || "-";
@@ -236,7 +192,6 @@ function renderTable(rows) {
 
         row.innerHTML = `
             <td>${idVal}</td>
-            <td>${usernameVal}</td>
             <td>${wordVal}</td>
             <td>${meaningVal}</td>
             <td>${synonymsVal}</td>
@@ -248,11 +203,6 @@ function renderTable(rows) {
     });
 }
 
-
-// ======================================================
-// APPLY FILTERS & SEARCH
-// ======================================================
-
 function applyFiltersAndSearch() {
     if (!dataTable) return;
 
@@ -261,19 +211,15 @@ function applyFiltersAndSearch() {
 
     let filtered = [...allTableData];
 
-    // فلترة اللغات
     if (selectedLanguage !== "" && selectedLanguage !== "all") {
         filtered = filtered.filter(item => normalize(item.language) === normalize(selectedLanguage));
     }
 
-    // بحث عام في الحقول
     if (searchQuery !== "") {
         const target = normalize(searchQuery);
         filtered = filtered.filter(item => {
-            const username = getUsernameFromEmail(item.userEmail, item.userName);
             return (
                 normalize(item.id).includes(target) ||
-                normalize(username).includes(target) ||
                 normalize(item.word).includes(target) ||
                 normalize(item.meaning).includes(target) ||
                 normalize(item.synonyms).includes(target) ||
@@ -285,6 +231,78 @@ function applyFiltersAndSearch() {
     renderTable(filtered);
 }
 
+// ======================================================
+// EXPORT PDF WITH ARABIC SUPPORT & FILTER COMPATIBILITY
+// ======================================================
+
+async function exportFilteredDataToPdf() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        showNotification("لا توجد بيانات لتصديرها.");
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // إضافة خط يدعم العربية (نستخدم الخطوط القياسية المتاحة أو نكتب بترميز سليم)
+        doc.addFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf", "Roboto", "normal");
+        doc.setFont("Roboto");
+
+        doc.setFontSize(16);
+        doc.text("Langdex - Public Dictionary Report", 105, 15, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 105, 22, { align: "center" });
+
+        let y = 35;
+        doc.setFontSize(11);
+
+        // رأس الجدول البسيط داخل الـ PDF
+        doc.setFillColor(103, 128, 113);
+        doc.rect(15, y, 180, 8, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.text("ID", 20, y + 6);
+        doc.text("Word", 45, y + 6);
+        doc.text("Meaning", 85, y + 6);
+        doc.text("Language", 145, y + 6);
+
+        y += 10;
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+
+        currentFilteredData.forEach((item, index) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+
+            const idStr = String(item.id || "-");
+            const wordStr = String(item.word || "-");
+            const meaningStr = String(item.meaning || "-");
+            const langStr = String(item.language || "-");
+
+            doc.text(idStr, 20, y);
+            doc.text(wordStr, 45, y);
+            doc.text(meaningStr, 85, y, { maxWidth: 55 });
+            doc.text(langStr, 145, y);
+
+            y += 8;
+            doc.setDrawColor(200, 200, 200);
+            doc.line(15, y - 2, 195, y - 2);
+        });
+
+        doc.save("langdex-filtered-dictionary.pdf");
+        showNotification("تم تصدير ملف الـ PDF بنجاح!");
+    } catch (error) {
+        console.error("PDF Export Error:", error);
+        showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
+    }
+}
 
 // ======================================================
 // EVENT LISTENERS
@@ -319,6 +337,11 @@ if (clearFilterButton) {
     });
 }
 
+if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener("click", () => {
+        exportFilteredDataToPdf();
+    });
+}
 
 // ======================================================
 // INITIALIZATION
