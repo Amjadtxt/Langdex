@@ -406,7 +406,7 @@ function applyFiltersAndSearch() {
     renderTable(filtered);
 }
 
-// تصدير PDF احترافي باستخدام مكتبة AutoTable لضمان ظهور كافة البيانات بوضوح تام
+// تصدير PDF احترافي مع دعم خط Cairo وجدول AutoTable
 async function exportUserPdf() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         showNotification("لا توجد بيانات لتصديرها.");
@@ -422,8 +422,15 @@ async function exportUserPdf() {
         });
 
         if (typeof doc.autoTable !== 'function') {
-            showNotification("مكتبة الجداول غير متوفرة، تأكد من إضافتها في الـ HTML.");
+            showNotification("مكتبة الجداول غير متوفرة.");
             return;
+        }
+
+        try {
+            doc.addFont("https://fonts.gstatic.com/s/cairo/v28/SLXGc1nY6HkvangtZmpQdkhzfH5lkSs2SgRRjatkSMmu0A.woff2", "Cairo", "normal");
+            doc.setFont("Cairo");
+        } catch (fontErr) {
+            console.warn("Could not load Cairo font, falling back to default", fontErr);
         }
 
         const tableRows = currentFilteredData.map((item, index) => [
@@ -450,12 +457,14 @@ async function exportUserPdf() {
                 fillColor: [103, 128, 113],
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                halign: 'center'
+                halign: 'center',
+                font: 'Cairo'
             },
             bodyStyles: {
                 halign: 'center',
                 textColor: [0, 0, 0],
-                cellPadding: 4
+                cellPadding: 4,
+                font: 'Cairo'
             },
             columnStyles: {
                 0: { cellWidth: 15 },
@@ -466,9 +475,9 @@ async function exportUserPdf() {
                 5: { cellWidth: 42 }
             },
             styles: {
-                font: 'helvetica',
                 fontSize: 9,
-                overflow: 'linebreak'
+                overflow: 'linebreak',
+                font: 'Cairo'
             }
         });
 
