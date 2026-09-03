@@ -1,4 +1,4 @@
-import { db } from "/Langdex/firebase-config.js"; // قم بتعديل مسار ملف Firebase حسب مشروعك
+import { db } from "./firebase-config.js";
 import { 
   collection, 
   getDocs, 
@@ -6,9 +6,7 @@ import {
   setDoc, 
   deleteDoc, 
   query, 
-  orderBy, 
-  limit, 
-  getDoc 
+  orderBy 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const logsTableBody = document.getElementById("logsTableBody");
@@ -18,6 +16,10 @@ let cachedLogs = [];
 
 // 1. تحميل عرض اللوجات من داتابيز Firebase
 async function loadLogs() {
+  if (!logsTableBody) return;
+  
+  logsTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">جاري تحميل سجل العمليات...</td></tr>`;
+
   try {
     const logsQuery = query(collection(db, "logs"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(logsQuery);
@@ -30,7 +32,12 @@ async function loadLogs() {
     renderLogsTable(cachedLogs);
   } catch (error) {
     console.error("خطأ أثناء تحميل السجل:", error);
-    logsTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ff6b6b;">فشل تحميل السجل</td></tr>`;
+    
+    if (error.code === "permission-denied") {
+      logsTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ff6b6b;">عذراً! ليس لديك صلاحيات أدمن لقراءة السجلات وفقاً لقواعد الحماية.</td></tr>`;
+    } else {
+      logsTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ff6b6b;">حدث خطأ أثناء تحميل البيانات: ${error.message}</td></tr>`;
+    }
   }
 }
 
@@ -74,7 +81,7 @@ async function handleUndo(logId) {
   const log = cachedLogs.find(l => l.id === logId);
   if (!log) return;
 
-  if (!confirm(`هل أنت تأكد من التراجع عن عملية: (${log.details})؟`)) {
+  if (!confirm(`هل أنت تأكد من التراجع عن عملية: (${log.details || 'هذه العملية'})؟`)) {
     return;
   }
 
@@ -85,21 +92,21 @@ async function handleUndo(logId) {
       case "add":
         // إضافة -> التراجع عنها يكون بحذف العنصر الذي أضيف
         if (log.targetId) {
-          await deleteDoc(doc(db, targetColl, log.targetId.toString()));
+          await deleteDoc(doc(db, targetColl, String(log.targetId)));
         }
         break;
 
       case "edit":
         // تعديل -> التراجع بإعادة الـ oldData إلى مستند العنصر
         if (log.targetId && log.oldData) {
-          await setDoc(doc(db, targetColl, log.targetId.toString()), log.oldData, { merge: true });
+          await setDoc(doc(db, targetColl, String(log.targetId)), log.oldData, { merge: true });
         }
         break;
 
       case "delete":
         // حذف فردي -> التراجع بإعادة إنشاء المستند كاملاً من oldData
         if (log.targetId && log.oldData) {
-          await setDoc(doc(db, targetColl, log.targetId.toString()), log.oldData);
+          await setDoc(doc(db, targetColl, String(log.targetId)), log.oldData);
         }
         break;
 
@@ -109,12 +116,12 @@ async function handleUndo(logId) {
         // حذف مجموعة -> التراجع بالمرور على المصفوفة في oldData وإعادة إنشائها
         if (Array.isArray(log.oldData) && log.oldData.length > 0) {
           for (const item of log.oldData) {
-            const itemId = item.id || item.docId;
+            const itemId = item.id || item.docId || item.wordId;
             if (itemId) {
               const itemData = { ...item };
               delete itemData.id;
               delete itemData.docId;
-              await setDoc(doc(db, targetColl, itemId.toString()), itemData);
+              await setDoc(doc(db, targetColl, String(itemId)), itemData);
             }
           }
         }
@@ -124,7 +131,7 @@ async function handleUndo(logId) {
         // حذف مستخدم -> إعادة بيانات المستخدم وكافة الكلمات الخاصة به المسجلة في oldData
         if (log.oldData) {
           if (log.oldData.userData && log.targetId) {
-            await setDoc(doc(db, "users", log.targetId.toString()), log.oldData.userData);
+            await setDoc(doc(db, "users", String(log.targetId)), log.oldData.userData);
           }
           if (Array.isArray(log.oldData.userWords)) {
             for (const word of log.oldData.userWords) {
@@ -132,7 +139,7 @@ async function handleUndo(logId) {
               const wData = { ...word };
               delete wData.id;
               delete wData.docId;
-              await setDoc(doc(db, "words", wId.toString()), wData);
+              await setDoc(doc(db, "words", String(wId)), wData);
             }
           }
         }
@@ -147,7 +154,7 @@ async function handleUndo(logId) {
     await deleteDoc(doc(db, "logs", logId));
 
     alert("تم التراجع عن العملية بنجاح!");
-    loadLogs(); // إعادة تحميل السجل
+    loadLogs();
 
   } catch (err) {
     console.error("خطأ أثناء تنفيذ التراجع:", err);
@@ -156,15 +163,17 @@ async function handleUndo(logId) {
 }
 
 // 4. التراجع عن آخر عملية
-undoLastBtn.addEventListener("click", () => {
-  if (cachedLogs.length === 0) {
-    alert("لا توجد عمليات للتراجع عنها");
-    return;
-  }
-  handleUndo(cachedLogs[0].id);
-});
+if (undoLastBtn) {
+  undoLastBtn.addEventListener("click", () => {
+    if (cachedLogs.length === 0) {
+      alert("لا توجد عمليات للتراجع عنها");
+      return;
+    }
+    handleUndo(cachedLogs[0].id);
+  });
+}
 
-// أدوات مساعدة للتنسيق والـ Formatting
+// أدوات مساعدة للتنسيق
 function getBadgeClass(type) {
   switch (type) {
     case "add": return "badge-add";
@@ -181,7 +190,7 @@ function getActionLabel(type) {
     case "delete": return "حذف";
     case "bulk_delete": return "حذف جماعي";
     case "range_delete": return "حذف نطاق";
-    case "category_delete": return "تغيير/حذف تصنيف";
+    case "category_delete": return "تغيير تصنيف";
     case "delete_user": return "حذف مستخدم";
     default: return "عملية";
   }
@@ -189,15 +198,19 @@ function getActionLabel(type) {
 
 function formatDate(timestamp) {
   if (!timestamp) return "-";
-  let dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return dateObj.toLocaleString("ar-EG", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  try {
+    let dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return dateObj.toLocaleString("ar-EG", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch (e) {
+    return "-";
+  }
 }
 
-// بدء التشغيل عند تحميل الصفحة
+// بدء التشغيل
 document.addEventListener("DOMContentLoaded", loadLogs);
