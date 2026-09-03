@@ -16,6 +16,72 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
     rel="stylesheet">
+
+  <style>
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
+    .content > div {
+      width: 85% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* تثبيت اللون الموحد #678071 لفورم تسجيل الدخول */
+    .login-form {
+      background: #678071 !important;
+      padding: 20px !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      margin-bottom: 15px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    /* تنسيق حقول الإدخال والزر */
+    .login-form input.loginput {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      font-family: 'Cairo', sans-serif !important;
+      border-radius: 8px !important;
+      padding: 12px !important;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000 !important;
+      margin-top: 10px !important;
+    }
+
+    .login-form .loginbut {
+      width: 100% !important;
+      box-sizing: border-box !important;
+      margin-top: 15px !important;
+      padding: 12px 10px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      background: #27ae60 !important;
+      font-size: 14px !important;
+      transition: 0.2s !important;
+    }
+
+    .login-form .loginbut:hover {
+      background: #219653 !important;
+    }
+
+    /* تعديلات الموبايل للتجاوب السلس */
+    @media (max-width: 768px) {
+      .content > div {
+        width: 94% !important;
+        margin: 10px auto !important;
+        padding: 12px !important;
+      }
+      .login-form {
+        padding: 15px !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
