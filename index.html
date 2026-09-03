@@ -15,11 +15,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة */
+    /* الإعدادات الأساسية للكمبيوتر والشاشات الكبيرة - جعل الصفحة ملمومة كارد في المنتصف */
+    .content {
+      padding: 0 15px !important;
+      box-sizing: border-box !important;
+    }
+
     .content > div {
-      width: 85% !important;
-      max-width: 850px !important;
-      margin: 15px auto !important;
+      width: 100% !important;
+      max-width: 450px !important; /* تصحيح العرض ليكون ملموماً واحترافياً مثل صفحات الدخول */
+      margin: 25px auto !important;
       box-sizing: border-box !important;
     }
 
@@ -27,12 +32,20 @@
     .search-section,
     .form {
       background: #678071 !important;
-      padding: 15px !important;
-      border-radius: 8px !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      margin-bottom: 15px !important;
       box-sizing: border-box !important;
-      width: 100% !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* عناوين الأقسام */
+    .search-section h1,
+    .form h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 15px;
+      font-size: 22px;
     }
 
     /* تنسيق حقول الإدخال والقوائم المنسدلة */
@@ -43,13 +56,14 @@
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
+      font-size: 14px !important;
     }
 
     .form select {
       padding: 12px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: white;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      color: #000;
       margin-top: 10px;
     }
 
@@ -61,18 +75,18 @@
       margin-top: 10px;
     }
 
-    /* تنسيق حاويات الأزرار لتبدو بشكل منظم وجنب بعض */
+    /* تنسيق حاويات الأزرار لتكون متساوية ومظبوطة */
     .inter1, .inter {
       display: flex !important;
-      gap: 10px !important;
+      gap: 8px !important;
       width: 100% !important;
       box-sizing: border-box !important;
     }
 
     .inter button, .inter1 button {
       flex: 1 !important;
-      margin-top: 8px !important;
-      padding: 12px 10px !important;
+      margin-top: 12px !important;
+      padding: 12px 5px !important;
       border: none !important;
       border-radius: 8px !important;
       font-weight: bold !important;
@@ -80,6 +94,7 @@
       font-family: 'Cairo', sans-serif !important;
       color: white !important;
       font-size: 14px !important;
+      text-align: center;
     }
 
     /* ألوان الأزرار المميزة */
@@ -96,42 +111,46 @@
     .inter .cel:hover { background: #626d6e; }
 
     .search-btn {
+      width: 100%;
       background: #00bcd4;
       color: white;
-      padding: 10px 20px;
+      padding: 12px;
       border: none;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
       margin-top: 10px;
       font-family: 'Cairo', sans-serif;
+      font-size: 14px;
     }
     .search-btn:hover { background: #008ba3; }
 
+    .search-result {
+      color: #fff;
+      margin-top: 10px;
+      text-align: center;
+    }
+
     /* تعديلات الموبايل لمنع أي لخبطة وتنظيم الأزرار بذكاء */
     @media (max-width: 768px) {
+      .content {
+        padding: 0 10px !important;
+      }
       .content > div {
-        width: 94% !important;
-        margin: 10px auto !important;
-        padding: 12px !important;
+        width: 100% !important;
+        margin: 15px auto !important;
+        padding: 15px !important;
       }
       
-      /* جعل أزرار التحديث والحذف والمسح تتوزع بجانب بعضها أو تأخذ أشكال متناسقة */
+      /* الأزرار الثلاثة متساوية تماماً وجنب بعض على الموبايل */
       .inter {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 8px !important;
+        display: flex !important;
+        gap: 6px !important;
       }
       
       .inter button {
-        width: 100% !important;
-        margin-top: 0 !important;
-        padding: 10px 5px !important;
-        font-size: 13px !important;
-      }
-
-      .inter1 button {
-        width: 100% !important;
+        padding: 10px 4px !important;
+        font-size: 12px !important;
       }
     }
   </style>
@@ -166,7 +185,7 @@
   <div class="content">
 
     <!-- قسم البحث -->
-    <div class="search-section" style="width: 100%;">
+    <div class="search-section">
       <h1>البحث</h1>
       <input type="text" placeholder="اكتب كلمة" class="search-txt">
       <button type="button" class="search-btn">بحث</button>
@@ -174,7 +193,7 @@
     </div>
 
     <!-- فورم تسجيل الكلمات -->
-    <div class="form" style="width: 100%;"> 
+    <div class="form"> 
       <h1>تسجيل كلمة جديدة</h1>
       <input type="text" placeholder="ID" class="id" readonly="">
       <input type="text" placeholder="الكلمة">
