@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (Without Logger Edition)
+// LANGDEX - admin-users.js (With Logger Edition)
 // ======================================================
 
 import {
@@ -15,6 +15,7 @@ import {
     getDoc,
     doc,
     setDoc,
+    addDoc,
     deleteDoc,
     updateDoc,
     query,
@@ -77,6 +78,7 @@ if (document.body) {
 
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
+const logsCollection = collection(db, "logs"); // 🌟 كوليكشن السجل
 
 let currentUser = null;
 let allUsersData = [];
@@ -102,6 +104,35 @@ function showNotification(message) {
         notification.style.opacity = "0";
         setTimeout(() => { if (notification) notification.remove(); }, 300);
     }, 3000);
+}
+
+// ======================================================
+// 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
+// ======================================================
+// action:         "add" | "update" | "delete" | "bulk_delete"
+// collectionName: "users" أو "words" (حسب مين اتأثر فعلياً)
+// targetDocId:    الـ document id بتاع العنصر (لو عملية مفردة)
+// oldData:        نسخة من البيانات *قبل* التعديل/الحذف
+// newData:        نسخة من البيانات *بعد* الإضافة/التعديل
+// details:        نص وصفي مختصر يظهر في جدول اللوج
+async function writeLog({ action, collectionName, targetDocId = null, oldData = null, newData = null, details = "" }) {
+    try {
+        await addDoc(logsCollection, {
+            userName: currentUser?.email || "أدمن",
+            uid: currentUser?.uid || null,
+            action,
+            collectionName,
+            targetDocId,
+            oldData,
+            newData,
+            details,
+            role: "admin",
+            undone: false, // 🌟 يتحول true بعد التراجع عنه
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("فشل تسجيل الحدث في اللوج:", error);
+    }
 }
 
 // التحقق من صلاحيات الأدمن أمنياً
@@ -268,18 +299,37 @@ function setupActionEvents() {
                     docId = email.replace(/[^a-zA-Z0-9]/g, "_");
                 }
 
+                // 🌟 نجيب الرول القديم قبل التحديث عشان نقدر نرجعه
+                const userObjLocal = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
+                const oldRole = userObjLocal ? userObjLocal.role : "user";
+
                 const userDocRef = doc(db, "users", docId);
                 const docSnap = await getDoc(userDocRef);
 
+                let wasNewDoc = false;
                 if (docSnap.exists()) {
                     await updateDoc(userDocRef, { role: newRole });
                 } else {
+                    wasNewDoc = true;
                     await setDoc(userDocRef, {
                         email: email,
                         role: newRole,
                         createdAt: serverTimestamp()
                     });
                 }
+
+                // 🌟 تسجيل حدث تحديث الرول — التراجع عنه = رجّع oldRole على نفس الـ doc
+                // (لو الـ doc اتعمل جديد بالكامل، التراجع يبقى حذفه تاني بدل الرجوع لرول قديم)
+                await writeLog({
+                    action: wasNewDoc ? "add" : "update",
+                    collectionName: "users",
+                    targetDocId: docId,
+                    oldData: wasNewDoc ? null : { email, role: oldRole },
+                    newData: { email, role: newRole },
+                    details: wasNewDoc
+                        ? `إنشاء صلاحية جديدة للمستخدم (${email}) كـ (${newRole})`
+                        : `تغيير رول المستخدم (${email}) من (${oldRole}) إلى (${newRole})`
+                });
 
                 showNotification(`تم تحديث رول المستخدم (${email}) إلى (${newRole}) بنجاح!`);
                 loadUsersData();
@@ -404,10 +454,22 @@ function setupActionEvents() {
                 const snap = await getDocs(q);
                 
                 const promises = [];
+                const deletedWordsOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
                 snap.forEach(d => {
+                    deletedWordsOldData.push({ _documentId: d.id, ...d.data(), createdAt: null });
                     promises.push(deleteDoc(doc(db, "words", d.id)));
                 });
                 await Promise.all(promises);
+
+                // 🌟 تسجيل حدث الحذف الجماعي — التراجع عنه = إعادة إضافة كل الكلمات دي
+                await writeLog({
+                    action: "bulk_delete",
+                    collectionName: "words",
+                    targetDocId: null,
+                    oldData: deletedWordsOldData,
+                    newData: null,
+                    details: `حذف تصنيف "${selectedLang}" (${deletedWordsOldData.length} كلمة) للمستخدم (${email})`
+                });
 
                 showNotification(`تم حذف كلمات تصنيف (${selectedLang}) بنجاح.`);
                 loadUsersData();
@@ -428,21 +490,47 @@ function setupActionEvents() {
                 showNotification("جاري الحذف...");
                 const userObj = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
 
+                let userDocIdUsed = null;
+                let userDocOldData = null;
+
                 if (userObj && userObj.docId) {
+                    userDocIdUsed = userObj.docId;
                     const userDocRef = doc(db, "users", userObj.docId);
+                    const snap = await getDoc(userDocRef);
+                    if (snap.exists()) userDocOldData = { ...snap.data() };
                     await deleteDoc(userDocRef);
                 } else {
                     const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-                    await deleteDoc(doc(db, "users", customDocId));
+                    userDocIdUsed = customDocId;
+                    const userDocRef = doc(db, "users", customDocId);
+                    const snap = await getDoc(userDocRef);
+                    if (snap.exists()) userDocOldData = { ...snap.data() };
+                    await deleteDoc(userDocRef);
                 }
 
                 const q = query(wordsCollection, where("userEmail", "==", email));
                 const snap = await getDocs(q);
                 const promises = [];
+                const deletedWordsOldData = []; // 🌟 كل كلمات اليوزر قبل ما تتمسح
                 snap.forEach(d => {
+                    deletedWordsOldData.push({ _documentId: d.id, ...d.data(), createdAt: null });
                     promises.push(deleteDoc(doc(db, "words", d.id)));
                 });
                 await Promise.all(promises);
+
+                // 🌟 تسجيل حدث حذف المستخدم بالكامل — التراجع عنه = إعادة إنشاء وثيقة اليوزر + كلماته
+                // ملحوظة: التراجع لا يقدر يرجّع حساب الدخول (Auth) بتاعه، بيرجّع بس بيانات users و words
+                await writeLog({
+                    action: "delete_user_full",
+                    collectionName: "users",
+                    targetDocId: userDocIdUsed,
+                    oldData: {
+                        userDoc: userDocOldData ? { email, ...userDocOldData } : { email, role: "user" },
+                        words: deletedWordsOldData
+                    },
+                    newData: null,
+                    details: `حذف المستخدم (${email}) بالكامل مع ${deletedWordsOldData.length} كلمة (تنبيه: التراجع لا يعيد حساب الدخول Auth، فقط بيانات Firestore)`
+                });
 
                 showNotification("تم حذف المستخدم وكل سجلاته بنجاح.");
                 loadUsersData();
@@ -483,6 +571,17 @@ if (addUserBtn) {
             };
             
             await setDoc(doc(db, "users", customDocId), newUserData);
+
+            // 🌟 تسجيل حدث إضافة مستخدم جديد
+            // ملحوظة: التراجع هيقدر يمسح وثيقة الـ Firestore بس، مش حساب الـ Auth (يحتاج صلاحيات سيرفر)
+            await writeLog({
+                action: "add",
+                collectionName: "users",
+                targetDocId: customDocId,
+                oldData: null,
+                newData: { ...newUserData, createdAt: null },
+                details: `إضافة مستخدم جديد (${email}) بصلاحية (${role}) — تنبيه: التراجع لا يحذف حساب Auth`
+            });
 
             showNotification("تمت إضافة المستخدم بنجاح!");
             emailInput.value = "";
