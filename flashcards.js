@@ -1,82 +1,124 @@
-// flashcards.js - ملف منفصل لجلب وعرض كلمات المستخدم الحالي في الفلاش كاردز
+// flashcards.js - نظام اختبارات الاختيار من متعدد بناءً على كلمات المستخدم
 
 let userWords = [];
 let currentIndex = 0;
+let score = 0;
+let answered = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-  initFlashcards();
+  initQuiz();
   
-  // تفعيل أزرار التحكم والضغط على الكارد
-  document.getElementById("flashcard").addEventListener("click", toggleCard);
-  document.getElementById("flipBtn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleCard();
-  });
-  document.getElementById("nextBtn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    nextCard();
+  document.getElementById("nextQuizBtn").addEventListener("click", () => {
+    currentIndex++;
+    if (currentIndex < userWords.length) {
+      loadQuestion();
+    } else {
+      showScoreScreen();
+    }
   });
 });
 
-async function initFlashcards() {
+async function initQuiz() {
   try {
-    // استبدل هذا السطر بطريقة جلب البيانات الخاصة ببرنامجك (مثلاً من الـ API أو قاعدة البيانات)
-    // المشابهة للطريقة التي تستخدمها في جلب الجدول في admin.js
     userWords = await fetchUserWordsFromDatabase();
 
     if (!userWords || userWords.length === 0) {
-      document.getElementById("cardWord").innerText = "لا توجد كلمات مسجلة!";
-      document.getElementById("quizProgress").innerText = "قم بإضافة كلمات جديدة من لوحة التحكم أولاً";
-      document.getElementById("nextBtn").style.display = "none";
-      document.getElementById("flipBtn").style.display = "none";
+      document.getElementById("questionTitle").innerText = "لا توجد كلمات مسجلة!";
+      document.getElementById("questionSub").innerText = "أضف كلمات جديدة من لوحة التحكم لتبدأ الاختبار.";
+      document.getElementById("quizProgress").innerText = "0 / 0";
       return;
     }
 
-    loadCard();
+    // خلط الكلمات عشوائياً
+    userWords.sort(() => Math.random() - 0.5);
+    currentIndex = 0;
+    score = 0;
+    
+    loadQuestion();
   } catch (error) {
-    console.error("خطأ في تحميل الكلمات:", error);
-    document.getElementById("cardWord").innerText = "حدث خطأ بالتحميل";
+    console.error("خطأ في جلب كلمات الاختبار:", error);
+    document.getElementById("questionTitle").innerText = "حدث خطأ بالتحميل";
   }
 }
 
-// دالة افتراضية لجلب كلمات اليوزر الحالي (قم بتعديلها لتتطابق مع دالة جلب البيانات لديك)
+// دالة جلب كلمات المستخدم (تأكد من مطابقتها لطريقة جلب البيانات في مشروعك)
 async function fetchUserWordsFromDatabase() {
-  // مثال: لو كنت تخزن البيانات في LocalStorage أو تطلبها عبر Fetch API لليوزر الحالي
-  // const response = await fetch('/api/user-words');
-  // return await response.json();
-  
-  // كمثال تجريبي مبني على بياناتك: تأكد من ربطها بالبيانات الحقيقية للمستخدم الفاتح
   const storedData = localStorage.getItem("langdex_words"); 
   if (storedData) {
     return JSON.parse(storedData);
   }
-  
-  // بيانات افتراضية في حال لم تجد شيء
   return [
-    { word: "مثال", meaning: "Example", synonym: "نموذج", lang: "العربية / الإنجليزية" }
+    { word: "Book", meaning: "كتاب" },
+    { word: "Maison", meaning: "منزل" },
+    { word: "Kitap", meaning: "كتاب" },
+    { word: "Water", meaning: "ماء" }
   ];
 }
 
-function loadCard() {
-  if (userWords.length === 0) return;
+function loadQuestion() {
+  answered = false;
+  document.getElementById("nextQuizBtn").style.display = "none";
   
-  const card = userWords[currentIndex];
-  document.getElementById('cardWord').innerText = card.word || card.الكلمة || "-";
-  document.getElementById('cardMeaning').innerText = card.meaning || card.المعنى || "-";
-  document.getElementById('cardSynonym').innerText = "المرادف: " + (card.synonym || card.المرادف || "-");
-  document.getElementById('cardLang').innerText = "اللغة: " + (card.lang || card.اللغة || "-");
-  document.getElementById('quizProgress').innerText = `الكلمة ${currentIndex + 1} من ${userWords.length}`;
+  const currentItem = userWords[currentIndex];
+  const wordText = currentItem.word || currentItem.الكلمة;
+  const correctMeaning = currentItem.meaning || currentItem.المعنى;
+
+  document.getElementById("questionTitle").innerText = wordText;
+  document.getElementById("quizProgress").innerText = `السؤال ${currentIndex + 1} من ${userWords.length}`;
+
+  // تجهيز الاختيارات (الإجابة الصحيحة + 3 إجابات خاطئة عشوائية)
+  let options = [correctMeaning];
   
-  document.getElementById('flashcard').classList.remove('flipped');
+  let wrongOptions = userWords
+    .map(w => w.meaning || w.المعنى)
+    .filter(m => m !== correctMeaning);
+
+  wrongOptions.sort(() => Math.random() - 0.5);
+  options = options.concat(wrongOptions.slice(0, 3));
+  options.sort(() => Math.random() - 0.5);
+
+  const container = document.getElementById("optionsContainer");
+  container.innerHTML = "";
+
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "option-btn";
+    btn.innerText = opt;
+    btn.onclick = () => checkAnswer(btn, opt, correctMeaning);
+    container.appendChild(btn);
+  });
 }
 
-function toggleCard() {
-  if (userWords.length === 0) return;
-  document.getElementById('flashcard').classList.toggle('flipped');
+function checkAnswer(selectedBtn, selectedOpt, correctOpt) {
+  if (answered) return;
+  answered = true;
+
+  const allButtons = document.querySelectorAll(".option-btn");
+
+  allButtons.forEach(btn => {
+    if (btn.innerText === correctOpt) {
+      btn.classList.add("correct");
+    }
+    if (btn === selectedBtn && selectedOpt !== correctOpt) {
+      btn.classList.add("wrong");
+    }
+  });
+
+  if (selectedOpt === correctOpt) {
+    score++;
+  }
+
+  document.getElementById("nextQuizBtn").style.display = "block";
 }
 
-function nextCard() {
-  if (userWords.length === 0) return;
-  currentIndex = (currentIndex + 1) % userWords.length;
-  loadCard();
+function showScoreScreen() {
+  document.getElementById("quizProgress").innerText = "انتهى الاختبار! 🎉";
+  document.getElementById("questionTitle").innerText = `نتيجة اختبارك: ${score} من ${userWords.length}`;
+  document.getElementById("questionSub").innerText = "أداء ممتاز! يمكنك إعادة الاختبار لتثبيت الكلمات أكثر.";
+  
+  document.getElementById("optionsContainer").innerHTML = `
+    <button type="button" class="option-btn" style="background: #2980b9;" onclick="initQuiz()">إعادة الاختبار 🔄</button>
+  `;
+  document.getElementById("nextQuizBtn").style.display = "none";
 }
