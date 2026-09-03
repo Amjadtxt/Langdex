@@ -222,6 +222,7 @@
         width: 100% !important;
         margin: 10px auto !important;
         padding: 15px !important;
+        box-sizing: border-box !important;
       }
 
       .inter1 {
@@ -245,33 +246,38 @@
       .table-container tr {
         display: block !important;
         width: 100% !important;
+        box-sizing: border-box !important;
       }
 
       .table-container thead { display: none !important; }
 
       .table-container tr {
         background: rgba(255, 255, 255, 0.05);
-        margin-bottom: 12px;
+        margin: 0 auto 15px auto !important;
+        max-width: 100% !important;
         border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
         border: 1px solid rgba(255, 255, 255, 0.15);
+        box-sizing: border-box;
       }
 
       .table-container td {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        text-align: left !important;
-        padding: 6px 4px !important;
+        text-align: right !important;
+        direction: rtl !important;
+        padding: 8px 6px !important;
         font-size: 13px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-sizing: border-box !important;
       }
 
       .table-container td:last-child {
         border-bottom: none !important;
         flex-direction: column !important;
         gap: 6px !important;
-        padding-top: 8px !important;
+        padding-top: 10px !important;
       }
 
       .table-container td button {
@@ -279,6 +285,7 @@
         font-size: 13px !important;
         padding: 8px !important;
         margin: 0 !important;
+        box-sizing: border-box !important;
       }
     }
   </style>
