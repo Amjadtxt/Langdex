@@ -77,6 +77,40 @@
       font-family: 'Cairo', sans-serif;
     }
 
+    /* تنسيق الأزرار الثلاثة (إضافة، تعديل، مسح) لتكون بنفس الحجم والعرض تماماً وبجانب بعض على الكمبيوتر */
+    .inter1 {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .inter1 button {
+      flex: 1; /* توزيع المساحة بالتساوي 100% بدون أي تفاوت بين الأزرار */
+      min-width: 0;
+      padding: 12px 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
+      font-size: 14px;
+    }
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+    
+    .inter1 .upa { background: #2980b9; }
+    .inter1 .upa:hover { background: #1f618d; }
+
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
+
     /* ديف الأزرار العلوية المستقل */
     .actions-top-bar {
       background: rgba(255, 255, 255, 0.03);
@@ -101,31 +135,30 @@
     .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
     .fix-lang-btn:hover { background: #732d91; }
 
-    /* قسم رفع الإكسيل المنفصل والمستقل تماماً */
-    .excel-upload-box {
+    /* قسم رفع الإكسيل المنفصل تماماً (لرفع الملف وقراءة البيانات إلى فايربيز مباشرة) */
+    .excel-upload-section {
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
       border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 15px;
       display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
       box-sizing: border-box;
       width: 100%;
     }
-    .excel-upload-box h2 {
-      font-size: 18px;
+    .excel-upload-section h3 {
       color: #00bcd4;
+      font-size: 16px;
       margin: 0;
     }
-    .excel-upload-btn {
-      background: #007bff;
+    .excel-upload-label {
+      background: #27ae60;
       color: white;
       padding: 10px 20px;
-      border: none;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
@@ -134,10 +167,9 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      text-align: center;
-      box-sizing: border-box;
+      font-size: 14px;
     }
-    .excel-upload-btn:hover { background: #0056b3; }
+    .excel-upload-label:hover { background: #219653; }
 
     /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
     .range-delete-box {
@@ -221,14 +253,22 @@
         padding: 12px !important;
       }
 
-      .actions-top-bar, .excel-upload-box {
+      .actions-top-bar, .excel-upload-section {
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
       }
-      .actions-top-bar button, .excel-upload-box button, .excel-upload-box label {
+      .actions-top-bar button, .excel-upload-section label {
         width: 100% !important;
+        box-sizing: border-box !important;
         justify-content: center !important;
+      }
+
+      .inter1 {
+        flex-direction: column !important;
+      }
+      .inter1 button {
+        width: 100% !important;
       }
 
       .range-delete-box {
@@ -348,16 +388,16 @@
       </select>
     </div>
 
-    <!-- 3. قسم رفع ملفات الإكسيل (منفصل ومستقل تماماً) -->
-    <div class="excel-upload-box" style="width: 100%;">
-      <h2>رفع الكلمات دفعة واحدة (Excel)</h2>
-      <label for="excelFileInput" class="excel-upload-btn">
-        <span>📊 اختيار ملف إكسيل ورفع</span>
+    <!-- 3. زر رفع الإكسيل المنفصل والمباشر لفايربيز -->
+    <div class="excel-upload-section" style="width: 100%;">
+      <h3>استيراد وتصعيد الكلمات عبر ملف Excel</h3>
+      <label for="excelFileInput" class="excel-upload-label">
+        <span>📊 رفع ملف إكسيل مباشر</span>
         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
       </label>
     </div>
 
-    <!-- 4. فورم إدارة الكلمات (الحقول الأساسية والأزرار الـ 3 المعتادة) -->
+    <!-- 4. فورم إدارة الكلمات (بالشكل الأصلي تماماً بدون أي دمج) -->
     <div class="form" style="width: 100%;">
       <h1>إدارة الكلمات</h1>
       <input type="number" placeholder="ID الكلمة" readonly>
