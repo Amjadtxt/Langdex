@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Langdex - القاموس العام والبحث</title>
+  <title>Home</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -14,14 +14,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- مكتبة jsPDF لتصدير الـ PDF مع دعم الحروف العربية -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    /* الإعدادات العامة للكونتينر لتناسب الأقسام والجدول براحتهم */
     .content {
       padding: 0 15px !important;
       box-sizing: border-box !important;
     }
 
-    /* الأقسام العامة تأخذ عرض مريح ومرن */
     .content > div,
     .search-section,
     .data-section {
@@ -31,7 +32,6 @@
       box-sizing: border-box !important;
     }
 
-    /* تثبيت لون الخلفية #678071 للأقسام الرئيسية */
     .search-section,
     .data-section {
       background: #678071 !important;
@@ -41,7 +41,6 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* العناوين الداخلية */
     .search-section h1,
     .data-section h1 {
       text-align: center;
@@ -50,7 +49,6 @@
       font-size: 20px;
     }
 
-    /* تحجيم حقول الإدخال والـ Inputs لتكون ملمومة وفي المنتصف */
     .search-section input.search-txt,
     .search-section select.filter-select {
       display: block !important;
@@ -67,12 +65,11 @@
       color: #000000 !important;
     }
 
-    /* أزرار البحث وإلغاء الفلتر */
-    .search-btn {
+    .search-btn,
+    .pdf-btn {
       display: block !important;
       width: 100% !important;
       max-width: 450px !important;
-      background: #00bcd4;
       color: white;
       padding: 12px;
       border: none;
@@ -83,15 +80,17 @@
       font-family: 'Cairo', sans-serif;
       font-size: 14px;
       transition: 0.2s;
+      text-align: center;
     }
+    
+    .search-btn { background: #00bcd4; }
     .search-btn:hover { background: #008ba3; }
 
-    .clear-btn {
-      background: #7f8c8d !important;
-    }
-    .clear-btn:hover {
-      background: #626d6e !important;
-    }
+    .clear-btn { background: #7f8c8d !important; }
+    .clear-btn:hover { background: #626d6e !important; }
+
+    .pdf-btn { background: #e67e22 !important; }
+    .pdf-btn:hover { background: #d35400 !important; }
 
     .search-result {
       color: #fff;
@@ -100,7 +99,6 @@
       font-size: 14px;
     }
 
-    /* جدول عرض سجل البيانات (يأخذ راحته بالعرض المطلوب) */
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
@@ -125,7 +123,7 @@
       font-weight: bold;
     }
 
-    /* تعديلات الموبايل للتجاوب السلس */
+    /* تعديلات الموبايل وتوسيط الكاردز بالكامل */
     @media (max-width: 768px) {
       .content {
         padding: 0 10px !important;
@@ -140,11 +138,11 @@
 
       .search-section input.search-txt,
       .search-section select.filter-select,
-      .search-btn {
+      .search-btn,
+      .pdf-btn {
         max-width: 100% !important;
       }
 
-      /* تحويل الجدول إلى كاردز منفصلة على الشاشات الصغيرة لسهولة التصفح */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -153,23 +151,28 @@
       .table-container tr {
         display: block !important;
         width: 100% !important;
+        box-sizing: border-box !important;
       }
       .table-container thead { display: none !important; }
+      
       .table-container tr {
-        background: rgba(255, 255, 255, 0.05);
-        margin-bottom: 12px;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+        margin: 0 auto 12px auto !important;
+        max-width: 450px !important;
+        border-radius: 10px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       }
+
       .table-container td {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        text-align: left !important;
-        padding: 6px 4px !important;
+        text-align: right !important;
+        padding: 8px 6px !important;
         font-size: 13px !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
       .table-container td:last-child {
         border-bottom: none !important;
@@ -180,9 +183,6 @@
 
 <body>
 
-  <!-- ==================================================
-       HEADER
-  ================================================== -->
   <header>
     <div class="user-bar">
       <span id="username">مرحباً، User</span>
@@ -200,15 +200,9 @@
     </nav>
   </header>
 
-
-  <!-- ==================================================
-       CONTENT (بحث وعرض عام فقط)
-  ================================================== -->
   <div class="content">
-
-    <!-- قسم البحث والفلترة العام -->
     <div class="search-section">
-      <h1>القاموس العام والبحث</h1>
+      <h1>بحث عام</h1>
       <input type="text" id="search-input" placeholder="اكتب للبحث في كل الكلمات..." class="search-txt">
       
       <select id="language-filter" class="filter-select">
@@ -217,21 +211,22 @@
 
       <button type="button" class="search-btn">بحث</button>
       <button type="button" id="clear-filter" class="search-btn clear-btn" style="margin-top: 5px;">إلغاء الفلتر</button>
+      
+      <!-- زر تحميل الـ PDF تحت الفلتر ومربوط بالنتيجة المعروضة -->
+      <button type="button" id="download-pdf-btn" class="pdf-btn">تحميل البيانات المعروضة (PDF)</button>
+
       <div class="search-result"></div>
     </div>
-
   </div>
 
-  <!-- جدول عرض كل الكلمات (القاموس العام مع الـ ID وتاريخ التسجيل وبواسطة مين) -->
   <div class="content">
     <div class="data-section">
-      <h1>كل كلمات المنصة (القاموس العام)</h1>
+      <h1>جميع البيانات</h1>
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th># ID</th>
-              <th>بواسطة</th>
               <th>الكلمة</th>
               <th>المعنى</th>
               <th>المرادف</th>
@@ -240,17 +235,13 @@
             </tr>
           </thead>
           <tbody id="data-table">
-            <tr><td colspan="7" style="text-align: center;">جاري تحميل البيانات...</td></tr>
+            <tr><td colspan="6" style="text-align: center;">جاري تحميل البيانات...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-
-  <!-- ==================================================
-       JAVASCRIPT
-  ================================================== -->
   <script type="module" src="auth-guard.js"></script>
   <script type="module" src="user-bar.js"></script>
   <script type="module" src="/Langdex/index-script.js"></script>
