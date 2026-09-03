@@ -109,7 +109,7 @@ const registerButton = document.querySelector(".reg");
 const updateButton = document.querySelector(".upa");
 const clearButton = document.querySelector(".cel");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
-const excelFileInput = document.querySelector("#excelFileInput"); // زر ملف الإكسيل داخل الفورم
+const excelFileInput = document.querySelector("#excelFileInput"); // زر ملف الإكسيل المستقل
 
 const searchInput = document.querySelector(".search-txt");
 const searchButton = document.querySelector(".search-btn");
@@ -664,7 +664,7 @@ if (clearButton) {
 }
 
 // ==========================================================
-// معالجة ورفع ملفات الإكسيل من داخل فورم إدارة الكلمات
+// معالجة ورفع ملفات الإكسيل بشكل مباشر ومستقل لفايربيز
 // ==========================================================
 if (excelFileInput) {
     excelFileInput.addEventListener("change", async function(e) {
