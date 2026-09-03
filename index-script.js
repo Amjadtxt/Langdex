@@ -395,3 +395,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         await initializeIndexPage();
     }
 });
+
+import { 
+    getFirestore, 
+    collection, 
+    query, 
+    orderBy, 
+    limit, 
+    onSnapshot 
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+// 1. طلب إذن الإشعارات من المتصفح أول ما يفتح الموقع
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+// 2. الاستماع التلقائي لأحدث إشعار يرسله الأدمن
+const db = getFirestore();
+let isFirstLoad = true; // متغير عشان نمنع ظهور الإشعارات القديمة أول ما يفتح
+
+// بنقول للفايربيز: هاتلي آخر إشعار ينزل في كوليكشن notifications
+const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(1));
+
+onSnapshot(q, (snapshot) => {
+    // التحميل الأول بنتخطاه عشان المالك ميتفاجئش بإشعارات قديمة بتظهر أول ما يفتح
+    if (isFirstLoad) {
+        isFirstLoad = false;
+        return;
+    }
+
+    // أول ما ينزل إشعار جديد فعلياً من الأدمن:
+    snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+            const data = change.doc.data();
+            
+            // إظهار الإشعار في نظام الويندوز/الموبايل
+            if (Notification.permission === "granted") {
+                new Notification(data.title || "Langdex", {
+                    body: data.body,
+                    icon: "/favicon.ico" // مسار اللوجو بتاعك لو تحب
+                });
+            }
+        }
+    });
+});
