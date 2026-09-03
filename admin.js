@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (With Logger Edition)
+// LANGDEX - admin.js (محدث ومنظم بالكامل مع دعم رفع الإكسيل والطباعة الشاملة)
 // ======================================================
 
 import {
@@ -11,27 +11,27 @@ import {
 import {
     getFirestore,
     collection,
-    getDocs,
-    getDoc,
-    doc,
-    setDoc,
     addDoc,
-    deleteDoc,
+    getDocs,
+    doc,
+    getDoc,
     updateDoc,
-    query,
-    where,
+    deleteDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 import {
     getAuth,
+    setPersistence,
+    browserLocalPersistence,
     onAuthStateChanged,
-    createUserWithEmailAndPassword
+    signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
+    apiKey: "AIzaSyCKshc43zO6DYwfPheHH9CsraX3VpU2fjc",
     authDomain: "langdex.firebaseapp.com",
+    databaseURL: "https://langdex-default-rtdb.firebaseio.com",
     projectId: "langdex",
     storageBucket: "langdex.firebasestorage.app",
     messagingSenderId: "819838317933",
@@ -39,51 +39,100 @@ const firebaseConfig = {
     measurementId: "G-F60CC2CDCJ"
 };
 
-const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
-
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// إنشاء شاشة التحميل وتثبيتها فوراً فوق كل عناصر الصفحة
-const loaderOverlay = document.createElement("div");
-loaderOverlay.id = "auth-loader-overlay";
-loaderOverlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #121212;
-    color: #ffffff;
-    z-index: 9999999999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Cairo', Arial, sans-serif;
-    font-size: 20px;
-    font-weight: bold;
-    direction: rtl;
-`;
-loaderOverlay.textContent = "جاري التحميل...";
-
-// إدراج شاشة التحميل في الـ DOM بمجرد قراءة السكربت
-if (document.body) {
-    document.body.appendChild(loaderOverlay);
-} else {
-    document.addEventListener("DOMContentLoaded", () => {
-        document.body.appendChild(loaderOverlay);
-    });
-}
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.error("Persistence error:", err);
+});
 
 const wordsCollection = collection(db, "words");
 const usersCollection = collection(db, "users");
 const logsCollection = collection(db, "logs"); // 🌟 كوليكشن السجل
 
-let currentUser = null;
+const ADMIN_EMAILS = ["amjadtxt@gmail.com"];
+
+const loaderOverlay = document.createElement("div");
+loaderOverlay.id = "auth-loader-overlay";
+loaderOverlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: #121212; color: #ffffff; z-index: 9999999999;
+    display: flex; justify-content: center; align-items: center;
+    font-family: 'Cairo', Arial, sans-serif; font-size: 20px; font-weight: bold; direction: rtl;
+`;
+loaderOverlay.textContent = "جاري التحقق من الصلاحيات والتحميل...";
+document.body.appendChild(loaderOverlay);
+
+async function verifyAdminPermission(user) {
+    if (!user || !user.email) return false;
+    const email = user.email.toLowerCase().trim();
+
+    if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
+        return true;
+    }
+
+    try {
+        let userDocRef = doc(db, "users", email);
+        let userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            const role = String(userDocSnap.data().role || "").toLowerCase().trim();
+            if (role === "admin") return true;
+        }
+
+        const usersSnapshot = await getDocs(usersCollection);
+        for (const userDoc of usersSnapshot.docs) {
+            const data = userDoc.data();
+            if (String(data.email || "").toLowerCase().trim() === email) {
+                const role = String(data.role || "").toLowerCase().trim();
+                if (role === "admin") return true;
+            }
+        }
+    } catch (err) {
+        console.error("Admin check error:", err);
+    }
+    return false;
+}
+
+let currentAdmin = null;
+let selectedDocumentId = null;
+let allTableData = [];
 let allUsersData = [];
 
-// نظام الإشعارات المتناسق
+const form = document.querySelector(".form");
+const inputs = form ? form.querySelectorAll("input") : [];
+const idInput = inputs[0] || null;
+const userIdInput = inputs[1] || null;
+const wordInput = inputs[2] || null;
+const meaningInput = inputs[3] || null;
+const synonymsInput = inputs[4] || null;
+const languageSelect = document.querySelector("#formLanguageSelect");
+
+const registerButton = document.querySelector(".reg");
+const updateButton = document.querySelector(".upa");
+const clearButton = document.querySelector(".cel");
+const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
+const excelFileInput = document.querySelector("#excelFileInput"); // زر ملف الإكسيل المستقل
+
+const searchInput = document.querySelector(".search-txt");
+const searchButton = document.querySelector(".search-btn");
+const searchResult = document.querySelector(".search-result");
+const languageFilterSearch = document.querySelector("#languageFilterSearch");
+const dataTable = document.querySelector("#data-table");
+const cardsContainer = document.querySelector("#cardsContainer");
+const totalUsersCountElem = document.querySelector("#totalUsersCount");
+
+function normalize(val) {
+    return String(val ?? "").trim().toLowerCase();
+}
+
+function extractUsername(emailOrUser) {
+    if (!emailOrUser) return "-";
+    const str = String(emailOrUser).trim();
+    if (str.includes("@")) return str.split("@")[0];
+    return str;
+}
+
 function showNotification(message) {
     let notification = document.querySelector(".langdex-notification");
     if (!notification) {
@@ -95,31 +144,27 @@ function showNotification(message) {
     notification.style.cssText = `
         color: #FFFFFF; position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
         z-index: 999999; padding: 12px 22px; border-radius: 10px; font-family: Cairo, Arial, sans-serif;
-        font-size: 15px; font-weight: 600; text-align: center; max-width: 90%; background: #222;
-        border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 5px 20px rgba(0,0,0,0.3); opacity: 1;
+        font-size: 15px; font-weight: 600; text-align: center; direction: rtl;
+        background: #222222; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 5px 20px rgba(0,0,0,0.3);
     `;
     clearTimeout(notification._timer);
-    notification._timer = setTimeout(() => {
-        notification.style.transition = "opacity 0.3s";
-        notification.style.opacity = "0";
-        setTimeout(() => { if (notification) notification.remove(); }, 300);
-    }, 3000);
+    notification._timer = setTimeout(() => notification.remove(), 3000);
 }
 
 // ======================================================
 // 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
 // ======================================================
-// action:         "add" | "update" | "delete" | "bulk_delete"
-// collectionName: "users" أو "words" (حسب مين اتأثر فعلياً)
+// action:         "add" | "update" | "delete" | "bulk_update" | "bulk_delete"
+// collectionName: اسم الكوليكشن المتأثر ("words")
 // targetDocId:    الـ document id بتاع العنصر (لو عملية مفردة)
-// oldData:        نسخة من البيانات *قبل* التعديل/الحذف
-// newData:        نسخة من البيانات *بعد* الإضافة/التعديل
+// oldData:        نسخة من البيانات *قبل* التعديل/الحذف (عنصر واحد أو مصفوفة في الجماعي)
+// newData:        نسخة من البيانات *بعد* الإضافة/التعديل (عنصر واحد أو مصفوفة في الجماعي)
 // details:        نص وصفي مختصر يظهر في جدول اللوج
 async function writeLog({ action, collectionName, targetDocId = null, oldData = null, newData = null, details = "" }) {
     try {
         await addDoc(logsCollection, {
-            userName: currentUser?.email || "أدمن",
-            uid: currentUser?.uid || null,
+            userName: currentAdmin?.email || "أدمن",
+            uid: currentAdmin?.uid || null,
             action,
             collectionName,
             targetDocId,
@@ -135,516 +180,728 @@ async function writeLog({ action, collectionName, targetDocId = null, oldData = 
     }
 }
 
-// التحقق من صلاحيات الأدمن أمنياً
-// 🌟 مهم: لازم يدور بالـ uid (مش الإيميل) عشان يتطابق مع دالة isAdmin() في Firestore Rules
-// اللي بتفحص /users/{request.auth.uid}
-async function verifyAdminPermission(user) {
-    if (!user || !user.email) return false;
-    const email = user.email.toLowerCase();
+function updateLanguageFilterDropdown(rows) {
+    if (!languageFilterSearch) return;
+    const currentVal = languageFilterSearch.value;
+    languageFilterSearch.innerHTML = `<option value="all">كل اللغات (للبحث أو العرض)</option>`;
+    
+    const langs = new Set();
+    rows.forEach(item => {
+        if (item.language) langs.add(String(item.language).trim());
+    });
 
-    if (ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === email)) {
-        return true;
-    }
+    langs.forEach(lang => {
+        const opt = document.createElement("option");
+        opt.value = lang;
+        opt.textContent = lang;
+        languageFilterSearch.appendChild(opt);
+    });
 
-    try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-            const data = userDocSnap.data();
-            if (data.role === "admin") return true;
-        }
-    } catch (err) {
-        console.error("Admin role check error:", err);
-    }
-
-    return false;
+    languageFilterSearch.value = langs.has(currentVal) ? currentVal : "all";
 }
 
-// جلب وتحميل بيانات المستخدمين والكلمات وإحصائيات كل لغة
-async function loadUsersData() {
+async function fetchAllData() {
     try {
         const usersSnap = await getDocs(usersCollection);
+        allUsersData = [];
+        usersSnap.forEach(d => allUsersData.push({ id: d.id, ...d.data() }));
+        if (totalUsersCountElem) totalUsersCountElem.textContent = allUsersData.length;
+
         const wordsSnap = await getDocs(wordsCollection);
+        allTableData = [];
+        wordsSnap.forEach(d => {
+            allTableData.push({ _documentId: d.id, ...d.data() });
+        });
 
-        const usersMap = new Map();
+        // 🌟 الترتيب الأساسي والنهائي: الأحدث من حيث تاريخ الإنشاء (createdAt) يظهر أولاً دائماً
+        allTableData.sort((a, b) => {
+            let timeA = 0;
+            let timeB = 0;
 
-        usersSnap.forEach(docSnap => {
-            const data = docSnap.data();
-            const email = data.email || "";
-            if (email) {
-                usersMap.set(email.toLowerCase(), {
-                    docId: docSnap.id, // 🌟 هنا الـ docId ده هو الـ uid الفعلي (لو اتضاف بالطريقة الجديدة)
-                    uid: docSnap.id,
-                    email: email,
-                    role: data.role || "user",
-                    wordsCount: 0,
-                    languagesMap: {}
-                });
+            if (a.createdAt) {
+                timeA = a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
             }
-        });
-
-        wordsSnap.forEach(docSnap => {
-            const data = docSnap.data();
-            const email = (data.userEmail || "").toLowerCase();
-            const lang = data.language || data.lang || "أخرى";
-            const wordUid = data.uid || data.userId || null; // 🌟 لالتقاط uid صاحب الكلمة
-
-            if (email) {
-                if (!usersMap.has(email)) {
-                    usersMap.set(email, {
-                        docId: null,
-                        uid: wordUid,
-                        email: data.userEmail,
-                        role: "user",
-                        wordsCount: 0,
-                        languagesMap: {}
-                    });
-                }
-                const userObj = usersMap.get(email);
-                if (!userObj.uid && wordUid) userObj.uid = wordUid; // 🌟 نكمّل الـ uid لو كان ناقص
-                userObj.wordsCount++;
-                
-                if (!userObj.languagesMap[lang]) {
-                    userObj.languagesMap[lang] = 0;
-                }
-                userObj.languagesMap[lang]++;
+            if (b.createdAt) {
+                timeB = b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
             }
+
+            if (timeB !== timeA) {
+                return timeB - timeA; // الأحدث تاريخاً يظهر أولاً بدقة
+            }
+            return Number(b.id || 0) - Number(a.id || 0); // ترتيب تنازلي للـ ID في حال تساوي الوقت تماماً
         });
 
-        allUsersData = [...usersMap.values()];
-
-        // **تثبيت الـ Admin في أول القائمة دائماً**
-        allUsersData.sort((a, b) => {
-            if (a.role === "admin" && b.role !== "admin") return -1;
-            if (a.role !== "admin" && b.role === "admin") return 1;
-            return 0;
-        });
-
-        renderUsersTable(allUsersData);
+        updateLanguageFilterDropdown(allTableData);
+        renderCardsAndTable(allTableData);
+        await setNextIdAdmin();
     } catch (error) {
-        console.error("Error loading users:", error);
-        showNotification("حدث خطأ أثناء تحميل البيانات.");
+        console.error(error);
+        showNotification("حدث خطأ أثناء جلب البيانات.");
     }
 }
 
-function renderUsersTable(usersList) {
-    const tableBody = document.querySelector("#users-table-body");
-    if (!tableBody) return;
+function renderCardsAndTable(rows) {
+    const langCounts = {};
+    rows.forEach(item => {
+        const lang = String(item.language || "غير محدد").trim();
+        langCounts[lang] = (langCounts[lang] || 0) + 1;
+    });
 
-    if (usersList.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">لا توجد بيانات مطابقة.</td></tr>`;
+    const existingLangCards = cardsContainer.querySelectorAll(".lang-card");
+    existingLangCards.forEach(c => c.remove());
+
+    for (const [lang, count] of Object.entries(langCounts)) {
+        const card = document.createElement("div");
+        card.className = "card lang-card";
+        card.innerHTML = `<h3>كلمات لغة (${lang})</h3><p>${count}</p>`;
+        cardsContainer.appendChild(card);
+    }
+
+    renderTableLog(rows);
+}
+
+function renderTableLog(rows) {
+    if (!dataTable) return;
+    dataTable.innerHTML = "";
+
+    if (rows.length === 0) {
+        dataTable.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #777;">لا توجد بيانات مطابقة</td></tr>`;
         return;
     }
 
-    tableBody.innerHTML = "";
+    rows.forEach(data => {
+        const tr = document.createElement("tr");
 
-    usersList.forEach((user, index) => {
-        const row = document.createElement("tr");
+        const rawUser = data.userEmail || data.userId || "";
+        const username = extractUsername(rawUser);
         
-        const langsArray = Object.keys(user.languagesMap);
-        const langsOptionsHtml = langsArray.map(l => `<option value="${l}">${l} (${user.languagesMap[l]} كلمة)</option>`).join("");
-
-        let langStatsHtml = "-";
-        if (langsArray.length > 0) {
-            langStatsHtml = langsArray.map(l => `<span style="display:inline-block; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px; font-size:11px;">${l}: <b>${user.languagesMap[l]}</b></span>`).join(" ");
+        let userRole = data.role || "user";
+        const matchedUser = allUsersData.find(u => normalize(u.email) === normalize(rawUser) || u.id === data.userId);
+        if (matchedUser && matchedUser.role) {
+            userRole = matchedUser.role;
         }
 
-        row.innerHTML = `
-            <td style="text-align: center;">${index + 1}</td>
-            <td>${user.email}</td>
-            <td style="text-align: center;"><b>${user.role}</b></td>
-            <td style="text-align: center;">${user.wordsCount} كلمة</td>
-            <td style="text-align: center;">${langStatsHtml}</td>
-            <td style="text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;">
-                
-                <div style="display: flex; gap: 3px; width: 100%;">
-                    <select class="role-select-${index}" style="padding: 3px; font-size: 11px; width: 65%; margin:0;">
-                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>مستخدم عادي (user)</option>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>مشرف (admin)</option>
-                    </select>
-                    <button class="upa btn-update-role" data-email="${user.email}" data-docid="${user.docId || ''}" data-uid="${user.uid || ''}" data-index="${index}" style="padding: 4px; font-size: 11px; width: 35%;">تحديث الرول</button>
-                </div>
+        let timeFormatted = "-";
+        if (data.createdAt) {
+            const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+            if (!isNaN(dateObj)) {
+                timeFormatted = dateObj.toLocaleDateString("ar-EG") + " - " + dateObj.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
+            }
+        }
 
-                <button class="upa btn-pdf-full" data-email="${user.email}" style="padding: 5px 10px; font-size: 11px; width: 100%;">تحميل PDF شامل (كل اللغات)</button>
-                
-                <div style="display: flex; gap: 3px; width: 100%;">
-                    <select class="lang-select-${index}" style="padding: 3px; font-size: 11px; width: 60%; margin:0;">
-                        <option value="" disabled selected>اختر لغة للحذف</option>
-                        ${langsOptionsHtml}
-                    </select>
-                    <button class="del btn-delete-lang" data-email="${user.email}" data-index="${index}" style="padding: 5px; font-size: 11px; width: 40%;">حذف تصنيف</button>
-                </div>
-
-                <button class="del btn-delete-user" data-email="${user.email}" style="padding: 5px; font-size: 11px; width: 100%; background-color: #b71c1c;">حذف المستخدم نهائياً</button>
+        tr.innerHTML = `
+            <td>${data.id || "-"}</td>
+            <td>${username}</td>
+            <td><strong>${data.word || "-"}</strong></td>
+            <td>${data.meaning || "-"}</td>
+            <td>${data.synonyms || "-"}</td>
+            <td>${data.language || "-"}</td>
+            <td><span style="color: ${normalize(userRole) === 'admin' ? '#00bcd4' : '#fff'};">${userRole}</span></td>
+            <td>${timeFormatted}</td>
+            <td class="action-btns">
+                <button class="btn-edit" data-id="${data._documentId}">تعديل</button>
+                <button class="btn-delete" data-id="${data._documentId}">حذف</button>
             </td>
         `;
-        tableBody.appendChild(row);
-    });
 
-    setupActionEvents();
-}
+        const editBtn = tr.querySelector(".btn-edit");
+        const deleteBtn = tr.querySelector(".btn-delete");
 
-function setupActionEvents() {
-    // 1. زر تحديث صلاحية الرول للمستخدم
-    document.querySelectorAll(".btn-update-role").forEach(btn => {
-        btn.addEventListener("click", async function () {
-            const email = this.getAttribute("data-email");
-            let docId = this.getAttribute("data-docid");
-            const uidAttr = this.getAttribute("data-uid");
-            const index = this.getAttribute("data-index");
-            const selectEl = document.querySelector(`.role-select-${index}`);
-            const newRole = selectEl ? selectEl.value : "";
-
-            if (!newRole) return;
-
-            try {
-                showNotification("جاري تحديث الرول للمستخدم...");
-
-                // 🌟 لازم نستخدم الـ uid الحقيقي بتاع اليوزر (مش إيميل معدّل)
-                // عشان يتطابق مع دالة isAdmin() في Firestore Rules اللي بتدور على /users/{uid}
-                if (!docId || docId === "null" || docId === "") {
-                    if (!uidAttr || uidAttr === "null" || uidAttr === "") {
-                        showNotification("تعذّر تحديد المستخدم بدقة (لا يوجد uid مسجل له من قبل). لازم يكون له كلمة واحدة على الأقل أو مستند مسبق.");
-                        return;
-                    }
-                    docId = uidAttr;
-                }
-
-                // 🌟 نجيب الرول القديم قبل التحديث عشان نقدر نرجعه
-                const userObjLocal = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
-                const oldRole = userObjLocal ? userObjLocal.role : "user";
-
-                const userDocRef = doc(db, "users", docId);
-                const docSnap = await getDoc(userDocRef);
-
-                let wasNewDoc = false;
-                if (docSnap.exists()) {
-                    await updateDoc(userDocRef, { role: newRole });
-                } else {
-                    wasNewDoc = true;
-                    await setDoc(userDocRef, {
-                        email: email,
-                        role: newRole,
-                        createdAt: serverTimestamp()
-                    });
-                }
-
-                // 🌟 تسجيل حدث تحديث الرول — التراجع عنه = رجّع oldRole على نفس الـ doc
-                // (لو الـ doc اتعمل جديد بالكامل، التراجع يبقى حذفه تاني بدل الرجوع لرول قديم)
-                await writeLog({
-                    action: wasNewDoc ? "add" : "update",
-                    collectionName: "users",
-                    targetDocId: docId,
-                    oldData: wasNewDoc ? null : { email, role: oldRole },
-                    newData: { email, role: newRole },
-                    details: wasNewDoc
-                        ? `إنشاء صلاحية جديدة للمستخدم (${email}) كـ (${newRole})`
-                        : `تغيير رول المستخدم (${email}) من (${oldRole}) إلى (${newRole})`
-                });
-
-                showNotification(`تم تحديث رول المستخدم (${email}) إلى (${newRole}) بنجاح!`);
-                loadUsersData();
-            } catch (err) {
-                console.error(err);
-                showNotification("حدث خطأ أثناء تحديث الرول.");
-            }
+        editBtn.addEventListener("click", () => {
+            selectedDocumentId = data._documentId;
+            if (idInput) idInput.value = data.id || "";
+            if (userIdInput) userIdInput.value = username;
+            if (wordInput) wordInput.value = data.word || "";
+            if (meaningInput) meaningInput.value = data.meaning || "";
+            if (synonymsInput) synonymsInput.value = data.synonyms || "";
+            if (languageSelect) languageSelect.value = data.language || "";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showNotification(`تم تحديد الكلمة (${data.word}) للتعديل.`);
         });
-    });
 
-    // 2. زر تحميل تقرير PDF شامل
-    document.querySelectorAll(".btn-pdf-full").forEach(btn => {
-        btn.addEventListener("click", async function () {
-            const targetEmail = this.getAttribute("data-email").toLowerCase();
+        deleteBtn.addEventListener("click", async () => {
+            if (!confirm(`هل أنت متأكد من حذف الكلمة "${data.word}"؟`)) return;
             try {
-                showNotification(`جاري استخراج كل بيانات وسجلات المستخدم (${targetEmail}) للـ PDF...`);
-                
-                const snap = await getDocs(wordsCollection);
-                const userWords = [];
+                // 🌟 نجهز نسخة من البيانات قبل الحذف عشان التراجع
+                const oldData = {
+                    id: data.id ?? null,
+                    word: data.word ?? "",
+                    meaning: data.meaning ?? "",
+                    synonyms: data.synonyms ?? "",
+                    language: data.language ?? "",
+                    userId: data.userId ?? "",
+                    userEmail: data.userEmail ?? "",
+                    username: data.username ?? "",
+                    role: data.role ?? "user"
+                };
 
-                snap.forEach(d => {
-                    const item = d.data();
-                    const recordEmail = (item.userEmail || item.email || "").toLowerCase();
+                await deleteDoc(doc(db, "words", data._documentId));
 
-                    if (recordEmail === targetEmail) {
-                        userWords.push({
-                            word: item.word || item.term || item.title || "-",
-                            meaning: item.meaning || item.translation || item.definition || "-",
-                            synonym: item.synonym || item.synonyms || item.similar || "-",
-                            language: item.language || item.lang || "أخرى"
-                        });
-                    }
-                });
-
-                if (userWords.length === 0) {
-                    showNotification("لا توجد أي كلمات مسجلة لهذا المستخدم.");
-                    return;
-                }
-
-                let rowsHtml = "";
-                userWords.forEach((item, idx) => {
-                    rowsHtml += `
-                        <tr>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${idx + 1}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${item.word}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${item.meaning}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd;">${item.synonym}</td>
-                            <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.language}</td>
-                        </tr>
-                    `;
-                });
-
-                const printWindow = window.open("", "_blank");
-                printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html lang="ar" dir="rtl">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>تقرير المستخدم - ${targetEmail}</title>
-                        <style>
-                            body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
-                            h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
-                            p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                            th { background-color: #edfbff; color: black; padding: 10px; border: 1px solid #2c3e50; font-size: 14px; }
-                            td { font-size: 13px; }
-                            tr:nth-child(even) { background-color: #f9f9f9; }
-                        </style>
-                    </head>
-                    <body>
-                        <h2>Langdex - تقرير شامل لكلمات المستخدم</h2>
-                        <p>البريد الإلكتروني: <b>${targetEmail}</b> | إجمالي الكلمات: <b>${userWords.length}</b></p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>م</th>
-                                    <th>الكلمة / المصطلح</th>
-                                    <th>المعنى / التفسير</th>
-                                    <th>المرادف</th>
-                                    <th>اللغة</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rowsHtml}
-                            </tbody>
-                        </table>
-                        <script>
-                            window.onload = function() {
-                                window.print();
-                            };
-                        </script>
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                showNotification("تم فتح نافذة التقرير، اختر حفظ كـ PDF (Save as PDF) من نافذة الطباعة!");
-            } catch (err) {
-                console.error(err);
-                showNotification("حدث خطأ أثناء تصدير الـ PDF.");
-            }
-        });
-    });
-
-    // 3. زر حذف تصنيف/لغة معينة للمستخدم
-    document.querySelectorAll(".btn-delete-lang").forEach(btn => {
-        btn.addEventListener("click", async function () {
-            const email = this.getAttribute("data-email");
-            const index = this.getAttribute("data-index");
-            const selectEl = document.querySelector(`.lang-select-${index}`);
-            const selectedLang = selectEl ? selectEl.value : "";
-
-            if (!selectedLang) {
-                showNotification("الرجاء اختيار اللغة/التصنيف المراد حذفه أولاً.");
-                return;
-            }
-
-            if (!confirm(`هل أنت متأكد من حذف جميع كلمات تصنيف (${selectedLang}) الخاصة بالمستخدم (${email})؟`)) return;
-
-            try {
-                showNotification("جاري حذف التصنيف...");
-                const q = query(wordsCollection, where("userEmail", "==", email), where("language", "==", selectedLang));
-                const snap = await getDocs(q);
-                
-                const promises = [];
-                const deletedWordsOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
-                snap.forEach(d => {
-                    deletedWordsOldData.push({ _documentId: d.id, ...d.data(), createdAt: null });
-                    promises.push(deleteDoc(doc(db, "words", d.id)));
-                });
-                await Promise.all(promises);
-
-                // 🌟 تسجيل حدث الحذف الجماعي — التراجع عنه = إعادة إضافة كل الكلمات دي
                 await writeLog({
-                    action: "bulk_delete",
+                    action: "delete",
                     collectionName: "words",
-                    targetDocId: null,
-                    oldData: deletedWordsOldData,
+                    targetDocId: data._documentId,
+                    oldData,
                     newData: null,
-                    details: `حذف تصنيف "${selectedLang}" (${deletedWordsOldData.length} كلمة) للمستخدم (${email})`
+                    details: `حذف كلمة "${data.word || ""}" (بواسطة الأدمن)`
                 });
 
-                showNotification(`تم حذف كلمات تصنيف (${selectedLang}) بنجاح.`);
-                loadUsersData();
+                showNotification("تم حذف الكلمة بنجاح.");
+                await fetchAllData();
             } catch (err) {
-                console.error(err);
-                showNotification("حدث خطأ أثناء حذف التصنيف.");
-            }
-        });
-    });
-
-    // 4. زر حذف المستخدم تماماً
-    document.querySelectorAll(".btn-delete-user").forEach(btn => {
-        btn.addEventListener("click", async function () {
-            const email = this.getAttribute("data-email");
-            if (!confirm(`هل أنت متأكد من حذف المستخدم (${email}) من النظام؟`)) return;
-
-            try {
-                showNotification("جاري الحذف...");
-                const userObj = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-                let userDocIdUsed = null;
-                let userDocOldData = null;
-
-                // 🌟 نحدد الـ doc المطلوب حذفه: أولوية للـ docId الموجود فعلاً، وإلا الـ uid المعروف من كلماته
-                const targetId = (userObj && userObj.docId) ? userObj.docId : (userObj && userObj.uid ? userObj.uid : null);
-
-                if (targetId) {
-                    userDocIdUsed = targetId;
-                    const userDocRef = doc(db, "users", targetId);
-                    const snap = await getDoc(userDocRef);
-                    if (snap.exists()) {
-                        userDocOldData = { ...snap.data() };
-                        await deleteDoc(userDocRef);
-                    }
-                } else {
-                    showNotification("تنبيه: لا يوجد مستند صلاحيات مسجل لهذا المستخدم في users، هيتم حذف كلماته فقط.");
-                }
-
-                const q = query(wordsCollection, where("userEmail", "==", email));
-                const snap = await getDocs(q);
-                const promises = [];
-                const deletedWordsOldData = []; // 🌟 كل كلمات اليوزر قبل ما تتمسح
-                snap.forEach(d => {
-                    deletedWordsOldData.push({ _documentId: d.id, ...d.data(), createdAt: null });
-                    promises.push(deleteDoc(doc(db, "words", d.id)));
-                });
-                await Promise.all(promises);
-
-                // 🌟 تسجيل حدث حذف المستخدم بالكامل — التراجع عنه = إعادة إنشاء وثيقة اليوزر + كلماته
-                // ملحوظة: التراجع لا يقدر يرجّع حساب الدخول (Auth) بتاعه، بيرجّع بس بيانات users و words
-                await writeLog({
-                    action: "delete_user_full",
-                    collectionName: "users",
-                    targetDocId: userDocIdUsed,
-                    oldData: {
-                        userDoc: userDocOldData ? { email, ...userDocOldData } : { email, role: "user" },
-                        words: deletedWordsOldData
-                    },
-                    newData: null,
-                    details: `حذف المستخدم (${email}) بالكامل مع ${deletedWordsOldData.length} كلمة (تنبيه: التراجع لا يعيد حساب الدخول Auth، فقط بيانات Firestore)`
-                });
-
-                showNotification("تم حذف المستخدم وكل سجلاته بنجاح.");
-                loadUsersData();
-            } catch (err) {
-                console.error(err);
                 showNotification("حدث خطأ أثناء الحذف.");
             }
         });
+
+        dataTable.appendChild(tr);
     });
 }
 
-// إضافة يوزر جديد
-const addUserBtn = document.querySelector("#add-user-btn");
-if (addUserBtn) {
-    addUserBtn.addEventListener("click", async function () {
-        const emailInput = document.querySelector("#new-user-email");
-        const passwordInput = document.querySelector("#new-user-password");
-        const roleSelect = document.querySelector("#new-user-role");
+async function setNextIdAdmin() {
+    try {
+        const usedIds = new Set();
+        allTableData.forEach(item => {
+            const idNum = Number(item.id);
+            if (Number.isInteger(idNum) && idNum > 0) usedIds.add(idNum);
+        });
+        let nextId = 1;
+        while (usedIds.has(nextId)) nextId++;
+        if (idInput) idInput.value = nextId;
+    } catch (e) {
+        if (idInput) idInput.value = 1;
+    }
+}
 
-        const email = emailInput ? emailInput.value.trim() : "";
-        const password = passwordInput ? passwordInput.value.trim() : "";
-        const role = roleSelect ? roleSelect.value : "";
+function performSearchAndFilter() {
+    const query = normalize(searchInput ? searchInput.value : "");
+    const selectedLang = languageFilterSearch ? languageFilterSearch.value : "all";
 
-        if (!email || !password || !role) {
-            showNotification("الرجاء إدخال البريد، كلمة المرور، وتحديد الرول.");
+    let filtered = allTableData.filter(item => {
+        const username = normalize(extractUsername(item.userEmail || item.userId));
+        const matchesQuery = !query || (
+            normalize(item.id).includes(query) ||
+            username.includes(query) ||
+            normalize(item.word).includes(query) ||
+            normalize(item.meaning).includes(query) ||
+            normalize(item.synonyms).includes(query) ||
+            normalize(item.language).includes(query)
+        );
+
+        const matchesLang = (selectedLang === "all") || (normalize(item.language) === normalize(selectedLang));
+
+        return matchesQuery && matchesLang;
+    });
+
+    renderTableLog(filtered);
+    if (searchResult) {
+        searchResult.textContent = (query || selectedLang !== "all") ? `النتائج المطابقة: ${filtered.length}` : "";
+    }
+    return filtered;
+}
+
+if (searchButton && searchInput) {
+    searchButton.addEventListener("click", performSearchAndFilter);
+    searchInput.addEventListener("input", performSearchAndFilter);
+}
+
+if (languageFilterSearch) {
+    languageFilterSearch.addEventListener("change", performSearchAndFilter);
+}
+
+// ==========================================================
+// تصدير تقرير PDF للبيانات المعروضة (بطريقة الطباعة الآمنة والداعمة لكل اللغات)
+// ==========================================================
+
+if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener("click", () => {
+        const currentRows = performSearchAndFilter();
+        if (currentRows.length === 0) {
+            showNotification("لا توجد بيانات معروضة لتحميلها في الـ PDF!");
             return;
         }
 
         try {
-            showNotification("جاري إنشاء وإضافة المستخدم...");
-            // 🌟 استخدام createUserWithEmailAndPassword بيسجل الأدمن خروج تلقائياً ويدخل بحساب اليوزر الجديد
-            // (سلوك معروف في Firebase Auth SDK على الـ client). لو ده بيسبب مشكلة، الحل الصح هو
-            // استخدام Cloud Function بصلاحيات Admin SDK بدل ما ننشئ الحساب من المتصفح مباشرة.
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const newUid = userCredential.user.uid;
+            showNotification("جاري تجهيز تقرير الـ PDF للطباعة والحفظ...");
 
-            const newUserData = {
-                email: email,
-                role: role,
-                createdAt: serverTimestamp()
-            };
-
-            // 🌟 التخزين بالـ uid الحقيقي بدل الإيميل المعدّل عشان يتوافق مع isAdmin() في الـ Rules
-            await setDoc(doc(db, "users", newUid), newUserData);
-
-            // 🌟 تسجيل حدث إضافة مستخدم جديد
-            // ملحوظة: التراجع هيقدر يمسح وثيقة الـ Firestore بس، مش حساب الـ Auth (يحتاج صلاحيات سيرفر)
-            await writeLog({
-                action: "add",
-                collectionName: "users",
-                targetDocId: newUid,
-                oldData: null,
-                newData: { ...newUserData, createdAt: null },
-                details: `إضافة مستخدم جديد (${email}) بصلاحية (${role}) — تنبيه: التراجع لا يحذف حساب Auth`
+            let rowsHtml = "";
+            currentRows.forEach((item, index) => {
+                rowsHtml += `
+                    <tr>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.id || (index + 1)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${extractUsername(item.userEmail || item.userId)}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${item.word || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.meaning || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.synonyms || ''}</td>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${item.language || ''}</td>
+                    </tr>
+                `;
             });
 
-            showNotification("تمت إضافة المستخدم بنجاح!");
-            emailInput.value = "";
-            passwordInput.value = "";
-            roleSelect.selectedIndex = 0;
-            loadUsersData();
-        } catch (err) {
-            console.error(err);
-            showNotification("حدث خطأ أثناء إضافة المستخدم (ربما البريد مستخدم مسبقاً أو الرمز قصير).");
+            const printWindow = window.open("", "_blank");
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Langdex - تقرير السجلات والبيانات</title>
+                    <style>
+                        body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
+                        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+                        p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th { background-color: #678071; color: black; padding: 10px; border: 1px solid #678071; font-size: 13px; }
+                        td { font-size: 12px; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Langdex - تقرير سجل الكلمات والبيانات</h2>
+                    <p>تاريخ التصدير: <b>${new Date().toLocaleString()}</b> | عدد السجلات المعروضة: <b>${currentRows.length}</b></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">ID</th>
+                                <th style="width: 15%;">بواسطة (اليوزر)</th>
+                                <th style="width: 20%;">الكلمة</th>
+                                <th style="width: 25%;">المعنى</th>
+                                <th style="width: 22%;">التفاصيل / المرادفات</th>
+                                <th style="width: 10%;">اللغة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        };
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            showNotification("تم فتح نافذة التقرير، اختر حفظ كـ PDF (Save as PDF) من نافذة الطباعة!");
+        } catch (error) {
+            console.error("PDF Error:", error);
+            showNotification("حدث خطأ أثناء تصدير ملف الـ PDF.");
         }
     });
 }
 
-// البحث
-const searchInput = document.querySelector("#search-user-input");
-if (searchInput) {
-    searchInput.addEventListener("input", function () {
-        const term = this.value.trim().toLowerCase();
-        if (!term) {
-            renderUsersTable(allUsersData);
+// تغيير اسم التصنيف جماعياً
+const renameLangBtn = document.getElementById("renameAnyLangBtn");
+if (renameLangBtn) {
+    renameLangBtn.addEventListener("click", async () => {
+        let oldLang = prompt("اكتب اسم اللغة القديمة تماماً كما تظهر (مثلاً: Urdu):");
+        if (!oldLang) return;
+
+        let newLang = prompt(`اكتب الاسم الجديد للغة "${oldLang}" (مثلاً: اردو):`);
+        if (!newLang) return;
+
+        if (!confirm(`هل أنت متأكد من تغيير وتوحيد كل كلمات لغة "${oldLang}" إلى "${newLang}"؟`)) return;
+
+        try {
+            let updatedCount = 0;
+            let batchPromises = [];
+            let affectedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
+
+            allTableData.forEach(item => {
+                if (item.language && item.language.trim().toLowerCase() === oldLang.trim().toLowerCase()) {
+                    item.language = newLang.trim();
+                    if (item._documentId) {
+                        const docRef = doc(db, "words", item._documentId);
+                        batchPromises.push(updateDoc(docRef, { language: newLang.trim() }));
+                        affectedDocIds.push(item._documentId);
+                        updatedCount++;
+                    }
+                }
+            });
+
+            await Promise.all(batchPromises);
+
+            // 🌟 تسجيل حدث جماعي — التراجع عنه = إرجاع اللغة القديمة لكل الـ docIds دي
+            await writeLog({
+                action: "bulk_update",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: { field: "language", value: oldLang.trim(), docIds: affectedDocIds },
+                newData: { field: "language", value: newLang.trim(), docIds: affectedDocIds },
+                details: `تغيير جماعي للغة من "${oldLang}" إلى "${newLang}" (${updatedCount} كلمة)`
+            });
+
+            showNotification(`تم تحديث ${updatedCount} كلمة بنجاح من (${oldLang}) إلى (${newLang})!`);
+            await fetchAllData();
+        } catch (error) {
+            console.error("Rename Error:", error);
+            showNotification("حدث خطأ أثناء تنفيذ التعديل الجماعي.");
+        }
+    });
+}
+
+// حذف الكلمات المكررة جماعياً
+const deleteDuplicatesBtn = document.getElementById("deleteDuplicatesBtn");
+if (deleteDuplicatesBtn) {
+    deleteDuplicatesBtn.addEventListener("click", async () => {
+        if (!confirm("هل أنت متأكد من البحث عن الكلمات المكررة وحذف النسخ المكررة مع إبقاء نسخة واحدة فقط؟")) return;
+
+        try {
+            let seenWords = new Set();
+            let duplicatesIds = [];
+            let duplicatesOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
+
+            const querySnapshot = await getDocs(wordsCollection);
+            querySnapshot.forEach(d => {
+                const data = d.data();
+                const wordVal = String(data.word || "").trim().toLowerCase();
+                const langVal = String(data.language || "").trim().toLowerCase();
+                
+                const identifier = `${wordVal}_${langVal}`;
+
+                if (wordVal && seenWords.has(identifier)) {
+                    duplicatesIds.push(d.id);
+                    duplicatesOldData.push({ _documentId: d.id, ...data, createdAt: null });
+                } else if (wordVal) {
+                    seenWords.add(identifier);
+                }
+            });
+
+            if (duplicatesIds.length === 0) {
+                showNotification("لا توجد كلمات مكررة مطابقة في السجل!");
+                return;
+            }
+
+            let deletePromises = duplicatesIds.map(id => deleteDoc(doc(db, "words", id)));
+            await Promise.all(deletePromises);
+
+            // 🌟 تسجيل حدث الحذف الجماعي — التراجع عنه = إعادة إضافة كل الكلمات دي من oldData
+            await writeLog({
+                action: "bulk_delete",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: duplicatesOldData,
+                newData: null,
+                details: `حذف جماعي لـ ${duplicatesIds.length} كلمة مكررة`
+            });
+
+            showNotification(`تم بنجاح العثور على ${duplicatesIds.length} كلمة مكررة وحذفها من السجل!`);
+            await fetchAllData();
+        } catch (error) {
+            console.error("Duplicates Error:", error);
+            showNotification("حدث خطأ أثناء محاولة حذف الكلمات المكررة.");
+        }
+    });
+}
+
+// زر حذف النطاق حسب الـ ID
+const deleteRangeBtn = document.getElementById("deleteRangeBtn");
+const startIdInput = document.getElementById("startIdInput");
+const endIdInput = document.getElementById("endIdInput");
+
+if (deleteRangeBtn) {
+    deleteRangeBtn.addEventListener("click", async () => {
+        const startId = Number(startIdInput ? startIdInput.value : NaN);
+        const endId = Number(endIdInput ? endIdInput.value : NaN);
+
+        if (isNaN(startId) || isNaN(endId) || startId > endId) {
+            showNotification("يرجى إدخال نطاق صحيح (من ID أصغر إلى ID أكبر).");
             return;
         }
-        const filtered = allUsersData.filter(u => u.email.toLowerCase().includes(term));
-        renderUsersTable(filtered);
+
+        if (!confirm(`هل أنت متأكد من حذف جميع الكلمات التي يقع رقم الـ ID الخاص بها بين ${startId} و ${endId}؟`)) return;
+
+        try {
+            let targetDocsIds = [];
+            let targetOldData = []; // 🌟 نسخة كاملة من كل كلمة هتتمسح
+
+            allTableData.forEach(item => {
+                const currentIdNum = Number(item.id);
+                if (!isNaN(currentIdNum) && currentIdNum >= startId && currentIdNum <= endId && item._documentId) {
+                    targetDocsIds.push(item._documentId);
+                    targetOldData.push({ ...item, createdAt: null });
+                }
+            });
+
+            if (targetDocsIds.length === 0) {
+                showNotification("لا توجد كلمات مطابقة ضمن هذا النطاق للحذف!");
+                return;
+            }
+
+            let deletePromises = targetDocsIds.map(id => deleteDoc(doc(db, "words", id)));
+            await Promise.all(deletePromises);
+
+            // 🌟 تسجيل حدث الحذف الجماعي بالنطاق — التراجع عنه = إعادة إضافة كل الكلمات دي
+            await writeLog({
+                action: "bulk_delete",
+                collectionName: "words",
+                targetDocId: null,
+                oldData: targetOldData,
+                newData: null,
+                details: `حذف جماعي بالنطاق (${startId} - ${endId}) لـ ${targetDocsIds.length} كلمة`
+            });
+
+            showNotification(`تم بنجاح حذف ${targetDocsIds.length} كلمة ضمن النطاق المحدد!`);
+            if (startIdInput) startIdInput.value = "";
+            if (endIdInput) endIdInput.value = "";
+            await fetchAllData();
+        } catch (error) {
+            console.error("Range Delete Error:", error);
+            showNotification("حدث خطأ أثناء تنفيذ عملية الحذف بالنطاق.");
+        }
     });
 }
 
-// التحقق الأمني عند تحميل الصفحة وتحويل غير الأدمن فوراً
+// إدارة الاستمارة (إضافة وتعديل ومسح)
+if (registerButton) {
+    registerButton.addEventListener("click", async () => {
+        const usernameVal = userIdInput ? userIdInput.value.trim() : "";
+        const word = wordInput ? wordInput.value.trim() : "";
+        const meaning = meaningInput ? meaningInput.value.trim() : "";
+        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
+        const language = languageSelect ? languageSelect.value.trim() : "";
+
+        if (!word || !meaning || !language) {
+            showNotification("يرجى ملء الكلمة والمعنى واللغة على الأقل.");
+            return;
+        }
+
+        try {
+            const newId = idInput ? Number(idInput.value) || 1 : 1;
+            const adminEmail = currentAdmin.email || "";
+            const finalUser = usernameVal ? usernameVal + "@admin" : extractUsername(adminEmail);
+
+            const newWordData = {
+                id: newId,
+                word: word,
+                meaning: meaning,
+                synonyms: synonyms,
+                language: language,
+                userId: currentAdmin.uid,
+                userEmail: adminEmail,
+                username: finalUser,
+                role: "admin",
+                createdAt: new Date()
+            };
+
+            const newDocRef = await addDoc(wordsCollection, newWordData);
+
+            // 🌟 تسجيل حدث الإضافة — التراجع عنه = حذف الـ doc ده
+            await writeLog({
+                action: "add",
+                collectionName: "words",
+                targetDocId: newDocRef.id,
+                oldData: null,
+                newData: { ...newWordData, createdAt: null },
+                details: `إضافة كلمة "${word}" (بواسطة الأدمن)`
+            });
+
+            showNotification("تم إضافة الكلمة بنجاح للقاعدة!");
+            clearForm();
+            await fetchAllData();
+        } catch (err) {
+            showNotification("حدث خطأ أثناء حفظ الكلمة.");
+        }
+    });
+}
+
+if (updateButton) {
+    updateButton.addEventListener("click", async () => {
+        if (!selectedDocumentId) {
+            showNotification("اختر كلمة من الجدول أولاً لتعديلها.");
+            return;
+        }
+
+        const word = wordInput ? wordInput.value.trim() : "";
+        const meaning = meaningInput ? meaningInput.value.trim() : "";
+        const synonyms = synonymsInput ? synonymsInput.value.trim() : "";
+        const language = languageSelect ? languageSelect.value.trim() : "";
+
+        if (!word || !meaning || !language) {
+            showNotification("يرجى إكمال الحقول الأساسية.");
+            return;
+        }
+
+        try {
+            // 🌟 نجيب النسخة الحالية (قبل التعديل) من البيانات المحلية عشان نسجلها كـ oldData
+            const beforeEdit = allTableData.find(item => item._documentId === selectedDocumentId);
+            const oldData = beforeEdit
+                ? {
+                    id: beforeEdit.id ?? null,
+                    word: beforeEdit.word ?? "",
+                    meaning: beforeEdit.meaning ?? "",
+                    synonyms: beforeEdit.synonyms ?? "",
+                    language: beforeEdit.language ?? ""
+                }
+                : null;
+
+            const docRef = doc(db, "words", selectedDocumentId);
+            const updatedFields = { word, meaning, synonyms, language };
+            await updateDoc(docRef, updatedFields);
+
+            // 🌟 تسجيل حدث التعديل — التراجع عنه = رجّع oldData على نفس الـ doc
+            await writeLog({
+                action: "update",
+                collectionName: "words",
+                targetDocId: selectedDocumentId,
+                oldData,
+                newData: updatedFields,
+                details: `تعديل كلمة "${oldData?.word || word}" ← "${word}" (بواسطة الأدمن)`
+            });
+
+            showNotification("تم تحديث الكلمة بنجاح!");
+            clearForm();
+            await fetchAllData();
+        } catch (err) {
+            showNotification("حدث خطأ أثناء التحديث.");
+        }
+    });
+}
+
+function clearForm() {
+    if (userIdInput) userIdInput.value = "";
+    if (wordInput) wordInput.value = "";
+    if (meaningInput) meaningInput.value = "";
+    if (synonymsInput) synonymsInput.value = "";
+    if (languageSelect) languageSelect.selectedIndex = 0;
+    selectedDocumentId = null;
+    setNextIdAdmin();
+}
+
+if (clearButton) {
+    clearButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        clearForm();
+        showNotification("تم مسح الاستمارة.");
+    });
+}
+
+// ==========================================================
+// معالجة ورفع ملفات الإكسيل بشكل مباشر ومستقل لفايربيز
+// ==========================================================
+if (excelFileInput) {
+    excelFileInput.addEventListener("change", async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (typeof XLSX === "undefined") {
+            showNotification("مكتبة الإكسيل غير متوفرة!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 2) {
+                    showNotification("الملف فارغ أو لا يحتوي على صفوف بيانات كافية.");
+                    excelFileInput.value = "";
+                    return;
+                }
+
+                showNotification("جاري معالجة ورفع الكلمات من الإكسيل...");
+
+                // حساب الـ IDs الموجودة حالياً لتوليد أرقام تسلسلية صحيحة بدون تكرار
+                const usedIds = new Set();
+                allTableData.forEach(item => {
+                    const idNum = Number(item.id);
+                    if (Number.isInteger(idNum) && idNum > 0) usedIds.add(idNum);
+                });
+                let currentNextId = 1;
+                while (usedIds.has(currentNextId)) currentNextId++;
+
+                const adminEmail = currentAdmin ? currentAdmin.email || "" : "";
+                const adminUid = currentAdmin ? currentAdmin.uid || "" : "";
+                const finalUser = extractUsername(adminEmail);
+
+                let importedCount = 0;
+                let importedDocIds = []; // 🌟 لتسجيلها في اللوج للتراجع الجماعي
+
+                // نبدأ من الصف 1 (تخطي الصف 0 الهيدر)
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.length > 0) {
+                        const word = String(row[0] || "").trim();      // العمود الأول: الكلمة
+                        const meaning = String(row[1] || "").trim();   // العمود الثاني: المعنى
+                        const synonyms = String(row[2] || "").trim();  // العمود الثالث: المرادف
+                        const language = String(row[3] || "").trim();  // العمود الرابع: اللغة
+
+                        if (word && meaning && language) {
+                            const newDocRef = await addDoc(wordsCollection, {
+                                id: currentNextId++,
+                                word: word,
+                                meaning: meaning,
+                                synonyms: synonyms,
+                                language: language,
+                                userId: adminUid,
+                                userEmail: adminEmail,
+                                username: finalUser,
+                                role: "admin",
+                                createdAt: new Date()
+                            });
+                            importedDocIds.push(newDocRef.id);
+                            importedCount++;
+                        }
+                    }
+                }
+
+                // 🌟 تسجيل حدث استيراد جماعي — التراجع عنه = حذف كل الـ docIds دي
+                if (importedCount > 0) {
+                    await writeLog({
+                        action: "bulk_add",
+                        collectionName: "words",
+                        targetDocId: null,
+                        oldData: null,
+                        newData: { docIds: importedDocIds },
+                        details: `استيراد ${importedCount} كلمة من ملف إكسيل`
+                    });
+                }
+
+                showNotification(`تم بنجاح رفع واستيراد ${importedCount} كلمة من ملف الإكسيل! 🚀`);
+                excelFileInput.value = "";
+                await fetchAllData();
+            } catch (error) {
+                console.error("Excel Import Error:", error);
+                showNotification("حدث خطأ أثناء قراءة أو رفع ملف الإكسيل.");
+                excelFileInput.value = "";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+let authCheckCompleted = false;
+
+setTimeout(() => {
+    if (!authCheckCompleted && (!auth.currentUser)) {
+        window.location.replace("login.html");
+    }
+}, 3000);
+
 onAuthStateChanged(auth, async user => {
+    authCheckCompleted = true;
+
     if (!user) {
-        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
         window.location.replace("login.html");
         return;
     }
-    currentUser = user;
 
     const isAdmin = await verifyAdminPermission(user);
     if (!isAdmin) {
-        if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
-        window.location.replace("index.html");
+        showNotification("ليس لديك صلاحيات الأدمن للوصول هنا!");
+        setTimeout(() => {
+            window.location.replace("index.html");
+        }, 1500);
         return;
     }
 
-    // لو أدمن: إزالة شاشة التحميل وعرض الصفحة وتحميل البيانات
-    if (loaderOverlay && loaderOverlay.parentNode) {
-        loaderOverlay.remove();
-    }
-
-    await loadUsersData();
+    currentAdmin = user;
+    if (loaderOverlay && loaderOverlay.parentNode) loaderOverlay.remove();
+    
+    await fetchAllData();
 });
