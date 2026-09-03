@@ -441,13 +441,13 @@ async function exportUserPdf() {
             <html lang="ar" dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>Langdex - تقرير الكلمات الشخصي</title>
+                <title>Langdex - التقرير الشخصي</title>
                 <style>
                     body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
                     h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
                     p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
                     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                    th { background-color: #678071; color: white; padding: 10px; border: 1px solid #678071; font-size: 14px; }
+                    th { background-color: #678071; color: black; padding: 10px; border: 1px solid #678071; font-size: 14px; }
                     td { font-size: 13px; }
                     tr:nth-child(even) { background-color: #f9f9f9; }
                 </style>
