@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin.js (محدث ومنظم بالكامل)
+// LANGDEX - admin.js (محدث ومنظم بالكامل مع دعم رفع الإكسيل)
 // ======================================================
 
 import {
@@ -109,6 +109,7 @@ const registerButton = document.querySelector(".reg");
 const updateButton = document.querySelector(".upa");
 const clearButton = document.querySelector(".cel");
 const downloadPdfBtn = document.querySelector("#downloadPdfBtn");
+const excelFileInput = document.querySelector("#excelFileInput"); // زر ملف الإكسيل داخل الفورم
 
 const searchInput = document.querySelector(".search-txt");
 const searchButton = document.querySelector(".search-btn");
@@ -659,6 +660,91 @@ if (clearButton) {
         e.preventDefault();
         clearForm();
         showNotification("تم مسح الاستمارة.");
+    });
+}
+
+// ==========================================================
+// معالجة ورفع ملفات الإكسيل من داخل فورم إدارة الكلمات
+// ==========================================================
+if (excelFileInput) {
+    excelFileInput.addEventListener("change", async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (typeof XLSX === "undefined") {
+            showNotification("مكتبة الإكسيل غير متوفرة!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 2) {
+                    showNotification("الملف فارغ أو لا يحتوي على صفوف بيانات كافية.");
+                    excelFileInput.value = "";
+                    return;
+                }
+
+                showNotification("جاري معالجة ورفع الكلمات من الإكسيل...");
+
+                // حساب الـ IDs الموجودة حالياً لتوليد أرقام تسلسلية صحيحة بدون تكرار
+                const usedIds = new Set();
+                allTableData.forEach(item => {
+                    const idNum = Number(item.id);
+                    if (Number.isInteger(idNum) && idNum > 0) usedIds.add(idNum);
+                });
+                let currentNextId = 1;
+                while (usedIds.has(currentNextId)) currentNextId++;
+
+                const adminEmail = currentAdmin ? currentAdmin.email || "" : "";
+                const adminUid = currentAdmin ? currentAdmin.uid || "" : "";
+                const finalUser = extractUsername(adminEmail);
+
+                let importedCount = 0;
+                // نبدأ من الصف 1 (تخطي الصف 0 الهيدر)
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.length > 0) {
+                        const word = String(row[0] || "").trim();      // العمود الأول: الكلمة
+                        const meaning = String(row[1] || "").trim();   // العمود الثاني: المعنى
+                        const synonyms = String(row[2] || "").trim();  // العمود الثالث: المرادف
+                        const language = String(row[3] || "").trim();  // العمود الرابع: اللغة
+
+                        if (word && meaning && language) {
+                            await addDoc(wordsCollection, {
+                                id: currentNextId++,
+                                word: word,
+                                meaning: meaning,
+                                synonyms: synonyms,
+                                language: language,
+                                userId: adminUid,
+                                userEmail: adminEmail,
+                                username: finalUser,
+                                role: "admin",
+                                createdAt: new Date()
+                            });
+                            importedCount++;
+                        }
+                    }
+                }
+
+                showNotification(`تم بنجاح رفع واستيراد ${importedCount} كلمة من ملف الإكسيل! 🚀`);
+                excelFileInput.value = "";
+                await fetchAllData();
+            } catch (error) {
+                console.error("Excel Import Error:", error);
+                showNotification("حدث خطأ أثناء قراءة أو رفع ملف الإكسيل.");
+                excelFileInput.value = "";
+            }
+        };
+        reader.readAsArrayBuffer(file);
     });
 }
 
