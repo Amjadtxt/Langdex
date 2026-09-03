@@ -128,7 +128,6 @@ function formatTimestamp(timestamp) {
 async function getUserWords() {
     if (!currentUser) return [];
     try {
-        // جلب البيانات الخاصة باليوزر الحالي فقط إما عن طريق الـ uid أو البريد
         const q = query(wordsCollection, where("uid", "==", currentUser.uid));
         const querySnapshot = await getDocs(q);
         
@@ -224,7 +223,6 @@ function renderTable(rows) {
             </td>
         `;
 
-        // ربط أزرار التعديل والحذف بالبيانات الخاصة بالصف
         const editBtn = row.querySelector(".edit-row-btn");
         const deleteBtn = row.querySelector(".delete-row-btn");
 
@@ -265,7 +263,7 @@ function clearForm() {
     if (formLanguageSelect) formLanguageSelect.selectedIndex = 0;
 }
 
-// عملية الإضافة
+// عملية الإضافة (حساب الـ ID تلقائياً ويبدأ من 1 لو الجدول فاضي أو يزيد 1 على أقصى رقم موجود)
 if (addBtn) {
     addBtn.addEventListener("click", async () => {
         const word = wordInput ? wordInput.value.trim() : "";
@@ -279,10 +277,15 @@ if (addBtn) {
         }
 
         try {
-            const newId = allUserTableData.length > 0 ? Math.max(...allUserTableData.map(item => Number(item.id) || 0)) + 1 : 1;
+            // حساب الـ ID الجديد تلقائياً بناءً على الكلمات الحالية للمستخدم
+            let nextId = 1;
+            if (allUserTableData && allUserTableData.length > 0) {
+                const maxId = Math.max(...allUserTableData.map(item => Number(item.id) || 0));
+                nextId = maxId > 0 ? maxId + 1 : 1;
+            }
             
             await addDoc(wordsCollection, {
-                id: newId,
+                id: nextId,
                 word,
                 meaning,
                 synonyms,
