@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Admin Dashboard</title>
+  <title>لوحة التحكم | الرئيسية</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -27,8 +27,8 @@
     .content > div,
     .cards-container,
     .search-section,
+    .form,
     .actions-top-bar,
-    .range-delete-box,
     .data-section {
       width: 100% !important;
       max-width: 850px !important;
@@ -36,6 +36,7 @@
       box-sizing: border-box !important;
     }
 
+    /* الكاردز الإحصائية */
     .cards-container {
       display: grid !important;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
@@ -64,9 +65,10 @@
       margin: 0;
     }
 
+    /* خلفية #678071 للأقسام */
     .search-section,
+    .form,
     .actions-top-bar,
-    .range-delete-box,
     .data-section {
       background: #678071 !important;
       padding: 20px !important;
@@ -76,6 +78,7 @@
     }
 
     .search-section h1,
+    .form h1,
     .data-section h1 {
       text-align: center;
       color: #ffffff;
@@ -83,9 +86,11 @@
       font-size: 20px;
     }
 
+    /* حقول الإدخال */
     .search-section input.search-txt,
     .search-section select.filter-select,
-    .range-delete-box input {
+    .form input,
+    .form select {
       display: block !important;
       width: 100% !important;
       max-width: 450px !important;
@@ -100,16 +105,19 @@
       color: #000000 !important;
     }
 
-    .actions-top-bar {
+    /* أزرار الفورم */
+    .inter1 {
       display: flex !important;
       gap: 10px !important;
-      align-items: center !important;
-      max-width: 850px !important;
+      width: 100% !important;
+      max-width: 450px !important;
+      margin: 15px auto 0 auto !important;
+      box-sizing: border-box !important;
     }
 
-    .actions-top-bar button {
+    .inter1 button {
       flex: 1 !important;
-      padding: 12px 10px !important;
+      padding: 12px 5px !important;
       border: none !important;
       border-radius: 8px !important;
       font-weight: bold !important;
@@ -121,44 +129,41 @@
       transition: 0.2s !important;
     }
 
-    .pdf-btn { background: #e67e22; }
-    .pdf-btn:hover { background: #d35400; }
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+    
+    .inter1 .upa { background: #2980b9; }
+    .inter1 .upa:hover { background: #1f618d; }
 
-    .range-delete-box {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
+
+    /* زر تحميل البيانات */
+    .actions-top-bar {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
     }
 
-    .range-delete-box input {
-      flex: 1;
-      min-width: 140px;
-      max-width: 250px !important;
-      margin: 0 !important;
-    }
-
-    .range-delete-btn {
+    .pdf-btn {
       width: 100% !important;
       max-width: 450px !important;
-      background: #852222;
-      color: white;
-      padding: 12px 10px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: 'Cairo', sans-serif;
-      transition: 0.2s;
-      text-align: center;
-      font-size: 14px;
-      margin: 10px auto 0 auto !important;
-      display: block !important;
+      padding: 12px 10px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      background: #e67e22;
+      transition: 0.2s !important;
     }
 
-    .range-delete-btn:hover { background: #a93232; }
+    .pdf-btn:hover { background: #d35400; }
 
+    /* جدول البيانات */
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
@@ -211,24 +216,22 @@
       .content > div,
       .cards-container,
       .search-section,
+      .form,
       .actions-top-bar,
-      .range-delete-box,
       .data-section {
         width: 100% !important;
         margin: 10px auto !important;
         padding: 15px !important;
       }
 
-      .actions-top-bar, 
-      .range-delete-box {
+      .inter1 {
         flex-direction: column !important;
         gap: 8px !important;
         max-width: 100% !important;
       }
       
-      .actions-top-bar button, 
-      .range-delete-box input, 
-      .range-delete-box button {
+      .inter1 button,
+      .pdf-btn {
         width: 100% !important;
         max-width: none !important;
         margin: 0 !important;
@@ -292,7 +295,8 @@
     <nav class="bar">
       <ul>
         <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
-        <a href="/Langdex/admin-manage.html"><li>الإدارة</li></a>
+        <a href="/Langdex/admin-manage.html"><li>إدارة</li></a>
+        <a href="/Langdex/admin-logs.html"><li>السجلات</li></a>
         <a href="/Langdex/users.html"><li>المستخدمين</li></a>
         <a href="#"><li>الإعدادات</li></a>
       </ul>
@@ -320,16 +324,55 @@
       </select>
     </div>
 
-    <!-- 3. تصدير PDF -->
-    <div class="actions-top-bar">
-      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
+    <!-- 3. فورم إدارة الكلمات -->
+    <div class="form">
+      <h1>إدارة الكلمات</h1>
+      <input type="number" placeholder="ID الكلمة" readonly>
+      <input type="text" placeholder="اسم اليوزر (قبل @)">
+      <input type="text" placeholder="الكلمة">
+      <input type="text" placeholder="المعنى">
+      <input type="text" placeholder="المرادف">
+      <select id="formLanguageSelect">
+          <option hidden>إختر اللغة</option>
+          <option hidden>Hindi</option>
+          <option hidden>Urdu</option>
+          <option hidden>Persian</option>
+          <option hidden>Chinese</option>
+          <option hidden>Bengali</option>
+          <option hidden>Turkish</option>
+          <option hidden>French</option>
+          <option hidden>Spanish</option>
+          <option hidden>German</option>
+          <option hidden>Japanese</option>
+          <option hidden>Korean</option>
+          <option hidden>Dutch</option>
+          <option hidden>Hebrew</option>
+          <option>الإنجليزية</option>
+          <option>الهندية</option>
+          <option>الأردية</option>
+          <option>الفارسية</option>
+          <option>الصينية</option>
+          <option>البنغالية</option>
+          <option>التركية</option>
+          <option>الفرنسية</option>
+          <option>الإسبانية</option>
+          <option>الألمانية</option>
+          <option>اليابانية</option>
+          <option>الكورية</option>
+          <option>الهولندية</option>
+          <option>العبرية</option>
+      </select>
+      
+      <div class="inter1">
+        <button type="button" class="reg">إضافة كلمة جديدة</button>
+        <button type="button" class="upa">تعديل الكلمة المحددة</button>
+        <button type="button" class="cel">مسح البيانات</button>
+      </div>
     </div>
 
-    <!-- 4. حذف نطاق الـ ID -->
-    <div class="range-delete-box">
-      <input type="number" id="startIdInput" placeholder="من ID رقم...">
-      <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
-      <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
+    <!-- 4. زر تحميل البيانات -->
+    <div class="actions-top-bar">
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
     </div>
 
     <!-- 5. جدول عرض سجل البيانات -->
