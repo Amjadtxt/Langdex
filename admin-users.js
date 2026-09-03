@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (Full Unicode PDF Export Edition + Logger)
+// LANGDEX - admin-users.js (Without Logger Edition)
 // ======================================================
 
 import {
@@ -27,8 +27,6 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-
-import { logAction } from "./logger.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
@@ -224,7 +222,6 @@ function renderUsersTable(usersList) {
             <td style="text-align: center;">${langStatsHtml}</td>
             <td style="text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;">
                 
-                <!-- تحديث الرول -->
                 <div style="display: flex; gap: 3px; width: 100%;">
                     <select class="role-select-${index}" style="padding: 3px; font-size: 11px; width: 65%; margin:0;">
                         <option value="user" ${user.role === 'user' ? 'selected' : ''}>مستخدم عادي (user)</option>
@@ -273,7 +270,6 @@ function setupActionEvents() {
 
                 const userDocRef = doc(db, "users", docId);
                 const docSnap = await getDoc(userDocRef);
-                const oldData = docSnap.exists() ? docSnap.data() : null;
 
                 if (docSnap.exists()) {
                     await updateDoc(userDocRef, { role: newRole });
@@ -285,16 +281,6 @@ function setupActionEvents() {
                     });
                 }
 
-                // تسجيل الحدث في السجل
-                await logAction(
-                    db,
-                    "تعديل رول مستخدم",
-                    `تعديل رول المستخدم (${email}) إلى (${newRole})`,
-                    "users",
-                    docId,
-                    oldData
-                );
-
                 showNotification(`تم تحديث رول المستخدم (${email}) إلى (${newRole}) بنجاح!`);
                 loadUsersData();
             } catch (err) {
@@ -304,7 +290,7 @@ function setupActionEvents() {
         });
     });
 
-    // 2. زر تحميل تقرير PDF شامل ودقيق يدعم كل اللغات والحروف بدون أي طلاسم
+    // 2. زر تحميل تقرير PDF شامل
     document.querySelectorAll(".btn-pdf-full").forEach(btn => {
         btn.addEventListener("click", async function () {
             const targetEmail = this.getAttribute("data-email").toLowerCase();
@@ -333,7 +319,6 @@ function setupActionEvents() {
                     return;
                 }
 
-                // بناء صفحة HTML منسقة واحترافية للطباعة كـ PDF تدعم الحروف بالكامل
                 let rowsHtml = "";
                 userWords.forEach((item, idx) => {
                     rowsHtml += `
@@ -418,23 +403,11 @@ function setupActionEvents() {
                 const q = query(wordsCollection, where("userEmail", "==", email), where("language", "==", selectedLang));
                 const snap = await getDocs(q);
                 
-                const oldWordsData = [];
                 const promises = [];
                 snap.forEach(d => {
-                    oldWordsData.push({ id: d.id, ...d.data() });
                     promises.push(deleteDoc(doc(db, "words", d.id)));
                 });
                 await Promise.all(promises);
-
-                // تسجيل الحدث في السجل
-                await logAction(
-                    db,
-                    "حذف تصنيف كلمات",
-                    `تم حذف تصنيف (${selectedLang}) للمستخدم (${email}) [عدد الكلمات: ${oldWordsData.length}]`,
-                    "words",
-                    null,
-                    oldWordsData
-                );
 
                 showNotification(`تم حذف كلمات تصنيف (${selectedLang}) بنجاح.`);
                 loadUsersData();
@@ -454,40 +427,22 @@ function setupActionEvents() {
             try {
                 showNotification("جاري الحذف...");
                 const userObj = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
-                
-                let oldUserData = null;
-                let targetDocId = userObj ? userObj.docId : null;
 
                 if (userObj && userObj.docId) {
                     const userDocRef = doc(db, "users", userObj.docId);
-                    const userSnap = await getDoc(userDocRef);
-                    if (userSnap.exists()) {
-                        oldUserData = userSnap.data();
-                    }
                     await deleteDoc(userDocRef);
                 } else {
-                    targetDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
+                    const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
+                    await deleteDoc(doc(db, "users", customDocId));
                 }
 
                 const q = query(wordsCollection, where("userEmail", "==", email));
                 const snap = await getDocs(q);
-                const oldWordsData = [];
                 const promises = [];
                 snap.forEach(d => {
-                    oldWordsData.push({ id: d.id, ...d.data() });
                     promises.push(deleteDoc(doc(db, "words", d.id)));
                 });
                 await Promise.all(promises);
-
-                // تسجيل الحدث في السجل
-                await logAction(
-                    db,
-                    "حذف مستخدم",
-                    `تم حذف المستخدم (${email}) وجميع سجلاته [عدد الكلمات المحذوفة: ${oldWordsData.length}]`,
-                    "users",
-                    targetDocId,
-                    { userData: oldUserData, deletedWords: oldWordsData }
-                );
 
                 showNotification("تم حذف المستخدم وكل سجلاته بنجاح.");
                 loadUsersData();
@@ -528,16 +483,6 @@ if (addUserBtn) {
             };
             
             await setDoc(doc(db, "users", customDocId), newUserData);
-
-            // تسجيل الحدث في السجل
-            await logAction(
-                db,
-                "إضافة مستخدم",
-                `تم إنشاء مستخدم جديد (${email}) برول (${role})`,
-                "users",
-                customDocId,
-                null
-            );
 
             showNotification("تمت إضافة المستخدم بنجاح!");
             emailInput.value = "";
