@@ -406,7 +406,7 @@ function applyFiltersAndSearch() {
     renderTable(filtered);
 }
 
-// تصدير PDF احترافي مع دعم خط Cairo وجدول AutoTable
+// تصدير تقرير PDF شامل ودقيق يدعم كل اللغات والحروف بدون أي طلاسم (بنفس طريقة الأدمن)
 async function exportUserPdf() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
         showNotification("لا توجد بيانات لتصديرها.");
@@ -414,75 +414,71 @@ async function exportUserPdf() {
     }
 
     try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
+        showNotification("جاري استخراج تقرير الـ PDF...");
+
+        let rowsHtml = "";
+        currentFilteredData.forEach((item, index) => {
+            const idVal = item.id !== undefined ? item.id : (index + 1);
+            const wordVal = item.word || "-";
+            const meaningVal = item.meaning || "-";
+            const synonymsVal = item.synonyms || "-";
+            const langVal = item.language || "-";
+
+            rowsHtml += `
+                <tr>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${idVal}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${wordVal}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${meaningVal}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${synonymsVal}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${langVal}</td>
+                </tr>
+            `;
         });
 
-        if (typeof doc.autoTable !== 'function') {
-            showNotification("مكتبة الجداول غير متوفرة.");
-            return;
-        }
-
-        try {
-            doc.addFont("https://fonts.gstatic.com/s/cairo/v28/SLXGc1nY6HkvangtZmpQdkhzfH5lkSs2SgRRjatkSMmu0A.woff2", "Cairo", "normal");
-            doc.setFont("Cairo");
-        } catch (fontErr) {
-            console.warn("Could not load Cairo font, falling back to default", fontErr);
-        }
-
-        const tableRows = currentFilteredData.map((item, index) => [
-            String(item.id !== undefined ? item.id : index + 1),
-            String(item.word || "-"),
-            String(item.meaning || "-"),
-            String(item.synonyms || "-"),
-            String(item.language || "-"),
-            formatTimestamp(item.createdAt)
-        ]);
-
-        doc.setFontSize(16);
-        doc.text("Langdex - My Personal Words Report", 148, 12, { align: "center" });
-        
-        doc.setFontSize(10);
-        doc.text(`Exported Date: ${new Date().toLocaleDateString()}`, 148, 18, { align: "center" });
-
-        doc.autoTable({
-            startY: 24,
-            head: [["ID", "الكلمة (Word)", "المعنى (Meaning)", "المرادف (Synonyms)", "اللغة (Lang)", "تاريخ التسجيل"]],
-            body: tableRows,
-            theme: 'grid',
-            headStyles: {
-                fillColor: [103, 128, 113],
-                textColor: [255, 255, 255],
-                fontStyle: 'bold',
-                halign: 'center',
-                font: 'Cairo'
-            },
-            bodyStyles: {
-                halign: 'center',
-                textColor: [0, 0, 0],
-                cellPadding: 4,
-                font: 'Cairo'
-            },
-            columnStyles: {
-                0: { cellWidth: 15 },
-                1: { cellWidth: 45 },
-                2: { cellWidth: 80 },
-                3: { cellWidth: 65 },
-                4: { cellWidth: 30 },
-                5: { cellWidth: 42 }
-            },
-            styles: {
-                fontSize: 9,
-                overflow: 'linebreak',
-                font: 'Cairo'
-            }
-        });
-
-        doc.save("my-langdex-words.pdf");
-        showNotification("تم تصدير ملف الـ PDF الشخصي بنجاح!");
+        const printWindow = window.open("", "_blank");
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>Langdex - تقرير الكلمات الشخصي</title>
+                <style>
+                    body { font-family: 'Cairo', Tahoma, Arial, sans-serif; padding: 20px; color: #333; direction: rtl; }
+                    h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+                    p { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 25px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                    th { background-color: #678071; color: white; padding: 10px; border: 1px solid #678071; font-size: 14px; }
+                    td { font-size: 13px; }
+                    tr:nth-child(even) { background-color: #f9f9f9; }
+                </style>
+            </head>
+            <body>
+                <h2>Langdex - My Personal Words Report</h2>
+                <p>تاريخ التصدير: <b>${new Date().toLocaleDateString()}</b> | إجمالي الكلمات: <b>${currentFilteredData.length}</b></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">ID</th>
+                            <th style="width: 25%;">الكلمة (Word)</th>
+                            <th style="width: 30%;">المعنى (Meaning)</th>
+                            <th style="width: 25%;">المرادف (Synonyms)</th>
+                            <th style="width: 10%;">اللغة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        showNotification("تم فتح نافذة التقرير، اختر حفظ كـ PDF (Save as PDF) من نافذة الطباعة!");
     } catch (error) {
         console.error("PDF Error:", error);
         showNotification("حدث خطأ أثناء تصدير الـ PDF.");
