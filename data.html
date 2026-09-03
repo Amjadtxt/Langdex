@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Langdex Data</title>
+  <title>Management</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -14,58 +14,59 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- SheetJS للإكسيل -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- مكتبة jsPDF لتصدير الـ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <style>
-    html {
-        visibility: visible !important;
-    }
-
-    body {
-      background-color: #3b4d43;
-    }
-
-    /* الإعدادات الأساسية للكونتينر */
-    .content2 {
+    .content {
       padding: 0 15px !important;
       box-sizing: border-box !important;
-      display: flex;
-      justify-content: center;
     }
 
-    /* قسم عرض البيانات باللون الموحد والبوردر المميز وتثبيت العرض للكمبيوتر */
+    .content > div,
+    .search-section,
+    .form,
+    .excel-upload-section,
+    .actions-top-bar,
     .data-section {
       width: 100% !important;
-      max-width: 900px !important;
-      margin: 20px auto !important;
-      background: #678071 !important;
-      padding: 25px !important;
-      border-radius: 12px !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
       box-sizing: border-box !important;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
 
-    /* عنوان القسم */
+    .search-section,
+    .form,
+    .excel-upload-section,
+    .actions-top-bar,
+    .data-section {
+      background: #678071 !important;
+      padding: 20px !important;
+      border-radius: 10px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-section h1,
+    .form h1,
     .data-section h1 {
       text-align: center;
       color: #ffffff;
-      margin-bottom: 20px;
-      font-size: 22px;
+      margin-bottom: 15px;
+      font-size: 20px;
     }
 
-    /* تحجيم وتوسيط حقل البحث وقائمة اختيار اللغات */
-    .data-controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-    }
-
-    .search-input,
-    .language-filter {
+    .search-section input.search-txt,
+    .search-section select.filter-select,
+    .form input,
+    .form select {
       display: block !important;
       width: 100% !important;
-      max-width: 500px !important;
-      margin: 8px auto !important;
+      max-width: 450px !important;
+      margin: 10px auto !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
@@ -76,18 +77,43 @@
       color: #000000 !important;
     }
 
-    /* تنسيق أزرار التحكم لتكون متناسقة وملمومة */
-    .cntrl {
+    .inter1 {
       display: flex !important;
       gap: 10px !important;
       width: 100% !important;
-      max-width: 500px !important;
-      margin: 8px auto 20px auto !important;
+      max-width: 450px !important;
+      margin: 15px auto 0 auto !important;
       box-sizing: border-box !important;
-      flex-wrap: nowrap;
     }
+    .inter1 button {
+      flex: 1 !important;
+      padding: 12px 5px !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      font-family: 'Cairo', sans-serif !important;
+      color: white !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      transition: 0.2s !important;
+    }
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+    
+    .inter1 .upa { background: #2980b9; }
+    .inter1 .upa:hover { background: #1f618d; }
 
-    .cntrl button {
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
+
+    .actions-top-bar {
+      display: flex !important;
+      gap: 10px !important;
+      align-items: center !important;
+      max-width: 850px !important;
+    }
+    .actions-top-bar button {
       flex: 1 !important;
       padding: 12px 10px !important;
       border: none !important;
@@ -97,100 +123,97 @@
       font-family: 'Cairo', sans-serif !important;
       color: white !important;
       text-align: center !important;
-      font-size: 13px !important;
+      font-size: 14px !important;
       transition: 0.2s !important;
-      box-sizing: border-box !important;
     }
+    .pdf-btn { background: #e67e22; }
+    .pdf-btn:hover { background: #d35400; }
 
-    /* ألوان الأزرار المخصصة */
-    .clear-filter { background: #c0392b !important; }
-    .clear-filter:hover { background: #962d22 !important; }
+    .excel-upload-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .excel-upload-section h3 {
+      color: #ffffff;
+      font-size: 15px;
+      margin: 0;
+    }
+    .excel-upload-label {
+      background: #27ae60;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .excel-upload-label:hover { background: #219653; }
 
-    .download-pdf { background: #e67e22 !important; }
-    .download-pdf:hover { background: #d35400 !important; }
-
-    /* جدول عرض البيانات للكمبيوتر */
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
       overflow-x: auto;
-      border-radius: 8px;
     }
-
     table {
-      width: 100% !important;
+      width: 100%;
       border-collapse: collapse;
       background: rgba(0, 0, 0, 0.15);
-      table-layout: fixed; /* لتوزيع الأعمدة بانتظام وثبات على الكمبيوتر */
+      border-radius: 8px;
+      overflow: hidden;
     }
-
     th, td {
-      padding: 12px 10px;
+      padding: 10px 8px;
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
       color: #fff;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      word-wrap: break-word;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-
     th {
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.25);
       font-weight: bold;
     }
 
-    /* تحديد نسب عرض الأعمدة للكمبيوتر لتوزيعها بانتظام */
-    th:nth-child(1), td:nth-child(1) { width: 10%; } /* ID */
-    th:nth-child(2), td:nth-child(2) { width: 22%; } /* الكلمة */
-    th:nth-child(3), td:nth-child(3) { width: 28%; } /* المعنى */
-    th:nth-child(4), td:nth-child(4) { width: 22%; } /* المرادف */
-    th:nth-child(5), td:nth-child(5) { width: 18%; } /* اللغة */
+    .table-container td button {
+      display: inline-block;
+      width: 70px;
+      padding: 6px 0;
+      margin: 2px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      font-size: 12px;
+    }
+    .table-container td button:first-of-type { background-color: #2980b9; }
+    .table-container td button:first-of-type:hover { background-color: #1f618d; }
+    .table-container td button:last-of-type { background-color: #c0392b; }
+    .table-container td button:last-of-type:hover { background-color: #962d22; }
 
-    /* تعديلات التجاوب للشاشات الصغيرة والموبايل */
     @media (max-width: 768px) {
-      .content2 {
-        padding: 0 10px !important;
-        display: block;
+      .content { padding: 0 10px !important; }
+      .content > div, .search-section, .form, .excel-upload-section, .actions-top-bar, .data-section {
+        width: 100% !important; margin: 10px auto !important; padding: 15px !important;
       }
+      .excel-upload-section { flex-direction: column !important; text-align: center !important; }
+      .excel-upload-section label { width: 100% !important; box-sizing: border-box !important; }
+      .inter1, .actions-top-bar { flex-direction: column !important; gap: 8px !important; max-width: 100% !important; }
+      .inter1 button, .actions-top-bar button { width: 100% !important; max-width: none !important; margin: 0 !important; }
 
-      .data-section {
-        width: 100% !important;
-        margin: 10px auto !important;
-        padding: 15px !important;
+      .table-container table, .table-container thead, .table-container tbody, .table-container th, .table-container td, .table-container tr {
+        display: block !important; width: 100% !important;
       }
-
-      .search-input,
-      .language-filter,
-      .cntrl {
-        max-width: 100% !important;
-      }
-
-      .cntrl {
-        flex-direction: column !important;
-        gap: 8px !important;
-      }
-
-      .cntrl button {
-        width: 100% !important;
-        font-size: 14px !important;
-      }
-
-      /* تحويل الجدول إلى كاردز مرتبة على الموبايل لمنع أي لخبطة */
-      .table-container table, 
-      .table-container thead, 
-      .table-container tbody, 
-      .table-container th, 
-      .table-container td, 
-      .table-container tr {
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        table-layout: auto !important;
-      }
-
-      .table-container thead {
-        display: none !important;
-      }
-
+      .table-container thead { display: none !important; }
       .table-container tr {
         background: rgba(255, 255, 255, 0.05);
         margin-bottom: 12px;
@@ -198,24 +221,17 @@
         padding: 10px;
         border: 1px solid rgba(255, 255, 255, 0.15);
       }
-
       .table-container td {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        text-align: left !important;
-        padding: 6px 4px !important;
-        font-size: 13px !important;
-        width: 100% !important;
+        display: flex !important; justify-content: space-between !important; align-items: center !important;
+        text-align: left !important; padding: 6px 4px !important; font-size: 13px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
-
       .table-container td:last-child {
-        border-bottom: none !important;
+        border-bottom: none !important; flex-direction: column !important; gap: 6px !important; padding-top: 8px !important;
       }
+      .table-container td button { width: 100% !important; font-size: 13px !important; padding: 8px !important; margin: 0 !important; }
     }
   </style>
-
 </head>
 
 <body>
@@ -228,42 +244,81 @@
       <span id="username">مرحباً، User</span>
       <button id="logout-btn">تسجيل الخروج</button>
     </div>
-    
+
     <nav class="bar">
       <ul>
-        <a href="/Langdex/index.html"><li>الرئيسية</li></a>
-        <a href="/Langdex/data.html"><li>البيانات</li></a>
-        <a href="#"><li>حول</li></a>
-        <a href="#"><li>استكشاف</li></a>
-        <a href="#"><li>التواصل</li></a>
+        <a href="index.html"><li>الرئيسية</li></a>
+        <a href="Data.html"><li>إدارة كلماتي</li></a>
       </ul>
     </nav>
   </header>
 
-  <div class="content2">
-    <section class="data-section">
-      <h1>جميع البيانات</h1>
+
+  <!-- ==================================================
+       DASHBOARD CONTENT (USER ONLY)
+  ================================================== -->
+  <div class="content">
+
+    <!-- 1. قسم البحث وتحته الفلتر -->
+    <div class="search-section">
+      <h1>البحث في كلماتي</h1>
+      <input type="text" id="search-input" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، أو المرادف...">
+      <select id="language-filter" class="filter-select">
+          <option value="all">كل اللغات</option>
+      </select>
+    </div>
+
+    <!-- 2. فورم إضافة وتعديل الكلمات -->
+    <div class="form">
+      <h1>إدارة كلمة جديدة</h1>
+      <input type="number" id="word-id" placeholder="ID الكلمة" readonly>
+      <input type="text" id="word-input" placeholder="الكلمة">
+      <input type="text" id="meaning-input" placeholder="المعنى">
+      <input type="text" id="synonyms-input" placeholder="المرادف">
+      <select id="formLanguageSelect">
+          <option hidden value="">إختر اللغة</option>
+          <option value="الإنجليزية">الإنجليزية</option>
+          <option value="الهندية">الهندية</option>
+          <option value="الأردية">الأردية</option>
+          <option value="الفارسية">الفارسية</option>
+          <option value="الصينية">الصينية</option>
+          <option value="البنغالية">البنغالية</option>
+          <option value="التركية">التركية</option>
+          <option value="الفرنسية">الفرنسية</option>
+          <option value="الإسبانية">الإسبانية</option>
+          <option value="الألمانية">الألمانية</option>
+          <option value="اليابانية">اليابانية</option>
+          <option value="الكورية">الكورية</option>
+          <option value="الهولندية">الهولندية</option>
+          <option value="العبرية">العبرية</option>
+      </select>
       
-      <div class="data-controls">
-        <!-- SEARCH INPUT -->
-        <input type="text" id="search-input" class="search-input" placeholder="ابحث في الكلمات، المعاني، أو المرادفات...">
-
-        <!-- LANGUAGE FILTER -->
-        <select id="language-filter" class="language-filter">
-          <option value="all">جميع اللغات</option>
-        </select>
-        
-        <div class="cntrl">
-          <button type="button" id="clear-filter" class="clear-filter">إلغاء الفلتر والبحث</button>
-          <button type="button" id="download-pdf" class="download-pdf">تحميل PDF</button>
-        </div>
+      <div class="inter1">
+        <button type="button" class="reg" id="add-btn">إضافة كلمة جديدة</button>
+        <button type="button" class="upa" id="update-btn">تعديل الكلمة المحددة</button>
+        <button type="button" class="cel" id="clear-btn">مسح الحقول</button>
       </div>
+    </div>
 
-      <!-- ==================================================
-           TABLE
-      ================================================== -->
+    <!-- 3. رفع ملف إكسيل -->
+    <div class="excel-upload-section">
+      <h3>رفع كلماتك بإستخدام ملف إكسيل</h3>
+      <label for="excelFileInput" class="excel-upload-label">
+        <span>رفع الملف</span>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+      </label>
+    </div>
+
+    <!-- 4. الأزرار العلوية (تحميل PDF الخاص بي) -->
+    <div class="actions-top-bar">
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل بياناتي المعروضة (PDF)</button>
+    </div>
+
+    <!-- 5. جدول عرض السجل الشخصي للمستخدم فقط -->
+    <div class="data-section">
+      <h1>سجل كلماتي الشخصية</h1>
       <div class="table-container">
-        <table id="words-table">
+        <table>
           <thead>
             <tr>
               <th>ID</th>
@@ -271,30 +326,26 @@
               <th>المعنى</th>
               <th>المرادف</th>
               <th>اللغة</th>
+              <th>تاريخ التسجيل</th>
+              <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody id="data-table">
-            <tr><td colspan="5" style="text-align: center;">جاري تحميل البيانات...</td></tr>
+            <tr><td colspan="7" style="text-align: center;">جاري تحميل بياناتك...</td></tr>
           </tbody>
         </table>
       </div>
+    </div>
 
-    </section>
   </div>
 
-  <!-- ==================================================
-       PDF LIBRARIES
-  ================================================== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <!-- ==================================================
        JAVASCRIPT
   ================================================== -->
   <script type="module" src="auth-guard.js"></script>
   <script type="module" src="user-bar.js"></script>
-  <script type="module" src="/Langdex/script.js"></script>
+  <script type="module" src="/Langdex/data-script.js"></script>
 
 </body>
 
