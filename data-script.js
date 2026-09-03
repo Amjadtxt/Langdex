@@ -41,6 +41,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const wordsCollection = collection(db, "words");
+const logsCollection = collection(db, "logs"); // 🌟 كوليكشن السجل
 
 let currentUser = null;
 let allUserTableData = [];
@@ -121,6 +122,36 @@ function formatTimestamp(timestamp) {
         });
     } catch (e) {
         return "-";
+    }
+}
+
+// ======================================================
+// 🌟 تسجيل الأحداث في اللوج (Logs) — بشكل يسمح بالتراجع الحقيقي لاحقاً
+// ======================================================
+// action:      نوع العملية: "add" | "update" | "delete"
+// collectionName: اسم الكوليكشن اللي اتعدلت فيه البيانات (words هنا)
+// targetDocId: الـ document id بتاع العنصر المتأثر
+// oldData:     نسخة من البيانات *قبل* التعديل/الحذف (null لو إضافة)
+// newData:     نسخة من البيانات *بعد* الإضافة/التعديل (null لو حذف)
+// details:     نص وصفي مختصر يظهر في جدول اللوج
+async function writeLog({ action, collectionName, targetDocId, oldData = null, newData = null, details = "" }) {
+    try {
+        await addDoc(logsCollection, {
+            userName: currentUser?.email || currentUser?.displayName || "مستخدم",
+            uid: currentUser?.uid || null,
+            action,               // "add" | "update" | "delete"
+            collectionName,       // "words"
+            targetDocId,          // document id في كوليكشن words
+            oldData,               // null لو add
+            newData,               // null لو delete
+            details,
+            role: "user",
+            undone: false,          // 🌟 يتحول true بعد التراجع عنه
+            timestamp: serverTimestamp()
+        });
+    } catch (error) {
+        // فشل تسجيل اللوج ما ينفعش يوقف العملية الأساسية، بس نسجله في الكونسول
+        console.error("فشل تسجيل الحدث في اللوج:", error);
     }
 }
 
@@ -296,8 +327,8 @@ if (addBtn) {
                 }
                 currentIdToSave = nextId;
             }
-            
-            await addDoc(wordsCollection, {
+
+            const newWordData = {
                 id: currentIdToSave,
                 word,
                 meaning,
@@ -306,6 +337,18 @@ if (addBtn) {
                 uid: currentUser.uid,
                 userEmail: currentUser.email || "",
                 createdAt: serverTimestamp()
+            };
+
+            const newDocRef = await addDoc(wordsCollection, newWordData);
+
+            // 🌟 تسجيل حدث الإضافة — التراجع عنه = حذف الـ doc ده
+            await writeLog({
+                action: "add",
+                collectionName: "words",
+                targetDocId: newDocRef.id,
+                oldData: null,
+                newData: { ...newWordData, createdAt: null }, // createdAt سيرفر تايم استامب، منسجلش القيمة الفعلية
+                details: `إضافة كلمة "${word}"`
             });
 
             showNotification("تمت إضافة الكلمة بنجاح!");
@@ -337,12 +380,30 @@ if (updateBtn) {
         }
 
         try {
+            // 🌟 نجيب النسخة الحالية (قبل التعديل) من البيانات اللي عندنا محلياً عشان نسجلها كـ oldData
+            const beforeEdit = allUserTableData.find(item => item._documentId === editingDocId);
+            const oldData = beforeEdit
+                ? {
+                    id: beforeEdit.id ?? null,
+                    word: beforeEdit.word ?? "",
+                    meaning: beforeEdit.meaning ?? "",
+                    synonyms: beforeEdit.synonyms ?? "",
+                    language: beforeEdit.language ?? ""
+                }
+                : null;
+
             const docRef = doc(db, "words", editingDocId);
-            await updateDoc(docRef, {
-                word,
-                meaning,
-                synonyms,
-                language
+            const updatedFields = { word, meaning, synonyms, language };
+            await updateDoc(docRef, updatedFields);
+
+            // 🌟 تسجيل حدث التعديل — التراجع عنه = رجّع oldData على نفس الـ doc
+            await writeLog({
+                action: "update",
+                collectionName: "words",
+                targetDocId: editingDocId,
+                oldData,
+                newData: updatedFields,
+                details: `تعديل كلمة "${oldData?.word || word}" ← "${word}"`
             });
 
             showNotification("تم تعديل الكلمة بنجاح!");
@@ -364,7 +425,32 @@ if (clearBtn) {
 
 async function deleteWord(docId) {
     try {
+        // 🌟 نجيب نسخة كاملة من بيانات الكلمة قبل ما نحذفها عشان نقدر نرجعها لو حصل تراجع
+        const beforeDelete = allUserTableData.find(item => item._documentId === docId);
+        const oldData = beforeDelete
+            ? {
+                id: beforeDelete.id ?? null,
+                word: beforeDelete.word ?? "",
+                meaning: beforeDelete.meaning ?? "",
+                synonyms: beforeDelete.synonyms ?? "",
+                language: beforeDelete.language ?? "",
+                uid: beforeDelete.uid ?? (currentUser ? currentUser.uid : null),
+                userEmail: beforeDelete.userEmail ?? (currentUser ? currentUser.email : "")
+            }
+            : null;
+
         await deleteDoc(doc(db, "words", docId));
+
+        // 🌟 تسجيل حدث الحذف — التراجع عنه = إعادة إضافة oldData بكل بياناته
+        await writeLog({
+            action: "delete",
+            collectionName: "words",
+            targetDocId: docId, // الـ doc القديم اتمسح، بنحتفظ بالـ id بس للتوثيق فقط
+            oldData,
+            newData: null,
+            details: `حذف كلمة "${oldData?.word || ""}"`
+        });
+
         showNotification("تم حذف الكلمة نهائياً.");
         if (editingDocId === docId) {
             clearForm();
