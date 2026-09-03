@@ -35,26 +35,29 @@
       box-sizing: border-box !important;
     }
 
+    /* تنسيق الكاردز في المنتصف ومرتبة */
     .cards-container {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-      gap: 12px !important;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+      gap: 15px !important;
+      justify-content: center !important;
     }
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 18px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       text-align: center;
       box-sizing: border-box;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
     .card h3 {
-      font-size: 13px;
-      color: #aaa;
-      margin-bottom: 5px;
+      font-size: 14px;
+      color: #e0e0e0;
+      margin-bottom: 8px;
     }
     .card p {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: bold;
       color: #00bcd4;
       margin: 0;
@@ -133,7 +136,7 @@
       overflow: hidden;
     }
     th, td {
-      padding: 10px 8px;
+      padding: 12px 10px;
       text-align: center;
       font-size: 13px;
       color: #fff;
@@ -166,23 +169,25 @@
       .table-container tr {
         display: block !important;
         width: 100% !important;
+        box-sizing: border-box !important;
       }
       .table-container thead { display: none !important; }
       .table-container tr {
-        background: rgba(255, 255, 255, 0.05);
-        margin-bottom: 12px;
+        background: rgba(255, 255, 255, 0.07);
+        margin-bottom: 15px;
         border-radius: 8px;
-        padding: 10px;
+        padding: 12px;
         border: 1px solid rgba(255, 255, 255, 0.15);
       }
       .table-container td {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        text-align: left !important;
-        padding: 6px 4px !important;
+        text-align: right !important;
+        padding: 8px 6px !important;
         font-size: 13px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        gap: 10px;
       }
     }
   </style>
