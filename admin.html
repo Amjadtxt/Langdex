@@ -57,18 +57,19 @@
       margin: 0;
     }
 
-    /* تنسيق أزرار الفورم الأساسية (إضافة، تعديل، مسح) لتكون واضحة وبحجم ممتاز */
+    /* تنسيق أزرار الفورم الأساسية (إضافة، تعديل، مسح) لتأخذ نفس السطر على الكمبيوتر */
     .inter1 {
       grid-column: 1 / -1;
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap; /* منع نزولهم سطر جديد على الشاشات الواسعة */
       margin-top: 10px;
+      width: 100%;
     }
     .inter1 button {
-      flex: 1;
-      min-width: 130px;
-      padding: 12px 20px;
+      flex: 1; /* توزيع المساحة بالتساوي تماماً زي زر الإنشاء */
+      min-width: 0;
+      padding: 12px 10px;
       border: none;
       border-radius: 8px;
       font-weight: bold;
@@ -77,6 +78,8 @@
       transition: 0.2s;
       box-sizing: border-box;
       color: white;
+      text-align: center;
+      font-size: 14px;
     }
     .inter1 .reg { background: #27ae60; }
     .inter1 .reg:hover { background: #219653; }
@@ -157,18 +160,36 @@
     }
     .range-delete-btn:hover { background: #a93232; }
 
-    /* تنسيق أزرار الإجراءات داخل الجدول لعدم الالتصاق */
+    /* تنسيق أزرار الإجراءات داخل الجدول (تعديل وحذف بنفس العرض وألوان مميزة) */
     .table-container td button {
-      margin: 3px 0;
-      padding: 6px 12px;
+      display: inline-block;
+      width: 75px; /* عرض موحد وثابت ليكونوا قد بعض تماماً */
+      padding: 6px 0;
+      margin: 3px auto;
       border-radius: 6px;
       border: none;
       cursor: pointer;
       font-family: 'Cairo', sans-serif;
       font-weight: bold;
+      color: white;
+      text-align: center;
+      font-size: 13px;
+    }
+    /* تخصيص لون زر التعديل والحذف في الجدول بناءً على وظيفتهم أو كلاساتهم لو موجودة، هنا بنديلهم ألوان مميزة */
+    .table-container td button:first-of-type {
+      background-color: #2980b9; /* أزرق للتعديل */
+    }
+    .table-container td button:first-of-type:hover {
+      background-color: #1f618d;
+    }
+    .table-container td button:last-of-type {
+      background-color: #c0392b; /* أحمر للحذف */
+    }
+    .table-container td button:last-of-type:hover {
+      background-color: #962d22;
     }
 
-    /* تعديلات الموبايل للجدول والمحتوى */
+    /* تعديلات الموبايل */
     @media (max-width: 768px) {
       .content > div {
         width: 94% !important;
@@ -183,7 +204,7 @@
         width: 100% !important;
       }
 
-      /* تنسيق أزرار الفورم على الموبايل لتاخد المساحة كاملة وتبقى مريحة */
+      /* على الموبايل نرجع أزرار الفورم تحت بعض عشان المساحة تضيق بأمان */
       .inter1 {
         flex-direction: column !important;
       }
@@ -242,17 +263,23 @@
       .table-container td:last-child {
         border-bottom: none !important;
         flex-direction: column !important;
-        gap: 8px !important; /* مسافة واضحة بين أزرار التعديل والحذف في الموبايل */
+        gap: 8px !important;
         padding-top: 10px !important;
       }
 
-      .table-container td button,
-      .table-container td select {
-        width: 100% !important;
+      .table-container td button {
+        width: 100% !important; /* على الموبايل ياخدوا العرض كامل ومرتاحين */
         font-size: 13px !important;
         padding: 10px !important;
         box-sizing: border-box !important;
         margin: 2px 0 !important;
+      }
+
+      .table-container td select {
+        width: 100% !important;
+        font-size: 13px !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
       }
     }
   </style>
@@ -313,7 +340,438 @@
       <input type="text" placeholder="المعنى">
       <input type="text" placeholder="المرادف">
       <select id="formLanguageSelect">
-          <option hidden>إختر اللغة</option>
+          <option hidden>English</option>
+          <option hidden>Hindi</option>
+          <option hidden>Urdu</option>
+          <option hidden>Persian</option>
+          <option hidden>Chinese</option>
+          <option hidden>Bengali</option>
+          <option hidden>Turkish</option>
+          <option hidden>French</option>
+          <option hidden>Spanish</option>
+          <option hidden>German</option>
+          <option hidden>Japanese</option>
+          <option hidden>Korean</option>
+          <option hidden>Dutch</option>
+          <option hidden>Hebrew</option>
+          <option>الإنجليزية</option>
+          <option>الهندية</option>
+          <option>الأردية</option>
+          <option>الفارسية</option>
+          <option>الصينية</option>
+          <option>البنغالية</option>
+          <option>التركية</option>
+          <option>الفرنسية</option>
+          <option>الإسبانية</option>
+          <option>الألمانية</option>
+          <option>اليابانية</option>
+          <option>الكورية</option>
+          <option>الهولندية</option>
+          <option>العبرية</option>
+      </select>
+      
+      <div class="inter1">
+        <button type="button" class="reg">إضافة كلمة جديدة</button>
+        <button type="button" class="upa">تعديل الكلمة المحددة</button>
+        <button type="button" class="cel">مسح البيانات</button>
+      </div>
+    </div>
+
+    <!-- ديف مستقل للأزرار الإضافية -->
+    <div class="actions-top-bar" style="width: 100%;">
+      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
+      <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
+    </div>
+
+    <!-- ديف حذف نطاق الـ ID (متمركز وجوه الفريم بخلفية حقول بيضاء) -->
+    <div class="range-delete-box" style="width: 100%;">
+      <input type="number" id="startIdInput" placeholder="من ID رقم...">
+      <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
+      <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
+    </div>
+
+    <!-- جدول عرض سجل الكلمات والبيانات -->
+    <div class="data-section" style="width: 100%;">
+      <h1>سجل البيانات</h1>
+      <div class="table-container" style="width: 95%; margin: 15px auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>بواسطة (اليوزر)</th>
+              <th>الكلمة</th>
+              <th>المعنى</th>
+              <th>التفاصيل / المرادفات</th>
+              <th>اللغة</th>
+              <th>الرول</th>
+              <th>الساعة والتاريخ</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="data-table">
+            <tr><td colspan="9" style="text-align: center;">جاري تحميل البيانات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ==================================================
+       JAVASCRIPT
+  ================================================== -->
+  <script type="module" src="/Langdex/auth-guard.js"></script>
+  <script type="module" src="/Langdex/user-bar.js"></script>
+  <script type="module" src="admin.js"></script>
+
+</body>
+
+</html>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Langdex - Admin Dashboard</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/Langdex/style.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS للإكسيل -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- مكتبة jsPDF لتصدير الـ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* الإعدادات الأساسية المطابقة لصفحة المستخدمين 100% */
+    .content > div {
+      width: 85% !important;
+      max-width: 850px !important;
+      margin: 15px auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* تنسيق الكاردز بنفس الستايل */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .card h3 {
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+    .card p {
+      font-size: 20px;
+      font-weight: bold;
+      color: #00bcd4;
+      margin: 0;
+    }
+
+    /* تنسيق أزرار الفورم الأساسية (إضافة، تعديل، مسح) لتأخذ نفس السطر على الكمبيوتر */
+    .inter1 {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap; /* منع نزولهم سطر جديد على الشاشات الواسعة */
+      margin-top: 10px;
+      width: 100%;
+    }
+    .inter1 button {
+      flex: 1; /* توزيع المساحة بالتساوي تماماً زي زر الإنشاء */
+      min-width: 0;
+      padding: 12px 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      box-sizing: border-box;
+      color: white;
+      text-align: center;
+      font-size: 14px;
+    }
+    .inter1 .reg { background: #27ae60; }
+    .inter1 .reg:hover { background: #219653; }
+    
+    .inter1 .upa { background: #2980b9; }
+    .inter1 .upa:hover { background: #1f618d; }
+
+    .inter1 .cel { background: #7f8c8d; }
+    .inter1 .cel:hover { background: #626d6e; }
+
+    /* ديف الأزرار العلوية المستقل */
+    .actions-top-bar {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    .pdf-btn { background: #e67e22; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .pdf-btn:hover { background: #d35400; }
+
+    .delete-edited-btn { background: #c0392b; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .delete-edited-btn:hover { background: #962d22; }
+
+    .fix-lang-btn { background: #8e44ad; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.2s; }
+    .fix-lang-btn:hover { background: #732d91; }
+
+    /* تنسيق قسم الحذف بالـ ID ومحاذاته للوسط تماماً مع خلفية بيضاء للحقول وجوا الفريم */
+    .range-delete-box {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      text-align: center;
+      width: 100%;
+    }
+    .range-delete-box input {
+      flex: 1;
+      min-width: 120px;
+      max-width: 250px;
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      color: #000000;
+      border-radius: 8px;
+      font-family: 'Cairo', sans-serif;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .range-delete-box input::placeholder {
+      color: #666;
+    }
+    .range-delete-btn {
+      background: #852222;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.2s;
+      box-sizing: border-box;
+    }
+    .range-delete-btn:hover { background: #a93232; }
+
+    /* تنسيق أزرار الإجراءات داخل الجدول (تعديل وحذف بنفس العرض وألوان مميزة) */
+    .table-container td button {
+      display: inline-block;
+      width: 75px; /* عرض موحد وثابت ليكونوا قد بعض تماماً */
+      padding: 6px 0;
+      margin: 3px auto;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      font-size: 13px;
+    }
+    /* تخصيص لون زر التعديل والحذف في الجدول بناءً على وظيفتهم أو كلاساتهم لو موجودة، هنا بنديلهم ألوان مميزة */
+    .table-container td button:first-of-type {
+      background-color: #2980b9; /* أزرق للتعديل */
+    }
+    .table-container td button:first-of-type:hover {
+      background-color: #1f618d;
+    }
+    .table-container td button:last-of-type {
+      background-color: #c0392b; /* أحمر للحذف */
+    }
+    .table-container td button:last-of-type:hover {
+      background-color: #962d22;
+    }
+
+    /* تعديلات الموبايل */
+    @media (max-width: 768px) {
+      .content > div {
+        width: 94% !important;
+        margin: 10px auto !important;
+        padding: 12px !important;
+      }
+
+      .actions-top-bar {
+        flex-direction: column !important;
+      }
+      .actions-top-bar button {
+        width: 100% !important;
+      }
+
+      /* على الموبايل نرجع أزرار الفورم تحت بعض عشان المساحة تضيق بأمان */
+      .inter1 {
+        flex-direction: column !important;
+      }
+      .inter1 button {
+        width: 100% !important;
+      }
+
+      /* تنسيق عناصر حذف النطاق على الموبايل لتكون في المنتصف تماماً جوه الفريم */
+      .range-delete-box {
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 15px !important;
+      }
+      .range-delete-box input, 
+      .range-delete-box button {
+        width: 85% !important;
+        max-width: 300px !important;
+        box-sizing: border-box !important;
+      }
+
+      /* تحويل الجدول في الموبايل لشكل بطاقات مرتبة */
+      .table-container table, 
+      .table-container thead, 
+      .table-container tbody, 
+      .table-container th, 
+      .table-container td, 
+      .table-container tr {
+        display: block !important;
+        width: 100% !important;
+      }
+
+      .table-container thead {
+        display: none !important;
+      }
+
+      .table-container tr {
+        background: rgba(255, 255, 255, 0.05);
+        margin-bottom: 15px;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-sizing: border-box;
+      }
+
+      .table-container td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 6px 4px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .table-container td:last-child {
+        border-bottom: none !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding-top: 10px !important;
+      }
+
+      .table-container td button {
+        width: 100% !important; /* على الموبايل ياخدوا العرض كامل ومرتاحين */
+        font-size: 13px !important;
+        padding: 10px !important;
+        box-sizing: border-box !important;
+        margin: 2px 0 !important;
+      }
+
+      .table-container td select {
+        width: 100% !important;
+        font-size: 13px !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================================================
+       HEADER
+  ================================================== -->
+  <header>
+    <div class="user-bar">
+      <span id="username">مرحباً، User</span>
+      <button id="logout-btn">تسجيل الخروج</button>
+    </div>
+
+    <nav class="bar">
+      <ul>
+        <a href="/Langdex/admin.html"><li>الرئيسية</li></a>
+        <a href="#"><li>السجل</li></a>
+        <a href="/Langdex/users.html"><li>المستخدمين</li></a>
+        <a href="#"><li>الإعدادات</li></a>
+      </ul>
+    </nav>
+  </header>
+
+
+  <!-- ==================================================
+       DASHBOARD CONTENT
+  ================================================== -->
+  <div class="content">
+
+    <!-- قسم الإحصائيات -->
+    <div style="width: 100%;">
+      <div class="cards-container" id="cardsContainer">
+          <div class="card">
+              <h3>إجمالي المستخدمين</h3>
+              <p id="totalUsersCount">0</p>
+          </div>
+      </div>
+    </div>
+
+    <!-- قسم البحث والفلترة -->
+    <div class="search-section" style="width: 100%;">
+      <h1>البحث</h1>
+      <input type="text" class="search-txt" placeholder="ابحث برقم الـ ID، الكلمة، المعنى، اليوزر، أو اللغة...">
+      <select class="filter-select" id="languageFilterSearch" style="margin-top: 10px; width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; font-family: 'Cairo', sans-serif;">
+          <option value="all">إختر اللغة</option>
+      </select>
+    </div>
+
+    <!-- فورم إدارة الكلمات -->
+    <div class="form" style="width: 100%;">
+      <h1>إدارة الكلمات</h1>
+      <input type="number" placeholder="ID الكلمة" readonly>
+      <input type="text" placeholder="اسم اليوزر (قبل @)">
+      <input type="text" placeholder="الكلمة">
+      <input type="text" placeholder="المعنى">
+      <input type="text" placeholder="المرادف">
+      <select id="formLanguageSelect">
+          <option hidden>English</option>
           <option hidden>Hindi</option>
           <option hidden>Urdu</option>
           <option hidden>Persian</option>
