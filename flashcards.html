@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Langdex - Flashcards Quiz</title>
+  <title>Langdex - Quiz</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -43,90 +43,71 @@
       font-size: 22px;
     }
 
-    .flashcard {
-      width: 100%;
-      max-width: 450px;
-      height: 250px;
-      margin: 0 auto 20px auto;
-      perspective: 1000px;
-      cursor: pointer;
-    }
-
-    .flashcard-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-      transition: transform 0.6s;
-      transform-style: preserve-3d;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .flashcard.flipped .flashcard-inner {
-      transform: rotateY(180deg);
-    }
-
-    .flashcard-front, .flashcard-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-radius: 12px;
-      padding: 20px;
-      box-sizing: border-box;
-      font-family: 'Cairo', sans-serif;
-    }
-
-    .flashcard-front {
+    .question-box {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
-    .flashcard-front h2 {
-      font-size: 28px;
+    .question-box h2 {
+      font-size: 26px;
       color: #00bcd4;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    .flashcard-front span {
+    .question-box p {
       font-size: 14px;
       color: #ddd;
+      margin: 0;
     }
 
-    .flashcard-back {
-      background: #2a2a2a;
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 450px;
+      margin: 0 auto;
+    }
+
+    .option-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
       color: #fff;
-      transform: rotateY(180deg);
-      border: 1px solid rgba(0, 188, 212, 0.4);
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
     }
 
-    .flashcard-back h2 {
-      font-size: 24px;
-      color: #27ae60;
-      margin-bottom: 10px;
+    .option-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
     }
 
-    .flashcard-back p {
-      font-size: 14px;
-      color: #ccc;
-      margin: 5px 0;
+    .option-btn.correct {
+      background: #27ae60 !important;
+      border-color: #2ecc71 !important;
+    }
+
+    .option-btn.wrong {
+      background: #c0392b !important;
+      border-color: #e74c3c !important;
     }
 
     .quiz-controls {
       display: flex;
       gap: 10px;
       max-width: 450px;
-      margin: 0 auto;
+      margin: 20px auto 0 auto;
     }
 
-    .quiz-controls button {
-      flex: 1;
+    .btn-next {
+      width: 100%;
       padding: 12px;
       border: none;
       border-radius: 8px;
@@ -135,14 +116,13 @@
       font-family: 'Cairo', sans-serif;
       color: white;
       font-size: 14px;
+      background: #2980b9;
       transition: 0.2s;
     }
 
-    .btn-next { background: #2980b9; }
-    .btn-next:hover { background: #1f618d; }
-
-    .btn-flip { background: #27ae60; }
-    .btn-flip:hover { background: #219653; }
+    .btn-next:hover {
+      background: #1f618d;
+    }
 
     .quiz-progress {
       color: #fff;
@@ -152,7 +132,6 @@
 
     @media (max-width: 768px) {
       .quiz-section { padding: 15px !important; }
-      .flashcard { height: 220px; }
     }
   </style>
 </head>
@@ -177,31 +156,25 @@
 
   <div class="content">
     <div class="quiz-section">
-      <h1>اختبارات الحفظ (Flashcards)</h1>
-      <div class="quiz-progress" id="quizProgress">جاري تحميل كلماتك...</div>
+      <h1>اختبار الكلمات (اختر الإجابة الصحيحة)</h1>
+      <div class="quiz-progress" id="quizProgress">جاري تحضير الاختبار...</div>
 
-      <div class="flashcard" id="flashcard">
-        <div class="flashcard-inner">
-          <div class="flashcard-front">
-            <h2 id="cardWord">-</h2>
-            <span>(اضغط لمعرفة المعنى)</span>
-          </div>
-          <div class="flashcard-back">
-            <h2 id="cardMeaning">-</h2>
-            <p id="cardSynonym">المرادف: -</p>
-            <p id="cardLang">اللغة: -</p>
-          </div>
-        </div>
+      <div class="question-box">
+        <h2 id="questionTitle">-</h2>
+        <p id="questionSub">ما هو المعنى الصحيح لهذه الكلمة؟</p>
+      </div>
+
+      <div class="options-container" id="optionsContainer">
+        <!-- سيتم توليد الاختيارات ديناميكياً هنا -->
       </div>
 
       <div class="quiz-controls">
-        <button type="button" class="btn-flip" id="flipBtn">قلب البطاقة</button>
-        <button type="button" class="btn-next" id="nextBtn">الكلمة التالية ➡</button>
+        <button type="button" class="btn-next" id="nextQuizBtn" style="display: none;">السؤال التالي ➡</button>
       </div>
     </div>
   </div>
 
-  <!-- ملف الجافاسكريبت المنفصل لجلب كلمات اليوزر الحالي -->
+  <!-- سكربتات النظام والملف المنفصل -->
   <script type="module" src="/Langdex/auth-guard.js"></script>
   <script type="module" src="/Langdex/user-bar.js"></script>
   <script type="module" src="/Langdex/flashcards.js"></script>
