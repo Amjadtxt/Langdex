@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-content="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Langdex - البحث والإضافة</title>
+  <title>Langdex - القاموس العام والبحث</title>
 
   <!-- CSS -->
   <link rel="stylesheet" href="/Langdex/style.css">
@@ -19,18 +19,12 @@
     .content {
       padding: 0 15px !important;
       box-sizing: border-box !important;
-    }
-
-    .content > div {
-      width: 100% !important;
-      max-width: 450px !important;
+      max-width: 500px !important;
       margin: 25px auto !important;
-      box-sizing: border-box !important;
     }
 
-    /* تثبيت اللون الموحد لقسم البحث وفورم تسجيل الكلمات */
-    .search-section,
-    .form {
+    /* تثبيت اللون الموحد #678071 لقسم البحث العام */
+    .search-section {
       background: #678071 !important;
       padding: 20px !important;
       border-radius: 10px !important;
@@ -39,61 +33,28 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    /* عناوين الأقسام */
-    .search-section h1,
-    .form h1 {
+    /* عنوان القسم */
+    .search-section h1 {
       text-align: center;
       color: #ffffff;
       margin-bottom: 15px;
       font-size: 22px;
     }
 
-    /* تنسيق حقول الإدخال والقوائم المنسدلة */
+    /* تنسيق حقول الإدخال والقوائم المنسدلة للبحث */
     .search-section input.search-txt,
-    .form input,
-    .form select {
+    .search-section select {
       width: 100% !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
       font-size: 14px !important;
-    }
-
-    .form select, .form input {
       padding: 12px;
       background: #ffffff;
       border: 1px solid #ccc;
       color: #000;
       margin-top: 10px;
     }
-
-    /* زر الحفظ وزر مسح الحقول */
-    .inter1 {
-      display: flex !important;
-      gap: 8px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-
-    .inter1 button {
-      flex: 1 !important;
-      margin-top: 12px !important;
-      padding: 12px 5px !important;
-      border: none !important;
-      border-radius: 8px !important;
-      font-weight: bold !important;
-      cursor: pointer !important;
-      font-family: 'Cairo', sans-serif !important;
-      color: white !important;
-      font-size: 14px !important;
-      text-align: center;
-    }
-
-    .inter1 .reg { background: #27ae60; }
-    .inter1 .reg:hover { background: #219653; }
-    
-    .inter1 .cel { background: #7f8c8d; }
-    .inter1 .cel:hover { background: #626d6e; }
 
     .search-btn {
       width: 100%;
@@ -116,16 +77,17 @@
       text-align: center;
     }
 
-    /* جدول عرض النتائج العامة أسفل الصفحة */
+    /* تنسيق جدول عرض النتائج العامة الشامل */
     .table-container {
       width: 100% !important;
-      max-width: 900px !important;
+      max-width: 1000px !important;
       background: #ffffff;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       overflow-x: auto;
       margin: 30px auto !important;
+      box-sizing: border-box;
     }
 
     table {
@@ -155,7 +117,7 @@
       .content {
         padding: 0 10px !important;
       }
-      .content > div, .table-container {
+      .content, .table-container {
         width: 100% !important;
         margin: 15px auto !important;
         padding: 15px !important;
@@ -188,14 +150,14 @@
 
 
   <!-- ==================================================
-       CONTENT (بحث وإضافة)
+       CONTENT (بحث وعرض عام فقط)
   ================================================== -->
   <div class="content">
 
-    <!-- قسم البحث والفلترة -->
+    <!-- قسم البحث والفلترة العام -->
     <div class="search-section">
-      <h1>البحث العام</h1>
-      <input type="text" id="search-input" placeholder="اكتب كلمة للبحث..." class="search-txt">
+      <h1>القاموس العام والبحث</h1>
+      <input type="text" id="search-input" placeholder="اكتب للبحث في كل الكلمات..." class="search-txt">
       
       <select id="language-filter">
         <option value="all">جميع اللغات</option>
@@ -206,68 +168,24 @@
       <div class="search-result"></div>
     </div>
 
-    <!-- فورم تسجيل كلمة جديدة (إضافة فقط بدون تحديث أو حذف) -->
-    <div class="form"> 
-      <h1>تسجيل كلمة جديدة</h1>
-      <input type="text" placeholder="ID" class="id" readonly="">
-      <input type="text" placeholder="الكلمة" class="word-input">
-      <input type="text" placeholder="المعنى" class="meaning-input">
-      <input type="text" placeholder="المرادف" class="synonyms-input">
-      <select class="language-select">
-        <option value="" disabled selected>اختر اللغة</option>
-        <option hidden>English</option>
-        <option hidden>Hindi</option>
-        <option hidden>Urdu</option>
-        <option hidden>Persian</option>
-        <option hidden>Chinese</option>
-        <option hidden>Bengali</option>
-        <option hidden>Turkish</option>
-        <option hidden>French</option>
-        <option hidden>Spanish</option>
-        <option hidden>German</option>
-        <option hidden>Japanese</option>
-        <option hidden>Korean</option>
-        <option hidden>Dutch</option>
-        <option hidden>Hebrew</option>
-        <option>الإنجليزية</option>
-        <option>الهندية</option>
-        <option>الأردية</option>
-        <option>الفارسية</option>
-        <option>الصينية</option>
-        <option>البنغالية</option>
-        <option>التركية</option>
-        <option>الفرنسية</option>
-        <option>الإسبانية</option>
-        <option>الألمانية</option>
-        <option>اليابانية</option>
-        <option>الكورية</option>
-        <option>الهولندية</option>
-        <option>العبرية</option>
-      </select>
-      
-      <div class="inter1">
-        <button type="button" class="reg">حفظ</button>
-        <button type="button" class="cel">مسح</button>
-      </div>
-    </div>
-
   </div>
 
-  <!-- جدول عرض النتائج العامة -->
+  <!-- جدول عرض كل الكلمات (القاموس العام مع الـ ID وتاريخ التسجيل) -->
   <div class="table-container">
-    <h3 style="margin-top: 0; color: #333;">القاموس العام (كل الكلمات)</h3>
+    <h3 style="margin-top: 0; color: #333;">كل كلمات المنصة (القاموس العام)</h3>
     <table>
       <thead>
         <tr>
-          <th>#</th>
+          <th># ID</th>
           <th>الكلمة</th>
           <th>المعنى</th>
           <th>المرادف</th>
           <th>اللغة</th>
+          <th>تاريخ التسجيل</th>
         </tr>
       </thead>
       <tbody id="data-table">
-        <!-- البيانات ستعرض هنا ديناميكياً -->
+        <!-- البيانات ستعرض هنا ديناميكياً بواسطة index-script.js -->
       </tbody>
     </table>
   </div>
