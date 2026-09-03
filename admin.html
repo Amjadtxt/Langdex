@@ -21,9 +21,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* الإعدادات الأساسية لتوحيد عرض كافة الأقسام والكاردز في المنتصف لتكون ملمومة واحترافية */
+    /* تقييد العرض الكلي لكل الأقسام لتكون ملمومة ومنتصفة تماماً زي صفحات الموبايل الاحترافية */
+    body {
+      background-color: #3b4d43; /* ضمان تناسق الخلفية العامة */
+    }
+
     .content {
-      padding: 0 15px !important;
+      width: 100% !important;
+      max-width: 520px !important;
+      margin: 0 auto !important;
+      padding: 10px !important;
       box-sizing: border-box !important;
     }
 
@@ -36,39 +43,39 @@
     .range-delete-box,
     .data-section {
       width: 100% !important;
-      max-width: 850px !important;
-      margin: 15px auto !important;
+      max-width: 480px !important;
+      margin: 12px auto !important;
       box-sizing: border-box !important;
+      float: none !important;
     }
 
-    /* تنسيق الكاردز بذكاء */
+    /* تنسيق الكاردز الإحصائية */
     .cards-container {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-      gap: 12px !important;
-      margin-bottom: 15px !important;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+      gap: 10px !important;
     }
     .card {
       background: rgba(255, 255, 255, 0.05);
-      padding: 15px;
+      padding: 12px;
       border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       text-align: center;
       box-sizing: border-box;
     }
     .card h3 {
-      font-size: 13px;
+      font-size: 12px;
       color: #aaa;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
     .card p {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       color: #00bcd4;
       margin: 0;
     }
 
-    /* تثبيت اللون #678071 لكافة الأقسام الرئيسية */
+    /* تثبيت لون الخلفية #678071 للأقسام */
     .search-section,
     .form,
     .excel-upload-section,
@@ -76,64 +83,52 @@
     .range-delete-box,
     .data-section {
       background: #678071 !important;
-      padding: 20px !important;
+      padding: 15px !important;
       border-radius: 10px !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    /* عناوين الأقسام داخل لوحة التحكم */
+    /* العناوين الداخلية */
     .search-section h1,
     .form h1,
     .data-section h1 {
       text-align: center;
       color: #ffffff;
-      margin-bottom: 15px;
-      font-size: 20px;
+      margin-bottom: 12px;
+      font-size: 18px;
     }
 
-    /* تنسيق حقول الإدخال وقوائم الفلترة */
+    /* تحجيم حقول الإدخال والقوائم المنسدلة لتكون ملمومة ومنضبطة */
     .search-section input.search-txt,
     .search-section select.filter-select,
     .form input,
     .form select,
     .range-delete-box input {
       width: 100% !important;
+      max-width: 100% !important;
       box-sizing: border-box !important;
       font-family: 'Cairo', sans-serif !important;
       border-radius: 8px !important;
-      padding: 12px !important;
-      font-size: 14px !important;
+      padding: 10px 12px !important;
+      font-size: 13px !important;
+      background: #ffffff !important;
+      border: 1px solid #ccc !important;
+      color: #000000 !important;
+      margin-top: 8px !important;
     }
 
-    .search-section select.filter-select,
-    .form select {
-      background: #ffffff;
-      border: 1px solid #ccc;
-      color: #000;
-      margin-top: 10px;
-    }
-
-    .search-section input.search-txt,
-    .form input,
-    .range-delete-box input {
-      background: #ffffff;
-      border: 1px solid #ccc;
-      color: #000;
-      margin-top: 10px;
-    }
-
-    /* تنسيق أزرار الفورم (إضافة، تعديل، مسح) */
+    /* أزرار الفورم (إضافة، تعديل، مسح) */
     .inter1 {
       display: flex !important;
-      gap: 10px !important;
+      gap: 8px !important;
       width: 100% !important;
-      margin-top: 15px !important;
+      margin-top: 12px !important;
       box-sizing: border-box !important;
     }
     .inter1 button {
       flex: 1 !important;
-      padding: 12px 5px !important;
+      padding: 10px 5px !important;
       border: none !important;
       border-radius: 8px !important;
       font-weight: bold !important;
@@ -141,7 +136,7 @@
       font-family: 'Cairo', sans-serif !important;
       color: white !important;
       text-align: center !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       transition: 0.2s !important;
     }
     .inter1 .reg { background: #27ae60; }
@@ -153,15 +148,17 @@
     .inter1 .cel { background: #7f8c8d; }
     .inter1 .cel:hover { background: #626d6e; }
 
-    /* ديف الأزرار العلوية المستقلة */
+    /* الأزرار العلوية المستقلة */
     .actions-top-bar {
       display: flex !important;
-      gap: 10px !important;
+      gap: 8px !important;
       align-items: center !important;
+      flex-wrap: wrap !important;
     }
     .actions-top-bar button {
       flex: 1 !important;
-      padding: 12px 10px !important;
+      min-width: 100px !important;
+      padding: 10px 8px !important;
       border: none !important;
       border-radius: 8px !important;
       font-weight: bold !important;
@@ -169,7 +166,7 @@
       font-family: 'Cairo', sans-serif !important;
       color: white !important;
       text-align: center !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       transition: 0.2s !important;
     }
     .fix-lang-btn { background: #8e44ad; }
@@ -181,23 +178,22 @@
     .pdf-btn { background: #e67e22; }
     .pdf-btn:hover { background: #d35400; }
 
-    /* قسم رفع الإكسيل المنفصل */
+    /* قسم رفع الإكسيل */
     .excel-upload-section {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 10px;
     }
     .excel-upload-section h3 {
       color: #ffffff;
-      font-size: 15px;
+      font-size: 14px;
       margin: 0;
     }
     .excel-upload-label {
       background: #27ae60;
       color: white;
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
@@ -206,22 +202,27 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 14px;
+      font-size: 13px;
     }
     .excel-upload-label:hover { background: #219653; }
 
-    /* تنسيق قسم الحذف بالـ ID */
+    /* قسم حذف نطاق الـ ID */
     .range-delete-box {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
+    }
+    .range-delete-box input {
+      flex: 1;
+      min-width: 120px;
+      margin-top: 0 !important;
     }
     .range-delete-btn {
-      flex: 1;
+      width: 100% !important;
       background: #852222;
       color: white;
-      padding: 12px 10px;
+      padding: 10px;
       border: none;
       border-radius: 8px;
       font-weight: bold;
@@ -229,12 +230,12 @@
       font-family: 'Cairo', sans-serif;
       transition: 0.2s;
       text-align: center;
-      font-size: 14px;
-      margin-top: 10px;
+      font-size: 13px;
+      margin-top: 8px;
     }
     .range-delete-btn:hover { background: #a93232; }
 
-    /* تنسيق جدول سجل البيانات والأسطر داخله */
+    /* جدول سجل البيانات */
     .table-container {
       width: 100% !important;
       margin: 0 auto !important;
@@ -248,9 +249,9 @@
       overflow: hidden;
     }
     th, td {
-      padding: 10px 8px;
+      padding: 8px 6px;
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       color: #fff;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
@@ -259,11 +260,10 @@
       font-weight: bold;
     }
 
-    /* أزرار الإجراءات داخل الجدول */
     .table-container td button {
       display: inline-block;
-      width: 70px;
-      padding: 6px 0;
+      width: 60px;
+      padding: 5px 0;
       margin: 2px;
       border-radius: 6px;
       border: none;
@@ -272,64 +272,15 @@
       font-weight: bold;
       color: white;
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
     }
-    .table-container td button:first-of-type {
-      background-color: #2980b9;
-    }
-    .table-container td button:first-of-type:hover {
-      background-color: #1f618d;
-    }
-    .table-container td button:last-of-type {
-      background-color: #c0392b;
-    }
-    .table-container td button:last-of-type:hover {
-      background-color: #962d22;
-    }
+    .table-container td button:first-of-type { background-color: #2980b9; }
+    .table-container td button:first-of-type:hover { background-color: #1f618d; }
+    .table-container td button:last-of-type { background-color: #c0392b; }
+    .table-container td button:last-of-type:hover { background-color: #962d22; }
 
-    /* تعديلات الموبايل للتجاوب السلس والاحترافي */
+    /* تحويل عناصر الجدول إلى كاردز منسقة للموبايل لمنع أي فرط في العرض */
     @media (max-width: 768px) {
-      .content {
-        padding: 0 10px !important;
-      }
-      .content > div,
-      .cards-container,
-      .search-section,
-      .form,
-      .excel-upload-section,
-      .actions-top-bar,
-      .range-delete-box,
-      .data-section {
-        width: 100% !important;
-        margin: 10px auto !important;
-        padding: 15px !important;
-      }
-
-      .excel-upload-section {
-        flex-direction: column !important;
-        text-align: center !important;
-      }
-      .excel-upload-section label {
-        width: 100% !important;
-        box-sizing: border-box !important;
-      }
-
-      .inter1, 
-      .actions-top-bar, 
-      .range-delete-box {
-        flex-direction: column !important;
-        gap: 8px !important;
-      }
-      
-      .inter1 button, 
-      .actions-top-bar button, 
-      .range-delete-box input, 
-      .range-delete-box button {
-        width: 100% !important;
-        margin-top: 0 !important;
-      }
-
-      /* تحويل الجدول إلى كاردز منفصلة على الشاشات الصغيرة لسهولة التصفح */
       .table-container table, 
       .table-container thead, 
       .table-container tbody, 
@@ -338,42 +289,35 @@
       .table-container tr {
         display: block !important;
         width: 100% !important;
+        box-sizing: border-box !important;
       }
-
-      .table-container thead {
-        display: none !important;
-      }
-
+      .table-container thead { display: none !important; }
       .table-container tr {
         background: rgba(255, 255, 255, 0.05);
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         border-radius: 8px;
-        padding: 10px;
+        padding: 8px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-        box-sizing: border-box;
       }
-
       .table-container td {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         text-align: left !important;
-        padding: 6px 4px !important;
-        font-size: 13px !important;
+        padding: 5px 4px !important;
+        font-size: 12px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
-
       .table-container td:last-child {
         border-bottom: none !important;
         flex-direction: column !important;
-        gap: 6px !important;
-        padding-top: 8px !important;
+        gap: 5px !important;
+        padding-top: 6px !important;
       }
-
       .table-container td button {
         width: 100% !important;
-        font-size: 13px !important;
-        padding: 8px !important;
+        font-size: 12px !important;
+        padding: 7px !important;
         margin: 0 !important;
       }
     }
@@ -474,7 +418,7 @@
 
     <!-- 4. قسم رفع ملف الإكسيل -->
     <div class="excel-upload-section">
-      <h3>رفع الكلمات بإستخدام ملف إكسيل</h3>
+      <h3>رفع ملف إكسيل</h3>
       <label for="excelFileInput" class="excel-upload-label">
         <span>رفع الملف</span>
         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
@@ -483,15 +427,15 @@
 
     <!-- 5. ديف الأزرار العلوية المنسقة -->
     <div class="actions-top-bar">
-      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير اسم التصنيف</button>
-      <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف الكلمات المكررة</button>
-      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل البيانات المعروضة</button>
+      <button type="button" class="fix-lang-btn" id="renameAnyLangBtn">تغيير الاسم</button>
+      <button type="button" class="delete-edited-btn" id="deleteDuplicatesBtn">حذف المكرر</button>
+      <button type="button" class="pdf-btn" id="downloadPdfBtn">تحميل PDF</button>
     </div>
 
     <!-- 6. ديف حذف نطاق الـ ID المنسق -->
     <div class="range-delete-box">
-      <input type="number" id="startIdInput" placeholder="من ID رقم...">
-      <input type="number" id="endIdInput" placeholder="إلى ID رقم...">
+      <input type="number" id="startIdInput" placeholder="من ID...">
+      <input type="number" id="endIdInput" placeholder="إلى ID...">
       <button type="button" class="range-delete-btn" id="deleteRangeBtn">حذف النطاق المحدد</button>
     </div>
 
@@ -503,13 +447,13 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>بواسطة (اليوزر)</th>
+              <th>اليوزر</th>
               <th>الكلمة</th>
               <th>المعنى</th>
-              <th>التفاصيل / المرادفات</th>
+              <th>المرادفات</th>
               <th>اللغة</th>
               <th>الرول</th>
-              <th>الساعة والتاريخ</th>
+              <th>التاريخ</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
