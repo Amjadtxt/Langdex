@@ -1,5 +1,5 @@
 // ======================================================
-// LANGDEX - admin-users.js (Full Unicode PDF Export Edition)
+// LANGDEX - admin-users.js (Full Unicode PDF Export Edition + Logger)
 // ======================================================
 
 import {
@@ -28,6 +28,7 @@ import {
     createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
+import { logAction } from "./logger.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCKsh43cO6DYwfPheHH9CsraX3VpU2fjc",
@@ -272,6 +273,7 @@ function setupActionEvents() {
 
                 const userDocRef = doc(db, "users", docId);
                 const docSnap = await getDoc(userDocRef);
+                const oldData = docSnap.exists() ? docSnap.data() : null;
 
                 if (docSnap.exists()) {
                     await updateDoc(userDocRef, { role: newRole });
@@ -282,6 +284,16 @@ function setupActionEvents() {
                         createdAt: serverTimestamp()
                     });
                 }
+
+                // تسجيل الحدث في السجل
+                await logAction(
+                    db,
+                    "تعديل رول مستخدم",
+                    `تعديل رول المستخدم (${email}) إلى (${newRole})`,
+                    "users",
+                    docId,
+                    oldData
+                );
 
                 showNotification(`تم تحديث رول المستخدم (${email}) إلى (${newRole}) بنجاح!`);
                 loadUsersData();
@@ -405,9 +417,24 @@ function setupActionEvents() {
                 showNotification("جاري حذف التصنيف...");
                 const q = query(wordsCollection, where("userEmail", "==", email), where("language", "==", selectedLang));
                 const snap = await getDocs(q);
+                
+                const oldWordsData = [];
                 const promises = [];
-                snap.forEach(d => promises.push(deleteDoc(doc(db, "words", d.id))));
+                snap.forEach(d => {
+                    oldWordsData.push({ id: d.id, ...d.data() });
+                    promises.push(deleteDoc(doc(db, "words", d.id)));
+                });
                 await Promise.all(promises);
+
+                // تسجيل الحدث في السجل
+                await logAction(
+                    db,
+                    "حذف تصنيف كلمات",
+                    `تم حذف تصنيف (${selectedLang}) للمستخدم (${email}) [عدد الكلمات: ${oldWordsData.length}]`,
+                    "words",
+                    null,
+                    oldWordsData
+                );
 
                 showNotification(`تم حذف كلمات تصنيف (${selectedLang}) بنجاح.`);
                 loadUsersData();
@@ -427,14 +454,40 @@ function setupActionEvents() {
             try {
                 showNotification("جاري الحذف...");
                 const userObj = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
+                
+                let oldUserData = null;
+                let targetDocId = userObj ? userObj.docId : null;
+
                 if (userObj && userObj.docId) {
-                    await deleteDoc(doc(db, "users", userObj.docId));
+                    const userDocRef = doc(db, "users", userObj.docId);
+                    const userSnap = await getDoc(userDocRef);
+                    if (userSnap.exists()) {
+                        oldUserData = userSnap.data();
+                    }
+                    await deleteDoc(userDocRef);
+                } else {
+                    targetDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
                 }
+
                 const q = query(wordsCollection, where("userEmail", "==", email));
                 const snap = await getDocs(q);
+                const oldWordsData = [];
                 const promises = [];
-                snap.forEach(d => promises.push(deleteDoc(doc(db, "words", d.id))));
+                snap.forEach(d => {
+                    oldWordsData.push({ id: d.id, ...d.data() });
+                    promises.push(deleteDoc(doc(db, "words", d.id)));
+                });
                 await Promise.all(promises);
+
+                // تسجيل الحدث في السجل
+                await logAction(
+                    db,
+                    "حذف مستخدم",
+                    `تم حذف المستخدم (${email}) وجميع سجلاته [عدد الكلمات المحذوفة: ${oldWordsData.length}]`,
+                    "users",
+                    targetDocId,
+                    { userData: oldUserData, deletedWords: oldWordsData }
+                );
 
                 showNotification("تم حذف المستخدم وكل سجلاته بنجاح.");
                 loadUsersData();
@@ -468,11 +521,23 @@ if (addUserBtn) {
             await createUserWithEmailAndPassword(auth, email, password);
 
             const customDocId = email.replace(/[^a-zA-Z0-9]/g, "_");
-            await setDoc(doc(db, "users", customDocId), {
+            const newUserData = {
                 email: email,
                 role: role,
                 createdAt: serverTimestamp()
-            });
+            };
+            
+            await setDoc(doc(db, "users", customDocId), newUserData);
+
+            // تسجيل الحدث في السجل
+            await logAction(
+                db,
+                "إضافة مستخدم",
+                `تم إنشاء مستخدم جديد (${email}) برول (${role})`,
+                "users",
+                customDocId,
+                null
+            );
 
             showNotification("تمت إضافة المستخدم بنجاح!");
             emailInput.value = "";
