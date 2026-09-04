@@ -81,7 +81,7 @@ function injectBellIcon() {
     bellBtn.type = "button";
     bellBtn.setAttribute(
         "style",
-        "position:fixed !important; bottom:20px !important; right:70px !important; " +
+        "position:fixed !important; bottom:20px !important; right:40px !important; " +
         "background:#00bcd4 !important; border:none !important; border-radius:50% !important; " +
         "width:52px !important; height:52px !important; display:flex !important; " +
         "align-items:center !important; justify-content:center !important; cursor:pointer !important; " +
