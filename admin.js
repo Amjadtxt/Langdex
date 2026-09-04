@@ -462,7 +462,7 @@ if (downloadPdfBtn) {
                         <thead>
                             <tr>
                                 <th style="width: 8%;">ID</th>
-                                <th style="width: 15%;">بواسطة (اليوزر)</th>
+                                <th style="width: 15%;">بواسطة (مستخدم)</th>
                                 <th style="width: 20%;">الكلمة</th>
                                 <th style="width: 25%;">المعنى</th>
                                 <th style="width: 22%;">التفاصيل / المرادفات</th>
@@ -497,7 +497,7 @@ if (renameLangBtn) {
         let oldLang = prompt("اكتب اسم اللغة القديمة تماماً كما تظهر (مثلاً: Urdu):");
         if (!oldLang) return;
 
-        let newLang = prompt(`اكتب الاسم الجديد للغة "${oldLang}" (مثلاً: اردو):`);
+        let newLang = prompt(`اكتب الاسم الجديد للغة "${oldLang}":`);
         if (!newLang) return;
 
         if (!confirm(`هل أنت متأكد من تغيير وتوحيد كل كلمات لغة "${oldLang}" إلى "${newLang}"؟`)) return;
@@ -691,7 +691,7 @@ if (sendNotifyBtn) {
                 details: `إرسال إشعار (${type === "specific" ? targetEmail : "لكل المستخدمين"}): "${message}"`
             });
 
-            showNotification("تم إرسال الإشعار بنجاح ✅");
+            showNotification("تم إرسال الإشعار بنجاح");
             if (notifyMessage) notifyMessage.value = "";
             if (notifyTargetEmail) notifyTargetEmail.value = "";
 
@@ -822,7 +822,7 @@ if (clearButton) {
     clearButton.addEventListener("click", (e) => {
         e.preventDefault();
         clearForm();
-        showNotification("تم مسح الاستمارة.");
+        showNotification("تم المسح.");
     });
 }
 
@@ -910,7 +910,7 @@ if (excelFileInput) {
                     });
                 }
 
-                showNotification(`تم بنجاح رفع واستيراد ${importedCount} كلمة من ملف الإكسيل! 🚀`);
+                showNotification(`تم بنجاح رفع واستيراد ${importedCount} كلمة من ملف الإكسيل!`);
                 excelFileInput.value = "";
                 await fetchAllData();
             } catch (error) {
