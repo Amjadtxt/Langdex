@@ -1,6 +1,6 @@
 // ======================================================
 // LANGDEX - user-bar.js
-// Username + Logout + أيقونة إشعارات ثابتة (بدون فتح تلقائي)
+// Username + Logout + أيقونة إشعارات جنب زر الخروج
 // ======================================================
 
 import {
@@ -67,51 +67,60 @@ const logoutButton =
 
 
 // ======================================================
-// 🔔 أيقونة إشعارات ثابتة (fixed) — مستقلة تمامًا عن .user-bar
+// 🔔 أيقونة إشعارات جنب زر الخروج
 // ======================================================
 
 let bellBadge = null;
 let currentNotifs = [];
 
 function injectBellIcon() {
-    if (document.querySelector("#notifyBellBtn")) return;
+    if (document.querySelector("#notifyBellBtn")) return true;
+
+    const userBar = document.querySelector(".user-bar");
+    if (!userBar || !logoutButton) return false;
 
     const bellBtn = document.createElement("button");
     bellBtn.id = "notifyBellBtn";
     bellBtn.type = "button";
-    bellBtn.textContent = "🔔";
     bellBtn.setAttribute(
         "style",
-        "position:fixed !important; top:14px !important; left:14px !important; " +
-        "background:#2c2f33 !important; border:1px solid rgba(255,255,255,0.2) !important; " +
-        "border-radius:50% !important; width:42px !important; height:42px !important; " +
-        "display:flex !important; align-items:center !important; justify-content:center !important; " +
-        "cursor:pointer !important; font-size:20px !important; " +
-        "z-index:2147483647 !important; box-shadow:0 4px 12px rgba(0,0,0,0.4) !important;"
+        "position:relative !important; display:inline-flex !important; align-items:center !important; " +
+        "justify-content:center !important; background:rgba(255,255,255,0.12) !important; " +
+        "border:none !important; border-radius:50% !important; width:34px !important; height:34px !important; " +
+        "cursor:pointer !important; font-size:17px !important; color:#fff !important; " +
+        "margin:0 8px !important; padding:0 !important; transition:background .2s !important;"
     );
+    bellBtn.textContent = "🔔";
+    bellBtn.addEventListener("mouseenter", () => bellBtn.style.setProperty("background", "rgba(255,255,255,0.22)", "important"));
+    bellBtn.addEventListener("mouseleave", () => bellBtn.style.setProperty("background", "rgba(255,255,255,0.12)", "important"));
 
     const badge = document.createElement("span");
     badge.id = "notifyBellBadge";
     badge.setAttribute(
         "style",
-        "position:absolute !important; top:-4px !important; right:-4px !important; " +
+        "position:absolute !important; top:-3px !important; left:-3px !important; " +
         "background:#e74c3c !important; color:#fff !important; border-radius:50% !important; " +
-        "min-width:18px !important; height:18px !important; font-size:11px !important; " +
+        "min-width:17px !important; height:17px !important; font-size:10px !important; " +
         "display:none !important; align-items:center !important; justify-content:center !important; " +
-        "padding:0 4px !important; font-family:Arial, sans-serif !important;"
+        "padding:0 4px !important; font-family:Arial, sans-serif !important; " +
+        "border:2px solid #678071 !important; box-sizing:content-box !important;"
     );
-    bellBtn.style.position = "fixed"; // تأكيد إضافي
     bellBtn.appendChild(badge);
     bellBadge = badge;
 
-    document.body.appendChild(bellBtn);
+    userBar.insertBefore(bellBtn, logoutButton);
 
     bellBtn.addEventListener("click", () => {
-        console.log("[Langdex Notify] تم الضغط على الجرس، عدد الإشعارات:", currentNotifs.length);
         showNotificationsPopup(currentNotifs);
     });
 
-    console.log("[Langdex Notify] ✅ تم حقن الأيقونة الثابتة في body.");
+    return true;
+}
+
+function ensureBellInjected(attempt = 0) {
+    if (!injectBellIcon() && attempt < 20) {
+        setTimeout(() => ensureBellInjected(attempt + 1), 300);
+    }
 }
 
 function updateBellBadge(count) {
@@ -124,8 +133,7 @@ function updateBellBadge(count) {
     }
 }
 
-// حقن فوري بمجرد تحميل الملف (من غير انتظار تسجيل الدخول)
-injectBellIcon();
+ensureBellInjected();
 
 
 // ======================================================
@@ -134,10 +142,7 @@ injectBellIcon();
 
 onAuthStateChanged(auth, (user) => {
 
-    if (!user) {
-        console.log("[Langdex Notify] مفيش مستخدم مسجل دخول.");
-        return;
-    }
+    if (!user) return;
 
     const email =
         user.email || "";
@@ -150,8 +155,7 @@ onAuthStateChanged(auth, (user) => {
             `مرحباً، ${name}`;
     }
 
-    console.log("[Langdex Notify] مستخدم مسجل دخول:", email);
-
+    ensureBellInjected();
     checkNotifications(user);
 });
 
@@ -206,8 +210,6 @@ async function checkNotifications(user) {
             getDocs(qSpecific)
         ]);
 
-        console.log("[Langdex Notify] عدد target=all:", snapAll.size, "| عدد target=" + userEmail + ":", snapSpecific.size);
-
         const notifs = [];
 
         snapAll.forEach(d => {
@@ -227,10 +229,8 @@ async function checkNotifications(user) {
         });
 
         currentNotifs = notifs;
-        console.log("[Langdex Notify] إشعارات غير مقروءة:", notifs.length);
-
         updateBellBadge(notifs.length);
-        // ملحوظة: مفيش فتح تلقائي للبوب أب هنا — بس تحديث العداد على الجرس
+        // مفيش فتح تلقائي — بس تحديث العداد على الجرس
 
     } catch (error) {
         console.error("[Langdex Notify] خطأ أثناء جلب الإشعارات:", error);
